@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Detalle del producto - Exclusive Jewelry</title>
+  <link rel="stylesheet" href="Joyeria.css" />
+</head>
+<body>
+  <header>
+    <div class="container header-content">
+      <div class="logo-box">
+        <img
+          id="logo"
+          src="Imagenes\Logo_Luxury_Joyeria-removebg-preview.png"
+          alt="Logo de la joyería"
+        />
+        <h1 id="ti">Luxury Jewelry</h1>
+      </div>
+      <nav class="nav-bar">
+        <a href="Pagina1_Joyeria.html">Inicio</a>
+        <a href="formulario.html">Registrarse</a>
+        <a href="Catalogo_joyeria.html">Catálogo</a>
+        <a href="contacto.html">Contacto</a>
+        <a href="iniciosesion.html">Iniciar sesión</a>
+        <a href="Carrito.html"> Ver Carrito</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="producto-detalle">
+      <div class="detalle-img">
+        <img src="Imagenes\WhatsApp Image 2025-10-10 at 10.23.34 AM.jpeg"Aretes de hombre adiamantados" />
+      </div>
+      <div class="detalle-info">
+        <h2>Aretes Mujer</h2>
+        <p class="precio">$28.000</p>
+        <p>
+          Esta delicada pulsera está finamente elaborada en un tono dorado brillante, decorada con circonias que aportan un brillo elegante. Su diseño central en forma de mariposa, acompañado de una perla luminosa, la convierte en una pieza perfecta para añadir un toque sutil de lujo a cualquier outfit. Ajustable y cómoda, es ideal para ocasiones especiales o uso diario.
+        </p>
+        <ul>
+          <li>Material: aleación dorada de alta calidad.</li>
+          <li>Detalle central: Mariposa con incrustaciones de circonia</li>
+          <li>Perla decorativa integrada</li>
+          <li>Ajustable mediante deslizador</li>
+          <li>Estilo: Elegante y femenino</li>
+        </ul>
+        <button class="boton" onclick="location.href='Catalogo_joyeria.html'">
+          Volver al Catálogo
+        </button>
+
+        <button class="boton" onclick="agregarAlCarrito('ARETES MUJER', 28000)">
+          Agregar al carrito
+        </button>
+
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2025 Exclusive Jewelry. Todos los derechos reservados. <br> <br>
+    Direccion: Calle 14 No.2-101 B/Centro , Ibagué, Tolima <br>
+    Tel: +57 3112803802 <br>
+    </div>
+  </footer>
+  <script>
+  function agregarAlCarrito(nombre, precio) {
+    let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+
+    carrito.push({
+      nombre: nombre,
+      precio: Number(precio)
+    });
+
+    localStorage.setItem("carrito", JSON.stringify(carrito));
+
+    mostrarMensajeCarrito();
+  }
+
+  function mostrarMensajeCarrito() {
+    const mensaje = document.getElementById("mensajeCarrito");
+
+    mensaje.classList.add("notificacion-activa");
+
+    setTimeout(() => {
+      mensaje.classList.remove("notificacion-activa");
+    }, 2000); // Desaparece en 2 segundos
+  }
+</script>
+
+
+  <div id="mensajeCarrito" class="notificacion-carrito">
+  Producto agregado al carrito 🛒
+</div>
+
+</body>
+</html>
