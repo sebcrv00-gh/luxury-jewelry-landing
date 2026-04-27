@@ -1,6 +1,29 @@
 const { pool } = require('../config/db');
 
 const User = {
+  async findAll() {
+    const [rows] = await pool.query(`
+      SELECT 
+        u.id, u.nombre, u.email, u.rol, u.telefono, u.direccion, u.foto,
+        COUNT(o.id) as total_pedidos
+      FROM usuarios u 
+      LEFT JOIN ordenes o ON u.id = o.usuario_id 
+      GROUP BY u.id 
+      ORDER BY u.id DESC
+    `);
+    return rows;
+  },
+
+  async makeVip(id) {
+    const [result] = await pool.query('UPDATE usuarios SET rol = ? WHERE id = ?', ['vip', id]);
+    return result.affectedRows > 0;
+  },
+
+  async removeVip(id) {
+    const [result] = await pool.query('UPDATE usuarios SET rol = ? WHERE id = ?', ['cliente', id]);
+    return result.affectedRows > 0;
+  },
+
   async findByEmail(email) {
     const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
     return rows[0] || null;

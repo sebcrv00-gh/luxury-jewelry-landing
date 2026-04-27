@@ -39,8 +39,8 @@ export default function Header() {
         </div>
 
         {/* Mobile Menu Toggle Button */}
-        <button 
-          className={`mobile-menu-toggle ${isMobileMenuOpen ? 'open' : ''}`} 
+        <button
+          className={`mobile-menu-toggle ${isMobileMenuOpen ? 'open' : ''}`}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           <span></span>
@@ -66,10 +66,13 @@ export default function Header() {
                   <span className="dropdown-name">{user.nombre}</span>
                   <span className="dropdown-email">{user.email}</span>
                 </div>
-                
-                <Link to="/perfil" onClick={() => setShowDropdown(false)}>Mi Perfil</Link>
-                {isAdmin && <Link to="/admin/productos" onClick={() => setShowDropdown(false)}>⚙ Dashboard Admin</Link>}
-                
+
+                <Link to="/mi-cuenta" onClick={() => setShowDropdown(false)}>Mi Panel</Link>
+                <Link to="/mi-cuenta/perfil" onClick={() => setShowDropdown(false)}>Editar Perfil</Link>
+                <Link to="/mi-cuenta/pedidos" onClick={() => setShowDropdown(false)}>Mis Pedidos</Link>
+                <Link to="/mi-cuenta/wishlist" onClick={() => setShowDropdown(false)}>Lista de Deseos</Link>
+                {isAdmin && <Link to="/admin/productos" onClick={() => setShowDropdown(false)}>Dashboard Admin</Link>}
+
                 <button onClick={handleLogout} className="btn-logout-dropdown">Cerrar Sesión</button>
               </div>
             </div>

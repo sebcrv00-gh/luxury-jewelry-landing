@@ -1,0 +1,340 @@
+/* =========================================================
+   LUXURY JEWELRY — Premium Admin Layout
+========================================================= */
+
+.admin-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-primary);
+  overflow: hidden;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+/* ─── SIDEBAR ──────────────────────────── */
+.admin-sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, rgba(8, 8, 8, 0.95), rgba(15, 15, 15, 0.98));
+  border-right: 1px solid var(--border-gold);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.4s var(--ease-out-expo);
+  backdrop-filter: blur(20px);
+  z-index: 100;
+}
+
+.admin-brand {
+  padding: 32px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.08);
+}
+
+.admin-brand img {
+  width: 48px;
+  filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.4));
+}
+
+.admin-brand h2 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.admin-nav {
+  flex: 1;
+  padding: 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 32px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  transition: all 0.3s var(--ease-out-expo);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+
+.admin-nav-item:hover, .admin-nav-item.active {
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.08), transparent);
+  color: var(--gold-light);
+  border-left-color: var(--gold);
+}
+
+.admin-nav-item svg {
+  color: var(--gold-dark);
+  transition: all 0.3s;
+}
+
+.admin-nav-item:hover svg, .admin-nav-item.active svg {
+  color: var(--gold);
+  filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.4));
+}
+
+.admin-logout {
+  padding: 24px;
+  border-top: 1px solid rgba(201, 168, 76, 0.08);
+}
+
+.admin-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  background: rgba(231, 76, 60, 0.05);
+  color: var(--danger);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  border-radius: 8px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+
+.admin-logout-btn:hover {
+  background: rgba(231, 76, 60, 0.15);
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.2);
+}
+
+/* ─── MAIN CONTENT ─────────────────────── */
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: radial-gradient(circle at top right, rgba(201, 168, 76, 0.03), transparent 40%),
+              var(--bg-secondary);
+}
+
+.admin-topbar {
+  padding: 24px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 15, 15, 0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.admin-page-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--gold-light);
+  letter-spacing: 1px;
+}
+
+.admin-user-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-user-info .admin-badge {
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.admin-content-area {
+  padding: 48px;
+  flex: 1;
+}
+
+/* ─── STATS GRID ───────────────────────── */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.admin-stat-card {
+  background: linear-gradient(135deg, rgba(21, 21, 21, 0.8), rgba(15, 15, 15, 0.9));
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.4s var(--ease-out-expo);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.admin-stat-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(201, 168, 76, 0.15);
+}
+
+.admin-stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(201, 168, 76, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+}
+
+.admin-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-stat-value {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.admin-stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.text-danger { color: var(--rose-gold) !important; }
+.bg-danger { background: rgba(183, 110, 121, 0.1) !important; }
+
+/* ─── PREMIUM TABLES ───────────────────── */
+.table-wrapper {
+  background: rgba(21, 21, 21, 0.6);
+  border: 1px solid rgba(201, 168, 76, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.table-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.1);
+}
+
+.luxury-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.luxury-table th {
+  text-align: left;
+  padding: 0 16px 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 600;
+}
+
+.luxury-table td {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.luxury-table tr td:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.luxury-table tr td:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.luxury-table tbody tr {
+  transition: all 0.3s;
+}
+
+.luxury-table tbody tr:hover td {
+  background: rgba(201, 168, 76, 0.05);
+}
+
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.product-cell img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+.product-name {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+/* Modals */
+.luxury-modal-content {
+  background: linear-gradient(145deg, rgba(21, 21, 21, 0.95), rgba(15, 15, 15, 0.98)) !important;
+  border: 1px solid var(--border-gold) !important;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(201, 168, 76, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 40px !important;
+}
+
+.action-btn {
+  padding: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  transition: all 0.3s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.action-btn.edit:hover {
+  color: var(--gold);
+  border-color: rgba(201, 168, 76, 0.3);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.action-btn.delete:hover {
+  color: var(--rose-gold);
+  border-color: rgba(183, 110, 121, 0.3);
+  background: rgba(183, 110, 121, 0.1);
+}

@@ -6,6 +6,10 @@ const path = require('path');
 const { initDB } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const wishlistRoutes = require('./routes/wishlistRoutes');
+const addressRoutes = require('./routes/addressRoutes');
+const ticketRoutes = require('./routes/ticketRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,6 +40,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ─── Rutas API ────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/addresses', addressRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 // Ruta de salud
 app.get('/api/health', (req, res) => {
@@ -55,8 +63,15 @@ async function start() {
       console.log(`   GET    /api/auth/me`);
       console.log(`   PUT    /api/auth/profile`);
       console.log(`   GET    /api/products`);
+      console.log(`   GET    /api/products/admin/all (admin)`);
       console.log(`   GET    /api/products/:id`);
-      console.log(`   POST   /api/products (admin)\n`);
+      console.log(`   POST   /api/products (admin)`);
+      console.log(`   PUT    /api/products/:id (admin)`);
+      console.log(`   DELETE /api/products/:id (admin)`);
+      console.log(`   POST   /api/orders`);
+      console.log(`   GET    /api/orders`);
+      console.log(`   GET    /api/orders/:id`);
+      console.log(`   GET    /api/orders/admin/all (admin)\n`);
     });
   } catch (err) {
     console.error('❌ Error al iniciar el servidor:', err);

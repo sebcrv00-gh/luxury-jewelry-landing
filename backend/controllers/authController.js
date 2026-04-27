@@ -136,6 +136,70 @@ const authController = {
       console.error('Error al borrar cuenta:', err);
       return res.status(500).json({ error: 'Error del servidor' });
     }
+  },
+
+  // GET /api/auth/users
+  async getAllUsers(req, res) {
+    try {
+      const users = await User.findAll();
+      return res.json(users);
+    } catch (err) {
+      console.error('Error al obtener usuarios:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+  },
+
+  // PUT /api/auth/users/:id/vip
+  async makeVip(req, res) {
+    try {
+      const { id } = req.params;
+      const ok = await User.makeVip(id);
+      if (!ok) return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.json({ ok: true, message: 'Cliente ascendido a VIP exitosamente' });
+    } catch (err) {
+      console.error('Error al hacer VIP:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+  },
+
+  // PUT /api/auth/users/:id/remove-vip
+  async removeVip(req, res) {
+    try {
+      const { id } = req.params;
+      const ok = await User.removeVip(id);
+      if (!ok) return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.json({ ok: true, message: 'Estatus VIP revocado exitosamente' });
+    } catch (err) {
+      console.error('Error al revocar VIP:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+  },
+
+  // PUT /api/auth/change-password
+  async changePassword(req, res) {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Ambos campos son obligatorios' });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+      }
+      const user = await User.findByEmail(req.session.email);
+      if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+      const currentHash = crypto.createHash('sha256').update(currentPassword).digest('hex');
+      if (currentHash !== user.clave) {
+        return res.status(401).json({ error: 'La contraseña actual es incorrecta' });
+      }
+
+      const newHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+      await User.update(req.session.userId, { clave: newHash });
+      return res.json({ ok: true, message: 'Contraseña actualizada exitosamente' });
+    } catch (err) {
+      console.error('Error al cambiar contraseña:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
   }
 };
 
