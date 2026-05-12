@@ -68,7 +68,7 @@ export default function Header() {
                 </div>
 
                 <Link to="/mi-cuenta" onClick={() => setShowDropdown(false)}>Mi Panel</Link>
-                <Link to="/mi-cuenta/perfil" onClick={() => setShowDropdown(false)}>Editar Perfil</Link>
+                <Link to={isAdmin ? "/admin?tab=profile" : "/mi-cuenta/perfil"} onClick={() => setShowDropdown(false)}>Editar Perfil</Link>
                 <Link to="/mi-cuenta/pedidos" onClick={() => setShowDropdown(false)}>Mis Pedidos</Link>
                 <Link to="/mi-cuenta/wishlist" onClick={() => setShowDropdown(false)}>Lista de Deseos</Link>
                 {isAdmin && <Link to="/admin/productos" onClick={() => setShowDropdown(false)}>Dashboard Admin</Link>}

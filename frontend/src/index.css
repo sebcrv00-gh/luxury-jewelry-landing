@@ -2177,6 +2177,12 @@ footer p+p {
   border: 1px solid rgba(78, 205, 196, 0.2);
 }
 
+.fc-alert--error {
+  background: rgba(231, 76, 60, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
 .fc-submit-btn {
   width: 100%;
   padding: 12px;

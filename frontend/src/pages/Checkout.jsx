@@ -40,7 +40,9 @@ export default function Checkout() {
     }
   }, [isLoggedIn, cartKey, navigate, user]);
 
-  const total = cart.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
+  const subtotal = cart.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
+  const shippingFee = 15000;
+  const total = subtotal + shippingFee;
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
@@ -143,9 +145,19 @@ export default function Checkout() {
                 </div>
               ))}
             </div>
-            <div className="checkout-total">
-              <span>Total</span>
-              <span>${total.toLocaleString('es-CO')}</span>
+            <div className="checkout-summary-details" style={{ borderTop: '1px solid var(--border-subtle)', marginTop: '20px', paddingTop: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-muted)' }}>
+                <span>Subtotal</span>
+                <span>${subtotal.toLocaleString('es-CO')}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-muted)' }}>
+                <span>Envío</span>
+                <span>${shippingFee.toLocaleString('es-CO')}</span>
+              </div>
+              <div className="checkout-total" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.4rem', fontWeight: 700, marginTop: '10px' }}>
+                <span>Total</span>
+                <span>${total.toLocaleString('es-CO')}</span>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
               <button className="btn-outline" style={{ flex: 1 }} onClick={() => navigate('/carrito')}>
@@ -191,11 +203,19 @@ export default function Checkout() {
               </div>
 
               {/* Mini resumen */}
-              <div className="checkout-mini-summary">
-                <span className="text-muted">{cart.length} producto(s)</span>
-                <span className="text-gold-light" style={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                  Total: ${total.toLocaleString('es-CO')}
-                </span>
+              <div className="checkout-mini-summary" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                  <span>{cart.length} producto(s)</span>
+                  <span>${subtotal.toLocaleString('es-CO')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                  <span>Envío</span>
+                  <span>${shippingFee.toLocaleString('es-CO')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--gold-light)', fontSize: '1.1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}>
+                  <span>Total Final:</span>
+                  <span>${total.toLocaleString('es-CO')}</span>
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>

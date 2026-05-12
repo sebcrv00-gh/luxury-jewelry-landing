@@ -44,7 +44,9 @@ export default function Cart() {
     setShowClearConfirm(false);
   };
 
-  const total = cart.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
+  const subtotal = cart.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
+  const shippingFee = 15000;
+  const total = subtotal + shippingFee;
 
   if (!isLoggedIn) {
     return (
@@ -88,7 +90,20 @@ export default function Cart() {
               </div>
             ))}
 
-            <div className="cart-total">Total: ${total.toLocaleString('es-CO')}</div>
+            <div className="cart-summary-details" style={{ borderTop: '1px solid var(--border-subtle)', marginTop: '20px', paddingTop: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-muted)' }}>
+                <span>Subtotal:</span>
+                <span>${subtotal.toLocaleString('es-CO')}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-muted)' }}>
+                <span>Envío:</span>
+                <span>${shippingFee.toLocaleString('es-CO')}</span>
+              </div>
+              <div className="cart-total" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.5rem', marginTop: '10px' }}>
+                <span>Total:</span>
+                <span>${total.toLocaleString('es-CO')}</span>
+              </div>
+            </div>
 
             <div className="cart-actions">
               <button className="btn-danger" onClick={requestClearCart} style={{ borderRadius: '50px', padding: '12px 24px' }}>Vaciar carrito</button>

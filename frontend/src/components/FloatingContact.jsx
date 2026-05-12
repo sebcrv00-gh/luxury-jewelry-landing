@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const COMPANY_EMAIL = 'luxuryjewellry95@gmail.com';
 
 export default function FloatingContact() {
+  const { user, isLoggedIn } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [formData, setFormData] = useState({ 
+    name: user?.nombre || '', 
+    email: user?.email || '', 
+    phone: '', 
+    message: '' 
+  });
   const [status, setStatus] = useState(null); // 'success' | 'error' | null
   const [sending, setSending] = useState(false);
+
+  // Reiniciar/Pre-llenar el formulario cuando cambia la sesión (login/logout)
+  useEffect(() => {
+    setFormData({
+      name: user?.nombre || '',
+      email: user?.email || '',
+      phone: '',
+      message: ''
+    });
+    setStatus(null);
+  }, [user, isLoggedIn]);
 
   // Prevenir scroll en el body cuando el modal está abierto
   useEffect(() => {
@@ -21,26 +39,45 @@ export default function FloatingContact() {
   }, [isOpen]);
 
   function handleChange(e) {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+
+    // Validación para el número de teléfono
+    if (name === 'phone') {
+      const numericValue = value.replace(/[^0-9]/g, '');
+      if (numericValue.length <= 10) {
+        setFormData(prev => ({ ...prev, [name]: numericValue }));
+      }
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: value }));
     setStatus(null);
   }
 
   function handleSubmit(e) {
     e.preventDefault();
+
+    // Validación manual de correo (@)
+    if (!formData.email.includes('@')) {
+      setStatus('error');
+      return;
+    }
+
     setSending(true);
 
     const subject = encodeURIComponent(`Contacto de ${formData.name} — Luxury Jewelry`);
     const body = encodeURIComponent(
-      `Nombre: ${formData.name}\nCorreo: ${formData.email}\n\nMensaje:\n${formData.message}`
+      `Nombre: ${formData.name}\nCorreo: ${formData.email}\nTeléfono: ${formData.phone}\n\nMensaje:\n${formData.message}`
     );
-    const mailtoLink = `mailto:${COMPANY_EMAIL}?subject=${subject}&body=${body}`;
-
-    window.location.href = mailtoLink;
+    
+    // Automatización de Gmail: Abre directamente la interfaz de redactar en una nueva pestaña
+    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${COMPANY_EMAIL}&su=${subject}&body=${body}`;
+    window.open(gmailLink, '_blank');
 
     setTimeout(() => {
       setSending(false);
       setStatus('success');
-      setFormData({ name: '', email: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', message: '' });
     }, 800);
   }
 
@@ -126,6 +163,19 @@ export default function FloatingContact() {
             </div>
 
             <div className="fc-field">
+              <label htmlFor="fc-phone">Teléfono</label>
+              <input
+                id="fc-phone"
+                type="tel"
+                name="phone"
+                placeholder="Solo 10 números"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="fc-field">
               <label htmlFor="fc-message">Mensaje</label>
               <textarea
                 id="fc-message"
@@ -137,6 +187,12 @@ export default function FloatingContact() {
                 required
               />
             </div>
+
+            {status === 'error' && (
+              <div className="fc-alert fc-alert--error">
+                Por favor, ingresa un correo electrónico válido.
+              </div>
+            )}
 
             {status === 'success' && (
               <div className="fc-alert fc-alert--success">
@@ -154,7 +210,13 @@ export default function FloatingContact() {
 
             <p className="fc-footer-note">
               Escríbenos también a{' '}
-              <a href={`mailto:${COMPANY_EMAIL}`}>{COMPANY_EMAIL}</a>
+              <a 
+                href={`https://mail.google.com/mail/?view=cm&fs=1&to=${COMPANY_EMAIL}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                {COMPANY_EMAIL}
+              </a>
             </p>
           </form>
         </div>

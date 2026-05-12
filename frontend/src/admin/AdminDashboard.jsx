@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -19,6 +19,7 @@ import ProductListAdmin from './ProductListAdmin';
 import OrderListAdmin from './OrderListAdmin';
 import ClientsAdmin from './ClientsAdmin';
 import SettingsAdmin from './SettingsAdmin';
+import ProfileAdmin from './ProfileAdmin';
 import './admin-layout.css'; // Importamos el CSS premium
 
 export default function AdminDashboard() {
@@ -27,14 +28,22 @@ export default function AdminDashboard() {
     ? `http://localhost:3001/${user.foto}`
     : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('inventory'); // 'dashboard', 'inventory', 'orders'
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('inventory'); // 'dashboard', 'inventory', 'orders', 'clients', 'settings', 'profile'
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [stats, setStats] = useState({ total: 0, lowStock: 0, categories: 0 });
 
   useEffect(() => {
     if (!loading && (!isLoggedIn || !isAdmin)) navigate('/');
-  }, [loading, isLoggedIn, isAdmin, navigate]);
+    
+    // Manejar pestaña por URL
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab && ['dashboard', 'inventory', 'orders', 'clients', 'settings', 'profile'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [loading, isLoggedIn, isAdmin, navigate, location.search]);
 
   const handleProductAdded = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -93,6 +102,13 @@ export default function AdminDashboard() {
             <Settings size={20} />
             <span>Configuración</span>
           </div>
+          <div
+            className={`admin-nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('profile'); setShowAddForm(false); }}
+          >
+            <Users size={20} />
+            <span>Mi Perfil</span>
+          </div>
         </nav>
 
         <div className="admin-logout">
@@ -122,7 +138,7 @@ export default function AdminDashboard() {
               <span onClick={() => navigate('/carrito')} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '2px', textTransform: 'uppercase', transition: 'all 0.35s' }} onMouseOver={e => { e.currentTarget.style.color = 'var(--gold-light)'; e.currentTarget.style.textShadow = '0 0 10px rgba(201,168,76,0.3)' }} onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.textShadow = 'none' }}>
                 <ShoppingCart size={14} /> CARRITO
               </span>
-              <span onClick={() => navigate('/perfil')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '2px', textTransform: 'uppercase', transition: 'all 0.35s' }} onMouseOver={e => { e.currentTarget.style.color = 'var(--gold-light)'; e.currentTarget.style.textShadow = '0 0 10px rgba(201,168,76,0.3)' }} onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.textShadow = 'none' }}>
+              <span onClick={() => setActiveTab('profile')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '2px', textTransform: 'uppercase', transition: 'all 0.35s' }} onMouseOver={e => { e.currentTarget.style.color = 'var(--gold-light)'; e.currentTarget.style.textShadow = '0 0 10px rgba(201,168,76,0.3)' }} onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.textShadow = 'none' }}>
                 <img src={fotoSrc} alt="Perfil" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--gold)', pointerEvents: 'none' }} />
                 MI PERFIL
               </span>
@@ -136,6 +152,7 @@ export default function AdminDashboard() {
               {activeTab === 'orders' && 'Gestión de Pedidos'}
               {activeTab === 'clients' && 'Módulo de Clientes'}
               {activeTab === 'settings' && 'Configuración'}
+              {activeTab === 'profile' && 'Editar Mi Perfil'}
             </h1>
             <span className="admin-badge" style={{ boxShadow: '0 0 10px rgba(201, 168, 76, 0.2)' }}>Admin</span>
           </div>
@@ -229,6 +246,10 @@ export default function AdminDashboard() {
 
           {activeTab === 'settings' && (
             <SettingsAdmin />
+          )}
+
+          {activeTab === 'profile' && (
+            <ProfileAdmin />
           )}
         </div>
       </main>

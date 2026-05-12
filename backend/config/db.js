@@ -62,6 +62,7 @@ async function initDB() {
         id INT(11) AUTO_INCREMENT PRIMARY KEY,
         usuario_id INT(11) NOT NULL,
         total DECIMAL(12,2) NOT NULL,
+        costo_envio DECIMAL(12,2) DEFAULT 15000.00,
         estado VARCHAR(50) DEFAULT 'pendiente',
         nombre_envio VARCHAR(255) NOT NULL,
         telefono_envio VARCHAR(50) NOT NULL,
@@ -72,6 +73,16 @@ async function initDB() {
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
       )
     `);
+
+    // Migración: Agregar costo_envio si no existe
+    try {
+      const [columns] = await conn.query("SHOW COLUMNS FROM ordenes LIKE 'costo_envio'");
+      if (columns.length === 0) {
+        await conn.query('ALTER TABLE ordenes ADD COLUMN costo_envio DECIMAL(12,2) DEFAULT 15000.00 AFTER total');
+      }
+    } catch (err) {
+      console.warn('⚠️ No se pudo verificar/agregar la columna costo_envio:', err.message);
+    }
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS orden_items (

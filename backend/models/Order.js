@@ -10,12 +10,18 @@ const Order = {
     try {
       await conn.beginTransaction();
 
-      const total = items.reduce((sum, i) => i.precio * i.cantidad, 0);
+      const subtotal = items.reduce((sum, i) => {
+        const p = parseFloat(i.precio) || 0;
+        const q = parseInt(i.cantidad) || 0;
+        return sum + (p * q);
+      }, 0);
+      const SHIPPING_COST = 15000;
+      const total = subtotal + SHIPPING_COST;
 
       const [orderResult] = await conn.query(
-        `INSERT INTO ordenes (usuario_id, total, nombre_envio, telefono_envio, direccion_envio, ciudad_envio, notas)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [userId, total, shipping.nombre, shipping.telefono, shipping.direccion, shipping.ciudad, shipping.notas || null]
+        `INSERT INTO ordenes (usuario_id, total, costo_envio, nombre_envio, telefono_envio, direccion_envio, ciudad_envio, notas)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, total, SHIPPING_COST, shipping.nombre, shipping.telefono, shipping.direccion, shipping.ciudad, shipping.notas || null]
       );
 
       const orderId = orderResult.insertId;
