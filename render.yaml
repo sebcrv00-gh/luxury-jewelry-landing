@@ -15,9 +15,8 @@ services:
       - fromGroup: luxury-jewelry-secrets
 
   # Frontend
-  - type: web
+  - type: static
     name: luxury-jewelry-frontend
-    env: static
     rootDir: frontend
     plan: free
     buildCommand: npm install && npm run build
