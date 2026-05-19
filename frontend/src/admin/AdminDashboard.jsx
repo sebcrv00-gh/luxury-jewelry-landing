@@ -13,12 +13,14 @@ import {
   AlertTriangle,
   Layers,
   Database,
-  Home
+  Home,
+  MessageSquare
 } from 'lucide-react';
 import AddProduct from './AddProduct';
 import ProductListAdmin from './ProductListAdmin';
 import OrderListAdmin from './OrderListAdmin';
 import ClientsAdmin from './ClientsAdmin';
+import TicketListAdmin from './TicketListAdmin';
 import SettingsAdmin from './SettingsAdmin';
 import ProfileAdmin from './ProfileAdmin';
 import './admin-layout.css'; // Importamos el CSS premium
@@ -30,18 +32,18 @@ export default function AdminDashboard() {
     : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('inventory'); // 'dashboard', 'inventory', 'orders', 'clients', 'settings', 'profile'
+  const [activeTab, setActiveTab] = useState('inventory'); // 'dashboard', 'inventory', 'orders', 'clients', 'tickets' , 'settings', 'profile'
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [stats, setStats] = useState({ total: 0, lowStock: 0, categories: 0 });
 
   useEffect(() => {
     if (!loading && (!isLoggedIn || !isAdmin)) navigate('/');
-    
+
     // Manejar pestaña por URL
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab && ['dashboard', 'inventory', 'orders', 'clients', 'settings', 'profile'].includes(tab)) {
+    if (tab && ['dashboard', 'inventory', 'orders', 'clients', 'tickets', 'settings', 'profile'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [loading, isLoggedIn, isAdmin, navigate, location.search]);
@@ -95,6 +97,13 @@ export default function AdminDashboard() {
           >
             <Users size={20} />
             <span>Clientes</span>
+          </div>
+          <div
+            className={`admin-nav-item ${activeTab === 'tickets' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('tickets'); setShowAddForm(false); }}
+          >
+            <MessageSquare size={20} />
+            <span>Mensajes y Soporte</span>
           </div>
           <div
             className={`admin-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
@@ -152,6 +161,7 @@ export default function AdminDashboard() {
               {activeTab === 'inventory' && 'Bóveda de Inventario'}
               {activeTab === 'orders' && 'Gestión de Pedidos'}
               {activeTab === 'clients' && 'Módulo de Clientes'}
+              {activeTab === 'tickets' && 'Buzón de Mensajes'}
               {activeTab === 'settings' && 'Configuración'}
               {activeTab === 'profile' && 'Editar Mi Perfil'}
             </h1>
@@ -243,6 +253,10 @@ export default function AdminDashboard() {
 
           {activeTab === 'clients' && (
             <ClientsAdmin />
+          )}
+
+          {activeTab === 'tickets' && (
+            <TicketListAdmin refreshTrigger={refreshTrigger} />
           )}
 
           {activeTab === 'settings' && (
