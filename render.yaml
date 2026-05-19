@@ -24,11 +24,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: luxury-jewelry-api
-          property: host
-        value: /api
+        value: https://luxury-jewelry-api.onrender.com/api
       # Nota: Render static sites usually need the full URL if not using a rewrite.
       # We'll set VITE_API_URL manually in the UI if this shortcut doesn't suffice.
     routes:
