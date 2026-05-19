@@ -1,0 +1,38 @@
+services:
+  # Backend
+  - type: web
+    name: luxury-jewelry-api
+    env: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+      - fromGroup: luxury-jewelry-secrets
+
+  # Frontend
+  - type: web
+    name: luxury-jewelry-frontend
+    env: static
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: luxury-jewelry-api
+          property: host
+        value: /api
+      # Nota: Render static sites usually need the full URL if not using a rewrite.
+      # We'll set VITE_API_URL manually in the UI if this shortcut doesn't suffice.
+    rewriteRules:
+      - source: /api/*
+        destination: https://luxury-jewelry-api.onrender.com/api/*
+      - source: /*
+        destination: /index.html
