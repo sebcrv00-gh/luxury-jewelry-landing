@@ -30,6 +30,27 @@ const STATUS_MAP = {
   cancelado: { label: 'Cancelado', color: '#e74c3c', icon: AlertCircle },
 };
 
+const STATIC_PRODUCTS = [
+  { id: 's1', nombre: 'Reloj Invicta Original', precio: 790000, img: '/images/WhatsApp Image 2025-10-02 at 10.03.51 AM.jpeg' },
+  { id: 's2', nombre: 'Curren Cronograph', precio: 170000, img: '/images/WhatsApp Image 2025-10-02 at 10.06.07 AM.jpeg' },
+  { id: 's3', nombre: 'Q&Q Metálico Hombre', precio: 98000, img: '/images/WhatsApp Image 2025-10-02 at 10.06.59 AM.jpeg' },
+  { id: 's4', nombre: 'Q&Q Sumergible Dama', precio: 75000, img: '/images/WhatsApp Image 2025-10-02 at 10.11.35 AM.jpeg' },
+  { id: 's5', nombre: 'Pulsera Elegante', precio: 44000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.10 AM.jpeg' },
+  { id: 's6', nombre: 'Pulsera Oro Laminado', precio: 35000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.08 AM.jpeg' },
+  { id: 's7', nombre: 'Conjunto Collar y Aretes', precio: 38000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.04 AM.jpeg' },
+  { id: 's8', nombre: 'Pulsera Dorada', precio: 38000, img: '/images/WhatsApp Image 2025-10-10 at 10.23.51 AM.jpeg' },
+  { id: 's9', nombre: 'Aretes Artesanales', precio: 28000, img: '/images/WhatsApp Image 2025-10-10 at 10.23.34 AM.jpeg' },
+];
+
+const RETURN_REASONS = [
+  'Producto equivocado',
+  'Producto dañado o defectuoso',
+  'No coincide con la descripción',
+  'Tamaño incorrecto',
+  'Cambio de opinión',
+  'Otro motivo',
+];
+
 export default function ClientDashboard() {
   const { user, isLoggedIn, loading, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -59,6 +80,11 @@ export default function ClientDashboard() {
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [ticketForm, setTicketForm] = useState({ asunto: '', mensaje: '' });
 
+  // Returns form
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [returnForm, setReturnForm] = useState({ orden_id: '', motivo: RETURN_REASONS[0], descripcion: '' });
+  const [returnMsg, setReturnMsg] = useState(null);
+
   const fotoSrc = user?.foto ? `http://localhost:3001/${user.foto}` : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
   useEffect(() => {
@@ -84,11 +110,33 @@ export default function ClientDashboard() {
   }, [location.pathname]);
 
   const loadOrders = async () => { try { const { data } = await api.get('/orders/mine/detailed'); setOrders(data); } catch (e) { console.error(e); } };
-  const loadWishlist = async () => { try { const { data } = await api.get('/wishlist'); setWishlist(data); } catch (e) { console.error(e); } };
+  const loadWishlist = async () => {
+    try {
+      const { data } = await api.get('/wishlist');
+      // Merge DB items with local static wishlist
+      const localIds = JSON.parse(localStorage.getItem(`luxury_local_wishlist_${user?.id}`) || '[]');
+      const localItems = localIds.map(id => {
+        const sp = STATIC_PRODUCTS.find(p => p.id === id);
+        if (!sp) return null;
+        return { id: `local_${sp.id}`, producto_id: sp.id, nombre: sp.nombre, precio: sp.precio, imagen_url: null, img: sp.img, stock: 99, isLocal: true };
+      }).filter(Boolean);
+      setWishlist([...data, ...localItems]);
+    } catch (e) { console.error(e); }
+  };
   const loadAddresses = async () => { try { const { data } = await api.get('/addresses'); setAddresses(data); } catch (e) { console.error(e); } };
   const loadTickets = async () => { try { const { data } = await api.get('/tickets'); setTickets(data); } catch (e) { console.error(e); } };
 
-  const removeWishlistItem = async (productId) => { await api.delete(`/wishlist/${productId}`); loadWishlist(); };
+  const removeWishlistItem = async (productId, isLocal = false) => {
+    if (isLocal) {
+      const localIds = JSON.parse(localStorage.getItem(`luxury_local_wishlist_${user?.id}`) || '[]');
+      const updated = localIds.filter(id => id !== productId);
+      localStorage.setItem(`luxury_local_wishlist_${user?.id}`, JSON.stringify(updated));
+      loadWishlist();
+    } else {
+      await api.delete(`/wishlist/${productId}`);
+      loadWishlist();
+    }
+  };
   const deleteAddress = async (id) => { await api.delete(`/addresses/${id}`); loadAddresses(); };
   const setDefaultAddress = async (id) => { await api.put(`/addresses/${id}/default`); loadAddresses(); };
 
@@ -309,16 +357,19 @@ export default function ClientDashboard() {
                 {wishlist.map(item => (
                   <div className="cd-wish-card" key={item.id}>
                     <div className="cd-wish-img">
-                      {item.imagen_url ? <img src={`http://localhost:3001/${item.imagen_url}`} alt={item.nombre}/> : <div className="cd-wish-placeholder"><Heart size={32}/></div>}
+                      {item.isLocal
+                        ? <img src={item.img} alt={item.nombre}/>
+                        : item.imagen_url ? <img src={`http://localhost:3001/${item.imagen_url}`} alt={item.nombre}/> : <div className="cd-wish-placeholder"><Heart size={32}/></div>
+                      }
                     </div>
                     <div className="cd-wish-info">
                       <h4>{item.nombre}</h4>
                       <p className="cd-wish-price">${Number(item.precio).toLocaleString('es-CO')}</p>
-                      <span className="cd-wish-stock">{item.stock > 0 ? `${item.stock} en stock` : 'Agotado'}</span>
+                      <span className="cd-wish-stock">{item.isLocal ? 'Disponible' : item.stock > 0 ? `${item.stock} en stock` : 'Agotado'}</span>
                     </div>
                     <div className="cd-wish-actions">
                       <button className="cd-action-btn small" onClick={() => navigate('/catalogo')}>Ver en tienda</button>
-                      <button className="cd-remove-btn" onClick={() => removeWishlistItem(item.producto_id)}><Trash2 size={14}/></button>
+                      <button className="cd-remove-btn" onClick={() => removeWishlistItem(item.isLocal ? item.producto_id : item.producto_id, !!item.isLocal)}><Trash2 size={14}/></button>
                     </div>
                   </div>
                 ))}
@@ -377,14 +428,70 @@ export default function ClientDashboard() {
         {/* ═══ DEVOLUCIONES ═══ */}
         {activeSection === 'devoluciones' && (
           <div className="cd-section">
-            <h2 className="cd-title">Devoluciones y Reclamos</h2>
-            <p className="cd-subtitle">Gestiona tus solicitudes de devolución</p>
-            <div className="cd-card">
-              <p className="cd-empty">Para solicitar una devolución, abre un <button className="cd-link-btn" onClick={() => goTo('soporte')} style={{display:'inline'}}>ticket de soporte</button> indicando el número de pedido y el motivo de la devolución. Nuestro equipo te atenderá en menos de 24 horas.</p>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+              <div><h2 className="cd-title" style={{margin:0}}>Devoluciones y Reclamos</h2><p className="cd-subtitle" style={{margin:0}}>Solicita la devolución de un pedido entregado</p></div>
+              <button className="cd-action-btn" onClick={() => { setShowReturnForm(!showReturnForm); setReturnMsg(null); }}><Plus size={16}/> Nueva Solicitud</button>
             </div>
+
+            {returnMsg && (
+              <div className="auth-alert" style={{ marginBottom: 20, ...(returnMsg.type === 'success' ? { background: 'rgba(78,205,196,0.08)', border: '1px solid rgba(78,205,196,0.2)', color: 'var(--success)' } : { background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.2)', color: '#e74c3c' }) }}>
+                <span>{returnMsg.type === 'success' ? '✓' : '⚠'}</span> {returnMsg.text}
+              </div>
+            )}
+
+            {showReturnForm && (() => {
+              const deliveredOrders = orders.filter(o => o.estado === 'entregado');
+              return (
+                <form className="cd-card cd-form" style={{marginBottom:24}} onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!returnForm.orden_id) { setReturnMsg({ type: 'error', text: 'Selecciona un pedido' }); return; }
+                  try {
+                    await api.post('/tickets', {
+                      asunto: `Devolución - Pedido #${returnForm.orden_id}`,
+                      mensaje: `Motivo: ${returnForm.motivo}\n\nDescripción: ${returnForm.descripcion || 'Sin descripción adicional'}`,
+                      orden_id: Number(returnForm.orden_id)
+                    });
+                    setReturnMsg({ type: 'success', text: 'Solicitud de devolución enviada exitosamente. Revisa tu sección de Soporte para seguimiento.' });
+                    setShowReturnForm(false);
+                    setReturnForm({ orden_id: '', motivo: RETURN_REASONS[0], descripcion: '' });
+                    loadTickets();
+                  } catch (err) {
+                    setReturnMsg({ type: 'error', text: err.response?.data?.error || 'Error al enviar solicitud' });
+                  }
+                }}>
+                  <div className="cd-form-grid">
+                    <div>
+                      <label>Pedido a devolver</label>
+                      <select className="cd-input" value={returnForm.orden_id} onChange={e => setReturnForm({...returnForm, orden_id: e.target.value})} required>
+                        <option value="">Selecciona un pedido...</option>
+                        {deliveredOrders.map(o => (
+                          <option key={o.id} value={o.id}>Pedido #{o.id} — ${Number(o.total).toLocaleString('es-CO')} ({new Date(o.creado_en).toLocaleDateString('es-CO')})</option>
+                        ))}
+                      </select>
+                      {deliveredOrders.length === 0 && <p style={{color:'var(--text-muted)', fontSize:'0.75rem', marginTop:6}}>No tienes pedidos entregados para devolver</p>}
+                    </div>
+                    <div>
+                      <label>Motivo de devolución</label>
+                      <select className="cd-input" value={returnForm.motivo} onChange={e => setReturnForm({...returnForm, motivo: e.target.value})}>
+                        {RETURN_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    </div>
+                    <div style={{gridColumn:'span 2'}}>
+                      <label>Descripción detallada (opcional)</label>
+                      <textarea className="cd-input cd-textarea" value={returnForm.descripcion} onChange={e => setReturnForm({...returnForm, descripcion: e.target.value})} placeholder="Describe el problema con el mayor detalle posible para agilizar tu solicitud..." rows={4}/>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',gap:12,marginTop:20}}>
+                    <button type="submit" className="cd-action-btn"><Send size={14}/> Enviar Solicitud</button>
+                    <button type="button" className="cd-link-btn" onClick={() => setShowReturnForm(false)}>Cancelar</button>
+                  </div>
+                </form>
+              );
+            })()}
+
             {tickets.filter(t => t.asunto.toLowerCase().includes('devol') || t.asunto.toLowerCase().includes('reclam')).length > 0 && (
               <div className="cd-card" style={{marginTop:16}}>
-                <h3>Solicitudes Relacionadas</h3>
+                <h3>Solicitudes de Devolución</h3>
                 {tickets.filter(t => t.asunto.toLowerCase().includes('devol') || t.asunto.toLowerCase().includes('reclam')).map(t => (
                   <div key={t.id} className="cd-ticket-row">
                     <span>#{t.id} — {t.asunto}</span>
@@ -392,6 +499,10 @@ export default function ClientDashboard() {
                   </div>
                 ))}
               </div>
+            )}
+
+            {tickets.filter(t => t.asunto.toLowerCase().includes('devol') || t.asunto.toLowerCase().includes('reclam')).length === 0 && !showReturnForm && (
+              <div className="cd-empty-state"><RotateCcw size={48}/><p>No tienes solicitudes de devolución</p></div>
             )}
           </div>
         )}

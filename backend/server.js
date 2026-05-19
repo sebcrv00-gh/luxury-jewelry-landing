@@ -10,6 +10,8 @@ const orderRoutes = require('./routes/orderRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+const recoveryRoutes = require('./routes/passwordRecoveryRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -57,6 +59,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/recovery', recoveryRoutes);
 
 // Ruta de salud
 app.get('/api/health', (req, res) => {

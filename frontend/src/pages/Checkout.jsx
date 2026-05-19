@@ -2,23 +2,31 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import { CreditCard, Landmark, Smartphone, Banknote, ShieldCheck, Lock } from 'lucide-react';
+
+const PAYMENT_METHODS = [
+  { id: 'efectivo', label: 'Efectivo', desc: 'Pago contra entrega', icon: Banknote, color: '#2ecc71' },
+  { id: 'tarjeta', label: 'Tarjeta Crédito / Débito', desc: 'Visa, Mastercard, Amex', icon: CreditCard, color: '#3498db' },
+  { id: 'nequi', label: 'Nequi', desc: 'Billetera digital', icon: Smartphone, color: '#e91e63' },
+];
 
 export default function Checkout() {
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
-  const [step, setStep] = useState(1); // 1 = resumen, 2 = datos envío, 3 = confirmación
+  const [step, setStep] = useState(1);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [orderResult, setOrderResult] = useState(null);
 
   const [shipping, setShipping] = useState({
-    nombre: '',
-    telefono: '',
-    direccion: '',
-    ciudad: '',
-    notas: ''
+    nombre: '', telefono: '', direccion: '', ciudad: '', notas: ''
   });
+
+  // Payment
+  const [paymentMethod, setPaymentMethod] = useState('efectivo');
+  const [cardData, setCardData] = useState({ numero: '', titular: '', expiracion: '', cvv: '' });
+  const [nequiData, setNequiData] = useState({ celular: '' });
 
   const cartKey = isLoggedIn ? `carrito_${user.id}` : null;
 
@@ -29,7 +37,6 @@ export default function Checkout() {
       if (saved.length === 0) { navigate('/carrito'); return; }
       setCart(saved.map(i => ({ ...i, cantidad: i.cantidad || 1 })));
     }
-    // Pre-fill from user profile
     if (user) {
       setShipping(prev => ({
         ...prev,
@@ -44,14 +51,41 @@ export default function Checkout() {
   const shippingFee = 15000;
   const total = subtotal + shippingFee;
 
+  // Card number formatting (xxxx xxxx xxxx xxxx)
+  const formatCardNumber = (val) => {
+    const nums = val.replace(/\D/g, '').slice(0, 16);
+    return nums.replace(/(.{4})/g, '$1 ').trim();
+  };
+
+  // Expiration formatting (MM/YY)
+  const formatExpiration = (val) => {
+    const nums = val.replace(/\D/g, '').slice(0, 4);
+    if (nums.length > 2) return nums.slice(0, 2) + '/' + nums.slice(2);
+    return nums;
+  };
+
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validate payment data
+    if (paymentMethod === 'tarjeta') {
+      if (cardData.numero.replace(/\s/g, '').length < 16) { setError('Número de tarjeta inválido'); return; }
+      if (!cardData.titular) { setError('Titular de la tarjeta requerido'); return; }
+      if (cardData.expiracion.length < 5) { setError('Fecha de expiración inválida'); return; }
+      if (cardData.cvv.length < 3) { setError('CVV inválido'); return; }
+    } else if (paymentMethod === 'nequi') {
+      if (nequiData.celular.replace(/\D/g, '').length < 10) { setError('Número de celular Nequi inválido'); return; }
+    }
+
     setSending(true);
     try {
-      const res = await api.post('/orders', { shipping, items: cart });
-      setOrderResult(res.data);
-      // Vaciar carrito
+      const res = await api.post('/orders', {
+        shipping,
+        items: cart,
+        metodo_pago: paymentMethod
+      });
+      setOrderResult({ ...res.data, metodo_pago: paymentMethod });
       if (cartKey) localStorage.removeItem(cartKey);
       setStep(3);
     } catch (err) {
@@ -65,6 +99,7 @@ export default function Checkout() {
 
   // ── Paso 3: Confirmación ──
   if (step === 3 && orderResult) {
+    const pm = PAYMENT_METHODS.find(m => m.id === orderResult.metodo_pago) || PAYMENT_METHODS[0];
     return (
       <div className="checkout-page">
         <div className="checkout-box confirmation-box">
@@ -84,6 +119,12 @@ export default function Checkout() {
               <span className="text-gold-light" style={{ fontSize: '1.2rem', fontWeight: 600 }}>${Number(orderResult.total).toLocaleString('es-CO')}</span>
             </div>
             <div className="confirmation-row">
+              <span className="text-muted">Método de Pago</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: pm.color, fontWeight: 600 }}>
+                <pm.icon size={16}/> {pm.label}
+              </span>
+            </div>
+            <div className="confirmation-row">
               <span className="text-muted">Estado</span>
               <span className="badge-premium badge-gold">Pendiente</span>
             </div>
@@ -96,7 +137,7 @@ export default function Checkout() {
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/catalogo"><button className="btn-primary"><span>Seguir Comprando</span></button></Link>
-            <Link to="/perfil"><button className="btn-outline">Mis Órdenes</button></Link>
+            <Link to="/mi-cuenta/pedidos"><button className="btn-outline">Mis Órdenes</button></Link>
           </div>
         </div>
       </div>
@@ -115,7 +156,7 @@ export default function Checkout() {
           <div className="step-line"></div>
           <div className={`checkout-step ${step >= 2 ? 'active' : ''}`}>
             <div className="step-number">2</div>
-            <span>Envío</span>
+            <span>Envío y Pago</span>
           </div>
           <div className="step-line"></div>
           <div className={`checkout-step ${step >= 3 ? 'active' : ''}`}>
@@ -124,7 +165,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        {error && <div className="alert alert-error" style={{ marginTop: '20px' }}>{error}</div>}
+        {error && <div className="auth-alert auth-alert-error" style={{ marginTop: '20px' }}><span>⚠</span> {error}</div>}
 
         {/* ── Paso 1: Resumen del Pedido ── */}
         {step === 1 && (
@@ -170,7 +211,7 @@ export default function Checkout() {
           </>
         )}
 
-        {/* ── Paso 2: Datos de Envío ── */}
+        {/* ── Paso 2: Datos de Envío + Método de Pago ── */}
         {step === 2 && (
           <>
             <h3 className="checkout-title">Datos de Envío</h3>
@@ -191,7 +232,7 @@ export default function Checkout() {
                 <input type="text" value={shipping.direccion} onChange={e => setShipping({ ...shipping, direccion: e.target.value })} placeholder="Calle, número, apartamento..." required />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
                 <div className="form-group">
                   <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.65rem' }}>Ciudad</label>
                   <input type="text" value={shipping.ciudad} onChange={e => setShipping({ ...shipping, ciudad: e.target.value })} placeholder="Ej: Bogotá" required />
@@ -202,15 +243,113 @@ export default function Checkout() {
                 </div>
               </div>
 
+              {/* ═══ MÉTODO DE PAGO ═══ */}
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '28px', marginBottom: '24px' }}>
+                <h3 className="checkout-title" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Lock size={18} style={{ color: 'var(--gold)' }}/> Método de Pago
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+                  {PAYMENT_METHODS.map(pm => (
+                    <button
+                      type="button"
+                      key={pm.id}
+                      onClick={() => setPaymentMethod(pm.id)}
+                      style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+                        padding: '20px 16px', borderRadius: '12px', cursor: 'pointer',
+                        background: paymentMethod === pm.id ? `${pm.color}12` : 'rgba(255,255,255,0.02)',
+                        border: paymentMethod === pm.id ? `2px solid ${pm.color}` : '1px solid var(--border-subtle)',
+                        transition: 'all 0.3s', position: 'relative',
+                      }}
+                    >
+                      <pm.icon size={28} style={{ color: paymentMethod === pm.id ? pm.color : 'var(--text-muted)', transition: 'color 0.3s' }}/>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: paymentMethod === pm.id ? '#fff' : 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>{pm.label}</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center' }}>{pm.desc}</span>
+                      {paymentMethod === pm.id && (
+                        <div style={{ position: 'absolute', top: '8px', right: '8px', width: '18px', height: '18px', borderRadius: '50%', background: pm.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <ShieldCheck size={11} style={{ color: '#fff' }}/>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* ── Formulario Tarjeta ── */}
+                {paymentMethod === 'tarjeta' && (
+                  <div style={{ background: 'linear-gradient(145deg, rgba(52,152,219,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(52,152,219,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                      <CreditCard size={20} style={{ color: '#3498db' }}/>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Información de Tarjeta</span>
+                      <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}><Lock size={10}/> Cifrado SSL</span>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Número de Tarjeta</label>
+                      <input type="text" value={cardData.numero} onChange={e => setCardData({...cardData, numero: formatCardNumber(e.target.value)})} placeholder="0000 0000 0000 0000" maxLength={19} style={{ letterSpacing: '2px', fontSize: '1.05rem' }}/>
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Titular de la Tarjeta</label>
+                      <input type="text" value={cardData.titular} onChange={e => setCardData({...cardData, titular: e.target.value.toUpperCase()})} placeholder="NOMBRE COMO APARECE EN LA TARJETA" style={{ textTransform: 'uppercase', letterSpacing: '1px' }}/>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="form-group">
+                        <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Expiración</label>
+                        <input type="text" value={cardData.expiracion} onChange={e => setCardData({...cardData, expiracion: formatExpiration(e.target.value)})} placeholder="MM/YY" maxLength={5}/>
+                      </div>
+                      <div className="form-group">
+                        <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>CVV</label>
+                        <input type="password" value={cardData.cvv} onChange={e => setCardData({...cardData, cvv: e.target.value.replace(/\D/g, '').slice(0, 4)})} placeholder="•••" maxLength={4}/>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+
+                {/* ── Formulario Nequi ── */}
+                {paymentMethod === 'nequi' && (
+                  <div style={{ background: 'linear-gradient(145deg, rgba(233,30,99,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(233,30,99,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                      <Smartphone size={20} style={{ color: '#e91e63' }}/>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Pago con Nequi</span>
+                    </div>
+                    <div className="form-group">
+                      <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Número de Celular Nequi</label>
+                      <input type="tel" value={nequiData.celular} onChange={e => setNequiData({celular: e.target.value.replace(/\D/g, '').slice(0, 10)})} placeholder="3XX XXX XXXX" maxLength={10} style={{ letterSpacing: '2px', fontSize: '1.1rem' }}/>
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '14px', lineHeight: 1.5 }}>
+                      Al confirmar, recibirás una notificación push en tu app Nequi para autorizar el pago de <strong style={{ color: '#e91e63' }}>${total.toLocaleString('es-CO')}</strong>.
+                    </p>
+                  </div>
+                )}
+
+                {/* ── Efectivo Info ── */}
+                {paymentMethod === 'efectivo' && (
+                  <div style={{ background: 'linear-gradient(145deg, rgba(46,204,113,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(46,204,113,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                      <Banknote size={20} style={{ color: '#2ecc71' }}/>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Pago Contra Entrega</span>
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.6, margin: 0 }}>
+                      Pagarás <strong style={{ color: '#2ecc71' }}>${total.toLocaleString('es-CO')}</strong> directamente al repartidor en el momento de la entrega.
+                      Asegúrate de tener el monto exacto disponible.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Mini resumen */}
               <div className="checkout-mini-summary" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '5px' }}>
                   <span>{cart.length} producto(s)</span>
                   <span>${subtotal.toLocaleString('es-CO')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '5px' }}>
                   <span>Envío</span>
                   <span>${shippingFee.toLocaleString('es-CO')}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
+                  <span>Método</span>
+                  <span style={{ color: PAYMENT_METHODS.find(m => m.id === paymentMethod)?.color }}>{PAYMENT_METHODS.find(m => m.id === paymentMethod)?.label}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--gold-light)', fontSize: '1.1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}>
                   <span>Total Final:</span>

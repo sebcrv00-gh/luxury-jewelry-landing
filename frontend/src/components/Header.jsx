@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
 export default function Header() {
-  const { user, isLoggedIn, isAdmin, logout } = useAuth();
+  const { user, isLoggedIn, isAdmin, logout, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -78,8 +78,8 @@ export default function Header() {
             </div>
           ) : (
             <>
-              <Link to="/registro" className={path === '/registro' ? 'active-nav' : ''}>Registrarse</Link>
-              <Link to="/login" className={path === '/login' ? 'active-nav' : ''}>Iniciar sesión</Link>
+              <a href="#" onClick={(e) => { e.preventDefault(); openAuthModal('register'); }} className={path === '/registro' ? 'active-nav' : ''}>Registrarse</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); openAuthModal('login'); }} className={path === '/login' ? 'active-nav' : ''}>Iniciar sesión</a>
             </>
           )}
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
 
 const COMPANY_EMAIL = 'luxuryjewellry95@gmail.com';
 
@@ -50,11 +51,18 @@ export default function FloatingContact() {
       return;
     }
 
+    // Validación para el nombre (solo letras y espacios)
+    if (name === 'name') {
+      const lettersOnly = value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+      setFormData(prev => ({ ...prev, [name]: lettersOnly }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
     setStatus(null);
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     // Validación manual de correo (@)
@@ -65,20 +73,18 @@ export default function FloatingContact() {
 
     setSending(true);
 
-    const subject = encodeURIComponent(`Contacto de ${formData.name} — Luxury Jewelry`);
-    const body = encodeURIComponent(
-      `Nombre: ${formData.name}\nCorreo: ${formData.email}\nTeléfono: ${formData.phone}\n\nMensaje:\n${formData.message}`
-    );
-    
-    // Automatización de Gmail: Abre directamente la interfaz de redactar en una nueva pestaña
-    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${COMPANY_EMAIL}&su=${subject}&body=${body}`;
-    window.open(gmailLink, '_blank');
-
-    setTimeout(() => {
-      setSending(false);
+    try {
+      await api.post('/contact', formData);
       setStatus('success');
       setFormData({ name: '', email: '', phone: '', message: '' });
-    }, 800);
+    } catch (err) {
+      console.error('Error enviando contacto:', err);
+      // Mantenemos success para la UX o podemos agregar error.
+      // Si las variables de correo están vacías en el .env, fallará.
+      setStatus('error');
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -190,13 +196,13 @@ export default function FloatingContact() {
 
             {status === 'error' && (
               <div className="fc-alert fc-alert--error">
-                Por favor, ingresa un correo electrónico válido.
+                Hubo un error al enviar el mensaje. Verifica los datos o intenta más tarde.
               </div>
             )}
 
             {status === 'success' && (
               <div className="fc-alert fc-alert--success">
-                ✓ Mensaje preparado — se abrirá tu cliente de correo.
+                ✓ Mensaje enviado correctamente. Te contactaremos pronto.
               </div>
             )}
 

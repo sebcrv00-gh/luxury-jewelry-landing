@@ -169,6 +169,11 @@
   font-family: var(--font-body); box-sizing: border-box;
 }
 .cd-input:focus { border-color: rgba(201,168,76,0.4); }
+
+select.cd-input option {
+  background-color: #141414;
+  color: #ffffff;
+}
 .cd-textarea { resize: vertical; min-height: 100px; }
 .cd-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 

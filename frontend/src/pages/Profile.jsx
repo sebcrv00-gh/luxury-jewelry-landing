@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import { Lock, KeyRound, Eye, EyeOff, X, ShieldCheck, Diamond } from 'lucide-react';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
@@ -20,6 +21,17 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Password Modal State
+  const [showPwdModal, setShowPwdModal] = useState(false);
+  const [pwdCurrent, setPwdCurrent] = useState('');
+  const [pwdNew, setPwdNew] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
+  const [pwdError, setPwdError] = useState('');
+  const [pwdSuccess, setPwdSuccess] = useState('');
+  const [pwdLoading, setPwdLoading] = useState(false);
+
+  const pwdOverlayRef = useRef(null);
 
   useEffect(() => {
     if (!loading && !isLoggedIn) navigate('/login');
@@ -80,6 +92,26 @@ export default function Profile() {
     }
   };
 
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPwdError(''); setPwdSuccess('');
+    if (!pwdCurrent || !pwdNew) { setPwdError('Todos los campos son obligatorios'); return; }
+    if (pwdNew.length < 6) { setPwdError('La nueva contraseña debe tener al menos 6 caracteres'); return; }
+    
+    setPwdLoading(true);
+    try {
+      const { data } = await api.put('/auth/change-password', { currentPassword: pwdCurrent, newPassword: pwdNew });
+      setPwdSuccess(data.message);
+      setPwdCurrent('');
+      setPwdNew('');
+      setTimeout(() => setShowPwdModal(false), 2500);
+    } catch (err) {
+      setPwdError(err.response?.data?.error || 'Error al actualizar la contraseña');
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
   if (loading) return <div className="loading-screen">Cargando...</div>;
   if (!user) return null;
 
@@ -98,8 +130,8 @@ export default function Profile() {
       <main className="profile-main">
         <h2>Mis Datos Personales</h2>
 
-        {message && <div className="alert alert-success">{message}</div>}
-        {error && <div className="alert alert-error">{error}</div>}
+        {message && <div className="auth-alert auth-alert-success" style={{ margin: '0 0 20px 0' }}><span>✓</span> {message}</div>}
+        {error && <div className="auth-alert auth-alert-error" style={{ margin: '0 0 20px 0' }}><span>⚠</span> {error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -122,9 +154,19 @@ export default function Profile() {
             <input type="text" value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Ej: Calle 14 No.2-101, Ibagué" />
           </div>
 
-          <button type="submit" className="form-submit" disabled={saving || deleting}>
-            {saving ? 'Guardando...' : 'Guardar Cambios'}
-          </button>
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center', marginTop: '10px' }}>
+            <button type="submit" className="form-submit" disabled={saving || deleting} style={{ margin: 0, flex: 1 }}>
+              {saving ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
+            <button 
+              type="button" 
+              className="btn-outline" 
+              onClick={() => { setShowPwdModal(true); setPwdError(''); setPwdSuccess(''); setPwdCurrent(''); setPwdNew(''); setShowPwd(false); }}
+              style={{ padding: '14px 24px', flex: 1, display: 'flex', gap: '8px', justifyContent: 'center' }}
+            >
+              <KeyRound size={16} /> Modificar Contraseña
+            </button>
+          </div>
         </form>
 
         <div style={{ marginTop: '50px', paddingTop: '30px', borderTop: '1px solid var(--border-subtle)' }}>
@@ -144,6 +186,84 @@ export default function Profile() {
           </button>
         </div>
       </main>
+
+      {/* ─── Password Change Modal ─── */}
+      {showPwdModal && (
+        <div className="auth-modal-overlay" ref={pwdOverlayRef} onClick={() => setShowPwdModal(false)}>
+          <div className="auth-modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', flexDirection: 'column' }}>
+            
+            <button className="auth-modal-close" onClick={() => setShowPwdModal(false)}>
+              <X size={20} />
+            </button>
+            
+            <div className="auth-modal-form-side" style={{ borderRadius: '20px' }}>
+              <div className="recovery-header" style={{ marginBottom: '30px' }}>
+                <div className="recovery-icon"><Lock size={28} /></div>
+                <h3 className="recovery-title">Actualizar Contraseña</h3>
+                <p className="recovery-desc">Mantén tu cuenta segura cambiando tu contraseña periódicamente.</p>
+                <div className="auth-brand-ornament" style={{ justifyContent: 'center', marginTop: '15px' }}>
+                  <span className="ornament-line"></span>
+                  <Diamond size={10} style={{ color: 'var(--gold)' }} />
+                  <span className="ornament-line"></span>
+                </div>
+              </div>
+
+              {pwdError && (
+                <div className="auth-alert auth-alert-error">
+                  <span>⚠</span> {pwdError}
+                </div>
+              )}
+              {pwdSuccess && (
+                <div className="auth-alert auth-alert-success">
+                  <span>✓</span> {pwdSuccess}
+                </div>
+              )}
+
+              <form onSubmit={handlePasswordChange} className="auth-form-fields">
+                <div className="auth-field">
+                  <label>Contraseña Actual</label>
+                  <div className="auth-password-wrap">
+                    <input 
+                      type={showPwd ? "text" : "password"} 
+                      value={pwdCurrent} 
+                      onChange={e => setPwdCurrent(e.target.value)} 
+                      placeholder="••••••••" 
+                      required 
+                    />
+                    <button type="button" className="auth-eye-btn" onClick={() => setShowPwd(!showPwd)}>
+                      {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="auth-field">
+                  <label>Nueva Contraseña</label>
+                  <div className="auth-password-wrap">
+                    <input 
+                      type={showPwd ? "text" : "password"} 
+                      value={pwdNew} 
+                      onChange={e => setPwdNew(e.target.value)} 
+                      placeholder="Mínimo 6 caracteres" 
+                      required 
+                    />
+                    <button type="button" className="auth-eye-btn" onClick={() => setShowPwd(!showPwd)}>
+                      {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" className="auth-submit-btn" disabled={pwdLoading} style={{ marginTop: '15px' }}>
+                  {pwdLoading ? (
+                    <span className="auth-spinner"></span>
+                  ) : (
+                    <><ShieldCheck size={18} style={{ marginRight: '8px' }}/> Guardar Nueva Contraseña</>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

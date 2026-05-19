@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle } from 'lucide-react';
 import api from '../api/axios';
 
 const STATIC_PRODUCTS = [
@@ -35,13 +35,14 @@ export default function Catalog() {
   const [activeCategory, setActiveCategory] = useState('Todas las colecciones');
   const [dbProducts, setDbProducts] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
-  const [addedMsg, setAddedMsg] = useState('');
+  const [addedProduct, setAddedProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
   const isVip = user?.rol === 'vip';
   const VIP_DISCOUNT = 0.10;
   const [wishlistIds, setWishlistIds] = useState(new Set());
+  const [localWishlist, setLocalWishlist] = useState(new Set());
 
   const scrollCarousel = (direction) => {
     if (carouselRef.current) {
@@ -56,11 +57,32 @@ export default function Catalog() {
       api.get('/wishlist').then(r => {
         setWishlistIds(new Set(r.data.map(w => w.producto_id)));
       }).catch(() => {});
+      // Load local wishlist for static products
+      const saved = JSON.parse(localStorage.getItem(`luxury_local_wishlist_${user?.id}`) || '[]');
+      setLocalWishlist(new Set(saved));
     }
   }, [isLoggedIn]);
 
+  const isInWishlist = (productId) => {
+    if (typeof productId === 'string') return localWishlist.has(productId);
+    return wishlistIds.has(productId);
+  };
+
   const toggleWishlist = async (productId) => {
     if (!isLoggedIn) { setShowPopup(true); return; }
+
+    // Static products (string IDs) -> localStorage
+    if (typeof productId === 'string') {
+      setLocalWishlist(prev => {
+        const n = new Set(prev);
+        if (n.has(productId)) n.delete(productId); else n.add(productId);
+        localStorage.setItem(`luxury_local_wishlist_${user?.id}`, JSON.stringify([...n]));
+        return n;
+      });
+      return;
+    }
+
+    // DB products (numeric IDs) -> API
     try {
       if (wishlistIds.has(productId)) {
         await api.delete(`/wishlist/${productId}`);
@@ -114,8 +136,8 @@ export default function Catalog() {
       });
     }
     localStorage.setItem(key, JSON.stringify(cart));
-    setAddedMsg(product.nombre);
-    setTimeout(() => setAddedMsg(''), 3500);
+    setAddedProduct(product);
+    setTimeout(() => setAddedProduct(null), 3500);
   };
 
   return (
@@ -158,19 +180,7 @@ export default function Catalog() {
         </nav>
       </div>
 
-      {addedMsg && (
-        <div className="toast-premium">
-          <div className="toast-icon">
-             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 6px rgba(201, 168, 76, 0.4))' }}>
-               <polyline points="20 6 9 17 4 12"></polyline>
-             </svg>
-          </div>
-          <div className="toast-text-box">
-            <span className="toast-subtitle">AÑADIDO AL BOLSO</span>
-            <span className="toast-title">{addedMsg}</span>
-          </div>
-        </div>
-      )}
+      {/* Toast removed in favor of in-card validation */}
 
       <div className="catalog-container">
         {filtered.length === 0 ? (
@@ -192,14 +202,12 @@ export default function Catalog() {
                 <div className={`product-card ${p.stock === 0 ? 'out-of-stock' : ''}`} key={p.id}>
                   <div className="product-image-wrap">
                     <img src={p.img} alt={p.nombre} style={p.stock === 0 ? { filter: 'grayscale(0.8) opacity(0.6)' } : {}} />
-                    {typeof p.id === 'number' && (
-                      <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }} style={{ position: 'absolute', top: '12px', right: '12px', background: wishlistIds.has(p.id) ? 'rgba(231,76,60,0.9)' : 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', zIndex: 3, color: '#fff' }}
-                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
-                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-                      >
-                        <Heart size={16} fill={wishlistIds.has(p.id) ? '#fff' : 'none'} />
-                      </button>
-                    )}
+                    <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }} style={{ position: 'absolute', top: '12px', right: '12px', background: isInWishlist(p.id) ? 'rgba(231,76,60,0.9)' : 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', zIndex: 3, color: '#fff' }}
+                      onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                      onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <Heart size={16} fill={isInWishlist(p.id) ? '#fff' : 'none'} />
+                    </button>
                     {p.stock === 0 && (
                       <div style={{
                         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%) rotate(-15deg)',
@@ -282,11 +290,15 @@ export default function Catalog() {
                   </div>
                </div>
                <button 
-                  className="btn-primary" 
-                  onClick={() => { addToCart(selectedProduct, quantity); setSelectedProduct(null); }} 
-                  disabled={selectedProduct.stock === 0}
-                  style={{ padding: '18px', fontSize: '0.9rem', letterSpacing: '3px', width: '100%', textAlign: 'center', justifyContent: 'center' }}>
-                  {selectedProduct.stock === 0 ? 'AGOTADO' : 'AÑADIR AL CARRITO'}
+                  className={addedProduct && addedProduct.id === selectedProduct.id ? "btn-success" : "btn-primary"} 
+                  onClick={() => addToCart(selectedProduct, quantity)} 
+                  disabled={selectedProduct.stock === 0 || (addedProduct && addedProduct.id === selectedProduct.id)}
+                  style={{ padding: '18px', fontSize: '0.9rem', letterSpacing: '3px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.3s' }}>
+                  {selectedProduct.stock === 0 ? 'AGOTADO' : (
+                    (addedProduct && addedProduct.id === selectedProduct.id) 
+                      ? <><CheckCircle size={18} /> AÑADIDO EXITOSAMENTE</> 
+                      : 'AÑADIR AL CARRITO'
+                  )}
                </button>
             </div>
           </div>

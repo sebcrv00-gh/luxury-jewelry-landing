@@ -6,6 +6,19 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login'); // 'login' o 'register'
+  
+  // States for the Welcome Animation
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [welcomeName, setWelcomeName] = useState('');
+
+  const triggerWelcome = (name) => {
+    setWelcomeName(name);
+    setShowWelcome(true);
+  };
+
+  const closeWelcome = () => setShowWelcome(false);
 
   useEffect(() => {
     api.get('/auth/me')
@@ -14,9 +27,12 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, clave) => {
+  const login = async (email, clave, skipAnimation = false) => {
     const res = await api.post('/auth/login', { email, clave });
     setUser(res.data.user);
+    if (!skipAnimation) {
+      triggerWelcome(res.data.user.nombre);
+    }
     return res.data;
   };
 
@@ -38,15 +54,32 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
+  const openAuthModal = (mode = 'login') => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+  };
+
   const value = {
     user,
     loading,
     isLoggedIn: !!user,
     isAdmin: user?.rol === 'admin',
+    isAuthModalOpen,
+    authModalMode,
+    openAuthModal,
+    closeAuthModal,
     login,
     register,
     logout,
-    updateProfile
+    updateProfile,
+    showWelcome,
+    welcomeName,
+    triggerWelcome,
+    closeWelcome
   };
 
   return (
