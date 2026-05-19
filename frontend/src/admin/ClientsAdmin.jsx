@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, User, Shield, Crown, ShoppingBag, XCircle } from 'lucide-react';
-import api from '../api/axios';
+import api, { getImageUrl } from '../api/axios';
 
 export default function ClientsAdmin() {
   const [clients, setClients] = useState([]);
@@ -105,7 +105,7 @@ export default function ClientsAdmin() {
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                       <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: client.rol === 'vip' ? 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(201,168,76,0.1))' : 'rgba(201, 168, 76, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: client.rol === 'vip' ? '#FFD700' : 'var(--gold)', border: client.rol === 'vip' ? '2px solid rgba(255,215,0,0.5)' : '1px solid rgba(201, 168, 76, 0.2)' }}>
-                        {client.foto ? <img src={`http://localhost:3001/${client.foto}`} alt="avatar" style={{width: '100%', height:'100%', objectFit: 'cover', borderRadius: '50%'}}/> : <User size={20} />}
+                        {client.foto ? <img src={getImageUrl(client.foto)} alt="avatar" style={{width: '100%', height:'100%', objectFit: 'cover', borderRadius: '50%'}}/> : <User size={20} />}
                       </div>
                       <div>
                         <div style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '0.95rem' }}>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getImageUrl } from '../api/axios';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
@@ -15,11 +16,10 @@ export default function Header() {
     await logout();
     setShowDropdown(false);
     setIsMobileMenuOpen(false);
-    navigate('/');
   };
 
   const fotoSrc = user?.foto
-    ? `http://localhost:3001/${user.foto}`
+    ? getImageUrl(user.foto)
     : DEFAULT_AVATAR;
 
   const path = location.pathname;

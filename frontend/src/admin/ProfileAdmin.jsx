@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Camera, CheckCircle, AlertCircle, Save, Trash2, User, Phone, MapPin, Mail } from 'lucide-react';
-import api from '../api/axios';
+import api, { getImageUrl } from '../api/axios';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
@@ -24,7 +24,7 @@ export default function ProfileAdmin() {
       setEmail(user.email || '');
       setTelefono(user.telefono || '');
       setDireccion(user.direccion || '');
-      setPreviewUrl(user.foto ? `http://localhost:3001/${user.foto}` : DEFAULT_AVATAR);
+      setPreviewUrl(user.foto ? getImageUrl(user.foto) : DEFAULT_AVATAR);
     }
   }, [user]);
 

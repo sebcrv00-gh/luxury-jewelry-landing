@@ -6,4 +6,15 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' }
 });
 
+export const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const backendBase = isLocal ? 'http://localhost:3001' : 'https://luxury-jewelry-api.onrender.com';
+  
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  return `${backendBase}/${cleanPath}`;
+};
+
 export default api;

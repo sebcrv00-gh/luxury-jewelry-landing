@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle } from 'lucide-react';
-import api from '../api/axios';
+import api, { getImageUrl } from '../api/axios';
 
 const STATIC_PRODUCTS = [
   { id: 's1', nombre: 'Reloj Invicta Original', precio: 790000, img: '/images/WhatsApp Image 2025-10-02 at 10.03.51 AM.jpeg' },
@@ -100,7 +100,7 @@ export default function Catalog() {
       id: `db_${p.id}`,
       nombre: p.nombre,
       precio: Number(p.precio),
-      img: p.imagen_url ? `http://localhost:3001/${p.imagen_url}` : '/images/Logo_Luxury_Joyeria-removebg-preview.png',
+      img: p.imagen_url ? getImageUrl(p.imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png',
       stock: p.stock,
       categoria: getCategoryFromName(p.nombre)
     }))

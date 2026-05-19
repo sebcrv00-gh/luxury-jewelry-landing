@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getImageUrl } from '../api/axios';
 import api from '../api/axios';
 import { Lock, KeyRound, Eye, EyeOff, X, ShieldCheck, Diamond } from 'lucide-react';
 
@@ -43,7 +44,7 @@ export default function Profile() {
       setEmail(user.email || '');
       setTelefono(user.telefono || '');
       setDireccion(user.direccion || '');
-      setPreviewUrl(user.foto ? `http://localhost:3001/${user.foto}` : DEFAULT_AVATAR);
+      setPreviewUrl(user.foto ? getImageUrl(user.foto) : DEFAULT_AVATAR);
     }
   }, [user]);
 

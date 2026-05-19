@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
@@ -8,6 +9,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login'); // 'login' o 'register'
+  const navigate = useNavigate();
   
   // States for the Welcome Animation
   const [showWelcome, setShowWelcome] = useState(false);
@@ -44,6 +46,7 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     await api.post('/auth/logout');
     setUser(null);
+    navigate('/');
   };
 
   const updateProfile = async (formData) => {

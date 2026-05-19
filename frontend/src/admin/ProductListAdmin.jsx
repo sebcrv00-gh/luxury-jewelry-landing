@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Edit3, Trash2, RefreshCw, AlertCircle, PackageOpen } from 'lucide-react';
-import api from '../api/axios';
+import api, { getImageUrl } from '../api/axios';
 
 export default function ProductListAdmin({ refreshTrigger, setStats }) {
   const [products, setProducts] = useState([]);
@@ -149,7 +149,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                   <td>
                     <div className="product-cell">
                       <img
-                        src={p.imagen_url ? `http://localhost:3001/${p.imagen_url}` : '/images/Logo_Luxury_Joyeria-removebg-preview.png'}
+                        src={p.imagen_url ? getImageUrl(p.imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png'}
                         alt={p.nombre}
                       />
                       <span className="product-name text-gold-light">{p.nombre}</span>

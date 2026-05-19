@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../api/axios';
+import api, { getImageUrl } from '../api/axios';
 import {
   LayoutDashboard, ShoppingBag, Truck, CreditCard, MapPin, RotateCcw,
   Heart, FileText, UserCog, MessageCircle, LogOut, Crown, Package,
@@ -85,7 +85,7 @@ export default function ClientDashboard() {
   const [returnForm, setReturnForm] = useState({ orden_id: '', motivo: RETURN_REASONS[0], descripcion: '' });
   const [returnMsg, setReturnMsg] = useState(null);
 
-  const fotoSrc = user?.foto ? `http://localhost:3001/${user.foto}` : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+  const fotoSrc = user?.foto ? getImageUrl(user.foto) : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
   useEffect(() => {
     if (!loading && !isLoggedIn) navigate('/login');
@@ -359,7 +359,7 @@ export default function ClientDashboard() {
                     <div className="cd-wish-img">
                       {item.isLocal
                         ? <img src={item.img} alt={item.nombre}/>
-                        : item.imagen_url ? <img src={`http://localhost:3001/${item.imagen_url}`} alt={item.nombre}/> : <div className="cd-wish-placeholder"><Heart size={32}/></div>
+                        : item.imagen_url ? <img src={getImageUrl(item.imagen_url)} alt={item.nombre}/> : <div className="cd-wish-placeholder"><Heart size={32}/></div>
                       }
                     </div>
                     <div className="cd-wish-info">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getImageUrl } from '../api/axios';
 import {
   LayoutDashboard,
   Package,
@@ -25,7 +26,7 @@ import './admin-layout.css'; // Importamos el CSS premium
 export default function AdminDashboard() {
   const { isLoggedIn, isAdmin, loading, logout, user } = useAuth();
   const fotoSrc = user?.foto
-    ? `http://localhost:3001/${user.foto}`
+    ? getImageUrl(user.foto)
     : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
   const navigate = useNavigate();
   const location = useLocation();
