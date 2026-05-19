@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { AlertCircle, X } from 'lucide-react';
 
 export default function Cart() {
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
 
@@ -56,7 +56,8 @@ export default function Cart() {
           <p style={{ color: 'var(--text-muted)', margin: '20px 0' }}>
             Debes iniciar sesión para ver tu carrito de compras.
           </p>
-          <Link to="/login"><button className="btn-primary">Iniciar Sesión</button></Link>
+          <button className="btn-primary" onClick={() => openAuthModal('login')}><span>Iniciar Sesión</span></button>
+          <button className="btn-outline" onClick={() => openAuthModal('register')} style={{ marginTop: '10px' }}>Crear Cuenta</button>
         </div>
       </div>
     );

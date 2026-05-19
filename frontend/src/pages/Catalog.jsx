@@ -29,7 +29,7 @@ const getCategoryFromName = (name) => {
 };
 
 export default function Catalog() {
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, openAuthModal } = useAuth();
   const carouselRef = useRef(null);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todas las colecciones');
@@ -312,8 +312,8 @@ export default function Catalog() {
             <h4>Acceso Restringido</h4>
             <p>Debes crear una cuenta o iniciar sesión para poder usar el carrito de compras.</p>
             <div className="popup-actions">
-              <Link to="/login"><button className="btn-primary"><span>Iniciar Sesión</span></button></Link>
-              <Link to="/registro"><button className="btn-outline">Registrarme</button></Link>
+              <button className="btn-primary" onClick={() => { setShowPopup(false); openAuthModal('login'); }}><span>Iniciar Sesión</span></button>
+              <button className="btn-outline" onClick={() => { setShowPopup(false); openAuthModal('register'); }}>Registrarme</button>
             </div>
           </div>
         </>
