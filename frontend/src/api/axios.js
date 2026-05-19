@@ -8,13 +8,19 @@ const api = axios.create({
 
 export const getImageUrl = (path) => {
   if (!path) return '';
+
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   
+  // Log de diagnóstico visible para el usuario (siempre al inicio)
+  if (!isLocal) {
+    console.log(`[Luxury Debug] Analizando ruta: "${path}"`);
+  }
+
   // 1. Si la ruta ya es absoluta y NO es de localhost, devolverla tal cual
   if (path.startsWith('http') && !path.includes('localhost:3001')) {
     return path;
   }
   
-  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const backendBase = isLocal ? 'http://localhost:3001' : 'https://luxury-jewelry-api.onrender.com';
   
   // 2. Limpiar prefijos de localhost si existen (común en bases de datos migradas)
@@ -31,9 +37,8 @@ export const getImageUrl = (path) => {
   
   const finalUrl = `${backendBase}/${cleanPath}`;
   
-  // Debug log (solo visible en consola de desarrollador)
   if (!isLocal) {
-    console.debug(`[Luxury Debug] Resolviendo imagen: ${path} -> ${finalUrl}`);
+    console.log(`[Luxury Debug] URL Generada Final: ${finalUrl}`);
   }
 
   return finalUrl;
