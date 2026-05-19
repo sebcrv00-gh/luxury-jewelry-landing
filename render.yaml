@@ -1,3 +1,14 @@
+envVarGroups:
+  - name: luxury-jewelry-secrets
+    envVars:
+      - key: DB_HOST
+      - key: DB_USER
+      - key: DB_PASS
+      - key: DB_NAME
+      - key: SESSION_SECRET
+      - key: EMAIL_USER
+      - key: EMAIL_PASS
+
 services:
   # Backend
   - type: web
