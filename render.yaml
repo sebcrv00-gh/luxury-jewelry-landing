@@ -15,7 +15,7 @@ services:
       - fromGroup: luxury-jewelry-secrets
 
   # Frontend
-  - type: static
+  - type: static_site
     name: luxury-jewelry-frontend
     rootDir: frontend
     plan: free
