@@ -7,7 +7,9 @@ router.post('/', async (req, res) => {
 
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, 
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -24,14 +26,14 @@ router.post('/', async (req, res) => {
       subject: `Contacto de ${name} — Luxury Jewelry`,
       text: `Nombre: ${name}\nCorreo: ${email}\nTeléfono: ${phone}\n\nMensaje:\n${message}`,
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2 style="color: #c9a84c;">Nuevo Mensaje de Contacto</h2>
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; border: 1px solid #c9a84c; border-radius: 8px;">
+          <h2 style="color: #c9a84c; text-align: center;">Nuevo Mensaje de Contacto</h2>
           <p><strong>Nombre:</strong> ${name}</p>
           <p><strong>Correo:</strong> ${email}</p>
           <p><strong>Teléfono:</strong> ${phone}</p>
-          <hr style="border: 1px solid #eee;" />
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <p><strong>Mensaje:</strong></p>
-          <p style="white-space: pre-wrap;">${message}</p>
+          <p style="white-space: pre-wrap; background: #fdfaf3; padding: 15px; border-radius: 5px;">${message}</p>
         </div>
       `
     };
@@ -41,8 +43,12 @@ router.post('/', async (req, res) => {
     
     res.status(200).json({ success: true, message: 'Correo enviado correctamente' });
   } catch (error) {
-    console.error('ERROR EN CONTACTO:', error.message);
-    res.status(500).json({ success: false, error: 'Hubo un error al enviar el correo. Por favor intenta más tarde.' });
+    console.error('ERROR EN CONTACTO (Nodemailer):', error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Error de servidor al enviar correo.',
+      details: error.message
+    });
   }
 });
 

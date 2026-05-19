@@ -203,7 +203,18 @@ export default function FloatingContact() {
 
             {status === 'error' && (
               <div className="fc-alert fc-alert--error">
-                Hubo un error al enviar el mensaje. Verifica los datos o intenta más tarde.
+                Hubo un error al enviar el mensaje.
+                <div style={{ marginTop: '10px' }}>
+                  <a 
+                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${COMPANY_EMAIL}&su=Contacto: ${formData.name}&body=${encodeURIComponent(formData.message)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="fc-fallback-link"
+                    style={{ color: 'var(--gold-light)', textDecoration: 'underline', fontWeight: 'bold' }}
+                  >
+                    Enviar por correo directo (Gmail)
+                  </a>
+                </div>
               </div>
             )}
 
