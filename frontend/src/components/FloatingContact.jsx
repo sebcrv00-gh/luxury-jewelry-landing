@@ -5,7 +5,7 @@ import api from '../api/axios';
 const COMPANY_EMAIL = 'luxuryjewellry95@gmail.com';
 
 export default function FloatingContact() {
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, openAuthModal } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({ 
     name: user?.nombre || '', 
@@ -74,13 +74,13 @@ export default function FloatingContact() {
     setSending(true);
 
     try {
-      await api.post('/contact', formData);
+      // Agregamos un timeout de 10 segundos para evitar que se quede "Cargando" por siempre
+      await api.post('/contact', formData, { timeout: 10000 });
       setStatus('success');
-      setFormData({ name: '', email: '', phone: '', message: '' });
+      setFormData({ name: user?.nombre || '', email: user?.email || '', phone: '', message: '' });
+      setTimeout(() => setStatus(null), 5000);
     } catch (err) {
       console.error('Error enviando contacto:', err);
-      // Mantenemos success para la UX o podemos agregar error.
-      // Si las variables de correo están vacías en el .env, fallará.
       setStatus('error');
     } finally {
       setSending(false);
@@ -92,7 +92,14 @@ export default function FloatingContact() {
       {/* Botón flotante para abrir modal */}
       <button
         className="fc-toggle-btn"
-        onClick={() => { setIsOpen(true); setStatus(null); }}
+        onClick={() => { 
+          if (!isLoggedIn) {
+            openAuthModal('login');
+          } else {
+            setIsOpen(true); 
+            setStatus(null); 
+          }
+        }}
         aria-label="Abrir contacto"
         aria-expanded={isOpen}
       >

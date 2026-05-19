@@ -11,13 +11,16 @@ router.post('/', async (req, res) => {
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-      }
+      },
+      connectionTimeout: 10000, 
+      greetingTimeout: 10000,   
+      socketTimeout: 15000      
     });
 
     const mailOptions = {
-      from: `"${name}" <${process.env.EMAIL_USER}>`, // Send relative from the auth user
+      from: `"${name}" <${process.env.EMAIL_USER}>`, 
       replyTo: email,
-      to: 'luxuryjewellry95@gmail.com', // Destino especificado
+      to: 'luxuryjewellry95@gmail.com', 
       subject: `Contacto de ${name} — Luxury Jewelry`,
       text: `Nombre: ${name}\nCorreo: ${email}\nTeléfono: ${phone}\n\nMensaje:\n${message}`,
       html: `
@@ -34,12 +37,12 @@ router.post('/', async (req, res) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Correo enviado: ', info.messageId);
+    console.log('Correo enviado exitosamente: ', info.messageId);
     
     res.status(200).json({ success: true, message: 'Correo enviado correctamente' });
   } catch (error) {
-    console.error('Error enviando correo de contacto:', error);
-    res.status(500).json({ success: false, error: 'Hubo un error al enviar el correo' });
+    console.error('ERROR EN CONTACTO:', error.message);
+    res.status(500).json({ success: false, error: 'Hubo un error al enviar el correo. Por favor intenta más tarde.' });
   }
 });
 
