@@ -10,7 +10,7 @@ envVarGroups:
       - key: DB_NAME
         value: ""
       - key: DB_PORT
-        value: "3306"
+        value: ""
       - key: SESSION_SECRET
         value: "luxury_jewelry_secret_key_2026"
       - key: EMAIL_USER
