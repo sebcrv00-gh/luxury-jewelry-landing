@@ -195,4 +195,24 @@ select.cd-input option {
   .cd-main { padding: 24px 16px; }
   .cd-stats-row { grid-template-columns: repeat(2, 1fr); }
   .cd-form-grid { grid-template-columns: 1fr; }
+  .cd-wish-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .cd-addr-grid { grid-template-columns: 1fr; }
+  .cd-title { font-size: 1.5rem; }
+  .cd-order-meta { flex-wrap: wrap; gap: 8px; }
+  .cd-progress-bar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
+}
+
+@media (max-width: 480px) {
+  .cd-stats-row { grid-template-columns: 1fr; }
+  .cd-stat-card { padding: 16px; gap: 12px; }
+  .cd-stat-val { font-size: 1.3rem; }
+  .cd-main { padding: 16px 12px; }
+  .cd-card { padding: 20px 16px; }
+  .cd-title { font-size: 1.3rem; }
+  .cd-wish-grid { grid-template-columns: 1fr; }
+  .cd-nav-item { padding: 6px 10px; font-size: 0.68rem; }
+  .cd-table th, .cd-table td { padding: 10px 8px; font-size: 0.78rem; }
+  .cd-step-dot { width: 28px; height: 28px; }
+  .cd-step-label { font-size: 0.6rem; }
+  .cd-ticket-header { flex-direction: column; gap: 8px; align-items: flex-start; }
 }
