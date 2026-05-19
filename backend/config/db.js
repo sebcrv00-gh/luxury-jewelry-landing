@@ -17,12 +17,21 @@ const pool = mysql.createPool({
  */
 async function initDB() {
   // Conexión temporal sin BD para crearla
-  const tempConn = await mysql.createConnection({
+  const dbConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     port: (process.env.DB_PORT && process.env.DB_PORT !== "") ? parseInt(process.env.DB_PORT, 10) : 3306
-  });
+  };
+
+  console.log('--- Intentando conectar con: ---');
+  console.log('Host:', dbConfig.host);
+  console.log('User:', dbConfig.user);
+  console.log('Port:', dbConfig.port);
+  console.log('Database target:', process.env.DB_NAME);
+  console.log('---------------------------------');
+
+  const tempConn = await mysql.createConnection(dbConfig);
 
   await tempConn.query(
     `CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
