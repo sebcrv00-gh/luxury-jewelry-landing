@@ -2,12 +2,19 @@ envVarGroups:
   - name: luxury-jewelry-secrets
     envVars:
       - key: DB_HOST
+        value: ""
       - key: DB_USER
+        value: ""
       - key: DB_PASS
+        value: ""
       - key: DB_NAME
+        value: ""
       - key: SESSION_SECRET
+        value: "luxury_jewelry_secret_key_2026"
       - key: EMAIL_USER
+        value: ""
       - key: EMAIL_PASS
+        value: ""
 
 services:
   # Backend
