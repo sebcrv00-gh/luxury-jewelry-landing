@@ -9,12 +9,16 @@ envVarGroups:
         value: ""
       - key: DB_NAME
         value: ""
+      - key: DB_PORT
+        value: "3306"
       - key: SESSION_SECRET
         value: "luxury_jewelry_secret_key_2026"
       - key: EMAIL_USER
         value: ""
       - key: EMAIL_PASS
         value: ""
+      - key: FRONTEND_URL
+        value: "https://luxury-jewelry-frontend.onrender.com"
 
 services:
   # Backend
@@ -41,7 +45,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://luxury-jewelry-api.onrender.com/api
+        value: /api
     routes:
       - type: rewrite
         source: /api/*
