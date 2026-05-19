@@ -14,18 +14,15 @@ services:
         value: production
       - fromGroup: luxury-jewelry-secrets
 
+static_sites:
   # Frontend
-  - type: static_site
-    name: luxury-jewelry-frontend
+  - name: luxury-jewelry-frontend
     rootDir: frontend
-    plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
         value: https://luxury-jewelry-api.onrender.com/api
-      # Nota: Render static sites usually need the full URL if not using a rewrite.
-      # We'll set VITE_API_URL manually in the UI if this shortcut doesn't suffice.
     routes:
       - type: rewrite
         source: /api/*
