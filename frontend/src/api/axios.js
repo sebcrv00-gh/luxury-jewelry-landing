@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://luxury-jewelry-api.onrender.com/api' : 'http://localhost:3001/api'),
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' }
 });
@@ -9,7 +9,7 @@ const api = axios.create({
 export const getImageUrl = (path) => {
   if (!path) return '';
   
-  // Si la ruta ya es absoluta y no es localhost, la devolvemos tal cual
+  // 1. Si la ruta ya es absoluta y NO es de localhost, devolverla tal cual
   if (path.startsWith('http') && !path.includes('localhost:3001')) {
     return path;
   }
@@ -17,11 +17,26 @@ export const getImageUrl = (path) => {
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const backendBase = isLocal ? 'http://localhost:3001' : 'https://luxury-jewelry-api.onrender.com';
   
-  // Limpiar la ruta si viene como URL absoluta de localhost desde la DB
+  // 2. Limpiar prefijos de localhost si existen (común en bases de datos migradas)
   let cleanPath = path.replace('http://localhost:3001/', '');
-  cleanPath = cleanPath.startsWith('/') ? cleanPath.substring(1) : cleanPath;
   
-  return `${backendBase}/${cleanPath}`;
+  // 3. Quitar barra inicial si la tiene
+  if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
+
+  // 4. Asegurar que apunte a la carpeta uploads si no es una ruta pública absoluta
+  // Si no empieza con 'uploads/' y no es un blob de preview local
+  if (!cleanPath.startsWith('uploads/') && !cleanPath.startsWith('blob:')) {
+    cleanPath = `uploads/${cleanPath}`;
+  }
+  
+  const finalUrl = `${backendBase}/${cleanPath}`;
+  
+  // Debug log (solo visible en consola de desarrollador)
+  if (!isLocal) {
+    console.debug(`[Luxury Debug] Resolviendo imagen: ${path} -> ${finalUrl}`);
+  }
+
+  return finalUrl;
 };
 
 export default api;
