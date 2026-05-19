@@ -31,8 +31,10 @@ services:
         value: /api
       # Nota: Render static sites usually need the full URL if not using a rewrite.
       # We'll set VITE_API_URL manually in the UI if this shortcut doesn't suffice.
-    rewriteRules:
-      - source: /api/*
+    routes:
+      - type: rewrite
+        source: /api/*
         destination: https://luxury-jewelry-api.onrender.com/api/*
-      - source: /*
+      - type: rewrite
+        source: /*
         destination: /index.html
