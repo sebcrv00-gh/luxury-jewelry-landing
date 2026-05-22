@@ -229,10 +229,7 @@ export default function AdminDashboard() {
             <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Luxury Jewelry" />
           </div>
           <div className="admin-brand-copy">
-            <div className="admin-brand-topline">
-              <h2>L.J. Admin</h2>
-              <span className="admin-brand-pill">Admin</span>
-            </div>
+            <h2>L.J. Admin</h2>
             <span className="admin-brand-subtitle">Enterprise Console</span>
           </div>
         </div>
@@ -293,7 +290,7 @@ export default function AdminDashboard() {
           <div className="admin-logout-panel">
             <span className="admin-logout-kicker">Sesión actual</span>
             <strong>{user?.nombre || 'Administrador'}</strong>
-            <p>Cierra tu sesión de forma segura cuando termines la gestión del sistema.</p>
+            <p>Acceso administrativo activo.</p>
           </div>
           <button className="admin-logout-btn" onClick={handleLogout}>
             <LogOut size={18} />
@@ -331,11 +328,25 @@ export default function AdminDashboard() {
               <div className="admin-dashboard-grid">
                 <section className="admin-surface admin-hero-card">
                   <span className="admin-surface-kicker">Centro de Operaciones</span>
-                  <h2>Administra catálogo, clientes, pedidos y soporte desde un entorno enfocado en gestión.</h2>
+                  <h2>Coordina la operación comercial y el servicio desde una consola ejecutiva unificada.</h2>
                   <p>
-                    El perfil administrador ya no necesita interactuar con el flujo de compra.
-                    Este panel concentra únicamente funciones de control, seguimiento y administración.
+                    El sistema integra inventario, pedidos, clientes y soporte en una experiencia
+                    administrativa diseñada para control continuo, trazabilidad y decisiones más precisas.
                   </p>
+                  <div className="admin-hero-highlights">
+                    <div className="admin-hero-highlight">
+                      <strong>Control central</strong>
+                      <span>Gestión coordinada del catálogo y la operación diaria.</span>
+                    </div>
+                    <div className="admin-hero-highlight">
+                      <strong>Visión operativa</strong>
+                      <span>Seguimiento claro de clientes, órdenes y solicitudes activas.</span>
+                    </div>
+                    <div className="admin-hero-highlight">
+                      <strong>Respuesta ágil</strong>
+                      <span>Herramientas preparadas para actuar con rapidez y consistencia.</span>
+                    </div>
+                  </div>
                   <div className="admin-hero-pills">
                     <span className="admin-mini-pill"><Database size={14} /> Datos centralizados</span>
                     <span className="admin-mini-pill"><Layers size={14} /> Catálogo consolidado</span>

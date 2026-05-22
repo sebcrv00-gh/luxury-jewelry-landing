@@ -3,6 +3,7 @@
 ========================================================= */
 
 .admin-layout {
+  --admin-header-height: 96px;
   --admin-divider-color: rgba(201, 168, 76, 0.08);
   display: flex;
   height: 100vh;
@@ -24,10 +25,11 @@
   backdrop-filter: blur(20px);
   z-index: 100;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .admin-brand {
-  min-height: 92px;
+  min-height: var(--admin-header-height);
   padding: 20px 24px;
   display: flex;
   align-items: center;
@@ -58,35 +60,13 @@
   flex: 1;
 }
 
-.admin-brand-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .admin-brand h2 {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 1.38rem;
   color: var(--gold);
   letter-spacing: 2px;
   text-transform: uppercase;
   margin: 0;
-}
-
-.admin-brand-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(201, 168, 76, 0.24);
-  background: rgba(201, 168, 76, 0.08);
-  color: var(--gold-light);
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -106,6 +86,8 @@
   flex-direction: column;
   gap: 8px;
   min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 20px;
 }
 
 .admin-nav-item {
@@ -139,14 +121,16 @@
 }
 
 .admin-logout {
+  margin-top: auto;
   padding: 24px;
   border-top: 1px solid var(--admin-divider-color);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(201, 168, 76, 0.03));
+  flex-shrink: 0;
 }
 
 .admin-logout-panel {
   margin-bottom: 14px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(201, 168, 76, 0.12);
@@ -164,15 +148,15 @@
 .admin-logout-panel strong {
   display: block;
   color: var(--text-primary);
-  font-size: 0.95rem;
-  margin-bottom: 8px;
+  font-size: 0.92rem;
+  margin-bottom: 4px;
 }
 
 .admin-logout-panel p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.55;
+  font-size: 0.76rem;
+  line-height: 1.45;
 }
 
 .admin-logout-btn {
@@ -208,7 +192,7 @@
 }
 
 .admin-topbar {
-  min-height: 92px;
+  min-height: var(--admin-header-height);
   padding: 20px 40px;
   display: flex;
   justify-content: space-between;
@@ -401,15 +385,46 @@
 .admin-hero-card h2 {
   margin: 0 0 14px;
   color: var(--text-primary);
-  font-size: 2rem;
-  line-height: 1.2;
+  font-size: clamp(1.85rem, 2.6vw, 2.55rem);
+  line-height: 1.14;
+  max-width: 13ch;
 }
 
 .admin-hero-card p {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.96rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.75;
+  max-width: 62ch;
+}
+
+.admin-hero-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.admin-hero-highlight {
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(201, 168, 76, 0.02));
+  border: 1px solid rgba(201, 168, 76, 0.1);
+}
+
+.admin-hero-highlight strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.admin-hero-highlight span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
 
 .admin-hero-pills {
@@ -834,11 +849,6 @@
     letter-spacing: 1px;
   }
 
-  .admin-brand-pill {
-    padding: 4px 10px;
-    font-size: 0.58rem;
-  }
-
   .admin-nav {
     display: grid !important;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
@@ -938,6 +948,16 @@
 
   .admin-hero-card h2 {
     font-size: 1.4rem !important;
+    max-width: none !important;
+  }
+
+  .admin-hero-card p {
+    max-width: none !important;
+  }
+
+  .admin-hero-highlights {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 
   .admin-module-grid {
@@ -1069,10 +1089,6 @@
   }
 
   .admin-brand-subtitle {
-    display: none !important;
-  }
-
-  .admin-brand-pill {
     display: none !important;
   }
 
