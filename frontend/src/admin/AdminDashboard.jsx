@@ -328,23 +328,27 @@ export default function AdminDashboard() {
               <div className="admin-dashboard-grid">
                 <section className="admin-surface admin-hero-card">
                   <span className="admin-surface-kicker">Centro de Operaciones</span>
-                  <h2>Coordina la operación comercial y el servicio desde una consola ejecutiva unificada.</h2>
-                  <p>
-                    El sistema integra inventario, pedidos, clientes y soporte en una experiencia
-                    administrativa diseñada para control continuo, trazabilidad y decisiones más precisas.
-                  </p>
-                  <div className="admin-hero-highlights">
-                    <div className="admin-hero-highlight">
-                      <strong>Control central</strong>
-                      <span>Gestión coordinada del catálogo y la operación diaria.</span>
+                  <div className="admin-hero-layout">
+                    <div className="admin-hero-copy">
+                      <h2>Coordina la operación comercial y el servicio desde una consola ejecutiva unificada.</h2>
+                      <p>
+                        El sistema integra inventario, pedidos, clientes y soporte en una experiencia
+                        administrativa diseñada para control continuo, trazabilidad y decisiones más precisas.
+                      </p>
                     </div>
-                    <div className="admin-hero-highlight">
-                      <strong>Visión operativa</strong>
-                      <span>Seguimiento claro de clientes, órdenes y solicitudes activas.</span>
-                    </div>
-                    <div className="admin-hero-highlight">
-                      <strong>Respuesta ágil</strong>
-                      <span>Herramientas preparadas para actuar con rapidez y consistencia.</span>
+                    <div className="admin-hero-highlights">
+                      <div className="admin-hero-highlight">
+                        <strong>Control central</strong>
+                        <span>Gestión coordinada del catálogo y la operación diaria.</span>
+                      </div>
+                      <div className="admin-hero-highlight">
+                        <strong>Visión operativa</strong>
+                        <span>Seguimiento claro de clientes, órdenes y solicitudes activas.</span>
+                      </div>
+                      <div className="admin-hero-highlight">
+                        <strong>Respuesta ágil</strong>
+                        <span>Herramientas preparadas para actuar con rapidez y consistencia.</span>
+                      </div>
                     </div>
                   </div>
                   <div className="admin-hero-pills">

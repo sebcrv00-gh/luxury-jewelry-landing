@@ -360,9 +360,10 @@
 
 .admin-dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.92fr);
   gap: 24px;
   margin-bottom: 28px;
+  align-items: stretch;
 }
 
 .admin-surface {
@@ -382,12 +383,24 @@
   text-transform: uppercase;
 }
 
+.admin-hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(240px, 0.9fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.admin-hero-copy {
+  min-width: 0;
+}
+
 .admin-hero-card h2 {
   margin: 0 0 14px;
   color: var(--text-primary);
-  font-size: clamp(1.85rem, 2.6vw, 2.55rem);
-  line-height: 1.14;
-  max-width: 13ch;
+  font-size: clamp(1.95rem, 2.25vw, 2.9rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  max-width: 16ch;
 }
 
 .admin-hero-card p {
@@ -395,14 +408,14 @@
   color: var(--text-secondary);
   font-size: 1rem;
   line-height: 1.75;
-  max-width: 62ch;
+  max-width: 58ch;
 }
 
 .admin-hero-highlights {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 14px;
-  margin-top: 24px;
+  margin-top: 2px;
 }
 
 .admin-hero-highlight {
@@ -431,7 +444,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 22px;
 }
 
 .admin-mini-pill {
@@ -449,14 +462,20 @@
 .admin-summary-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+}
+
+.admin-summary-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 .admin-summary-item {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  padding: 14px 0;
+  padding: 16px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -955,9 +974,15 @@
     max-width: none !important;
   }
 
+  .admin-hero-layout {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
   .admin-hero-highlights {
     grid-template-columns: 1fr !important;
     gap: 12px !important;
+    margin-top: 0 !important;
   }
 
   .admin-module-grid {
