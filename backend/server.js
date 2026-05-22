@@ -69,10 +69,12 @@ app.get('/api/health', (req, res) => {
 
 // ─── Iniciar ──────────────────────────────────────────────
 async function start() {
-  try {
-    await initDB();
-    app.listen(PORT, () => {
-      console.log(`\n🚀 Luxury Jewelry API corriendo en http://localhost:${PORT}`);
+  app.listen(PORT, async () => {
+    console.log(`\n🚀 Luxury Jewelry API corriendo en http://localhost:${PORT}`);
+    console.log(`📦 Inicializando base de datos en segundo plano...`);
+    try {
+      await initDB();
+      console.log(`✅ Base de datos inicializada correctamente y lista.`);
       console.log(`📦 Endpoints disponibles:`);
       console.log(`   POST   /api/auth/register`);
       console.log(`   POST   /api/auth/login`);
@@ -89,11 +91,11 @@ async function start() {
       console.log(`   GET    /api/orders`);
       console.log(`   GET    /api/orders/:id`);
       console.log(`   GET    /api/orders/admin/all (admin)\n`);
-    });
-  } catch (err) {
-    console.error('❌ Error al iniciar el servidor:', err);
-    process.exit(1);
-  }
+    } catch (err) {
+      console.error('❌ Error crítico al inicializar la base de datos:', err);
+      console.warn('⚠️ El servidor continuará ejecutándose para permitir el diagnóstico de la base de datos y evitar caídas por puerto.');
+    }
+  });
 }
 
 start();

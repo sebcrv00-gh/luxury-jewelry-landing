@@ -9,7 +9,8 @@ const pool = mysql.createPool({
   port: (process.env.DB_PORT && process.env.DB_PORT !== "") ? parseInt(process.env.DB_PORT, 10) : 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  charset: 'utf8mb4'
+  charset: 'utf8mb4',
+  connectTimeout: 10000
 });
 
 /**
@@ -21,7 +22,8 @@ async function initDB() {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    port: (process.env.DB_PORT && process.env.DB_PORT !== "") ? parseInt(process.env.DB_PORT, 10) : 3306
+    port: (process.env.DB_PORT && process.env.DB_PORT !== "") ? parseInt(process.env.DB_PORT, 10) : 3306,
+    connectTimeout: 10000
   };
 
   console.log('--- Intentando conectar con: ---');
