@@ -1654,14 +1654,41 @@ footer p+p {
   .user-dropdown-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .user-widget {
+    justify-content: center;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 14px 16px;
+    margin: 0;
+  }
+
+  .user-widget .hamburger-icon {
+    display: none;
   }
 
   .dropdown-menu {
     position: relative;
-    top: 8px;
+    top: 0;
     width: 100%;
-    border-radius: 8px;
+    border-radius: 0;
+    background: rgba(20, 20, 20, 0.5);
+    border: none;
+    box-shadow: none;
+    padding: 10px 0;
+    margin-bottom: 10px;
+  }
+  
+  .dropdown-menu a {
+    border: none !important;
+    padding: 12px !important;
+    background: transparent !important;
   }
 
   /* ── HERO ── */
