@@ -23,8 +23,8 @@ export default function Footer() {
         </a>
       </div>
 
-      <p>&copy; {new Date().getFullYear()} Luxury Jewelry. Todos los derechos reservados.</p>
       <p>Calle 14 No.2-101 B/Centro, Ibagué, Tolima &nbsp;|&nbsp; Tel: +57 311 280 3802</p>
+      <p>&copy; {new Date().getFullYear()} Luxury Jewelry. Todos los derechos reservados.</p>
     </footer>
   );
 }
