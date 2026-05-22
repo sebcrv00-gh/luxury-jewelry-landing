@@ -88,8 +88,8 @@ export default function ClientsAdmin() {
           <p style={{ marginTop: '16px' }}>Cargando directorio de clientes...</p>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="admin-table">
+        <div className="table-wrapper">
+          <table className="luxury-table">
             <thead>
               <tr>
                 <th>Cliente</th>

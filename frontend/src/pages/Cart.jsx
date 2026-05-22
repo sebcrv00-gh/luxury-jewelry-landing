@@ -56,8 +56,10 @@ export default function Cart() {
           <p style={{ color: 'var(--text-muted)', margin: '20px 0' }}>
             Debes iniciar sesión para ver tu carrito de compras.
           </p>
-          <button className="btn-primary" onClick={() => openAuthModal('login')}><span>Iniciar Sesión</span></button>
-          <button className="btn-outline" onClick={() => openAuthModal('register')} style={{ marginTop: '10px' }}>Crear Cuenta</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', marginTop: '32px' }}>
+            <button className="btn-primary" onClick={() => openAuthModal('login')} style={{ width: '100%', maxWidth: '280px' }}><span>Iniciar Sesión</span></button>
+            <button className="btn-outline" onClick={() => openAuthModal('register')} style={{ width: '100%', maxWidth: '280px' }}>Crear Cuenta</button>
+          </div>
         </div>
       </div>
     );

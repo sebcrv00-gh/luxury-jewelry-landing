@@ -573,7 +573,7 @@ export default function ClientDashboard() {
                 <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%)', borderRadius: '50%' }}></div>
                 <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%)', borderRadius: '50%' }}></div>
 
-                <div style={{ display: 'flex', gap: '50px', alignItems: 'center', position: 'relative', zIndex: 2 }}>
+                <div className="cd-membership-inner" style={{ display: 'flex', gap: '50px', alignItems: 'center', position: 'relative', zIndex: 2 }}>
                   {/* Foto y Badge */}
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ width: '160px', height: '160px', borderRadius: '50%', border: '3px solid var(--gold)', padding: '6px', background: 'rgba(201,168,76,0.1)', marginBottom: '20px' }}>
@@ -596,10 +596,10 @@ export default function ClientDashboard() {
 
                   {/* Datos y Stats */}
                   <div style={{ flex: 1 }}>
-                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '5px', letterSpacing: '1px' }}>{user.nombre}</h3>
+                    <h3 className="cd-membership-name" style={{ fontFamily: 'var(--font-display)', fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '5px', letterSpacing: '1px' }}>{user.nombre}</h3>
                     <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '35px', letterSpacing: '1px' }}>{user.email}</p>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
+                    <div className="cd-membership-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
                       <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                         <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Compras Realizadas</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

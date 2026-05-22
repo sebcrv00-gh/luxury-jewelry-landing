@@ -309,4 +309,21 @@ select.cd-input option {
   .cd-ticket-header { flex-direction: column; gap: 8px; align-items: flex-start; }
   .cd-logout-btn span { display: none !important; }
   .cd-logout-btn { padding: 8px !important; border-radius: 50% !important; }
+
+  /* ── PERFIL / MEMBRESÍA RESPONSIVE ── */
+  .cd-membership-card {
+    padding: 30px 20px !important;
+  }
+  .cd-membership-inner {
+    flex-direction: column !important;
+    gap: 20px !important;
+    text-align: center;
+  }
+  .cd-membership-stats {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .cd-membership-name {
+    font-size: 1.8rem !important;
+  }
 }
