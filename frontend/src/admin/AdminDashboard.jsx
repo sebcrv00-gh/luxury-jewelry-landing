@@ -292,6 +292,11 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="admin-logout">
+          <div className="admin-logout-panel">
+            <span className="admin-logout-kicker">Sesión actual</span>
+            <strong>{user?.nombre || 'Administrador'}</strong>
+            <p>Cierra tu sesión de forma segura cuando termines la gestión del sistema.</p>
+          </div>
           <button className="admin-logout-btn" onClick={handleLogout}>
             <LogOut size={18} />
             <span>Cerrar Sesión</span>
