@@ -1717,7 +1717,7 @@ footer p+p {
 
   .carousel-track {
     gap: 16px;
-    padding: 20px 16px 40px;
+    padding: 20px 27.5vw 40px;
   }
 
   .carousel-track .product-card {
@@ -1725,16 +1725,7 @@ footer p+p {
   }
 
   .carousel-arrow {
-    width: 40px;
-    height: 40px;
-  }
-
-  .carousel-arrow.left {
-    left: 4px;
-  }
-
-  .carousel-arrow.right {
-    right: 4px;
+    display: none !important;
   }
 
   .product-card img {
@@ -2000,8 +1991,11 @@ footer p+p {
   }
 
   .carousel-arrow {
-    width: 34px;
-    height: 34px;
+    display: none !important;
+  }
+  
+  .carousel-track {
+    padding: 20px 9vw 40px;
   }
 
   .product-grid {
