@@ -31,12 +31,22 @@ async function initDB() {
   console.log('Database target:', process.env.DB_NAME);
   console.log('---------------------------------');
 
-  const tempConn = await mysql.createConnection(dbConfig);
-
-  await tempConn.query(
-    `CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
-  );
-  await tempConn.end();
+  let tempConn;
+  try {
+    tempConn = await mysql.createConnection(dbConfig);
+    await tempConn.query(
+      `CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    );
+    await tempConn.end();
+    console.log('✅ Verificación/Creación de Base de Datos exitosa o confirmada');
+  } catch (err) {
+    console.warn('⚠️ Advertencia: No se pudo verificar o crear la base de datos desde la conexión raíz.');
+    console.warn('   Detalle:', err.message);
+    console.warn('   Se intentará conectar directamente al pool. Si la base de datos ya existe, esto debería funcionar.');
+    if (tempConn && tempConn.end) {
+      try { await tempConn.end(); } catch (e) {}
+    }
+  }
 
   // Crear tablas
   const conn = await pool.getConnection();
