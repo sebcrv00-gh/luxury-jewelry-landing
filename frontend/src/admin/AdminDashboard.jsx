@@ -27,32 +27,25 @@ import './admin-layout.css'; // Importamos el CSS premium
 
 const TAB_META = {
   dashboard: {
-    title: 'Centro de Control',
-    subtitle: 'Visibilidad ejecutiva del sistema, operación comercial y monitoreo general del negocio.'
+    title: 'Centro de Control'
   },
   inventory: {
-    title: 'Catálogo e Inventario',
-    subtitle: 'Administra el portafolio, el stock disponible y la estructura del catálogo central.'
+    title: 'Catálogo e Inventario'
   },
   orders: {
-    title: 'Gestión de Pedidos',
-    subtitle: 'Supervisa órdenes registradas, estados operativos y trazabilidad comercial.'
+    title: 'Gestión de Pedidos'
   },
   clients: {
-    title: 'Gestión de Clientes',
-    subtitle: 'Consulta perfiles, segmenta clientes y administra privilegios comerciales.'
+    title: 'Gestión de Clientes'
   },
   tickets: {
-    title: 'Soporte',
-    subtitle: 'Monitorea solicitudes, contacto web y tickets abiertos desde un solo buzón.'
+    title: 'Soporte'
   },
   settings: {
-    title: 'Configuración',
-    subtitle: 'Controla seguridad, parámetros del negocio y reglas operativas del panel.'
+    title: 'Configuración'
   },
   profile: {
-    title: 'Perfil Administrativo',
-    subtitle: 'Actualiza tu identidad operativa y los datos visibles dentro del sistema.'
+    title: 'Perfil Administrativo'
   }
 };
 
@@ -232,9 +225,14 @@ export default function AdminDashboard() {
       {/* ── SIDEBAR ── */}
       <aside className="admin-sidebar">
         <div className="admin-brand" onClick={() => handleTabChange('dashboard')} style={{ cursor: 'pointer' }}>
-          <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Luxury Jewelry" />
-          <div>
-            <h2>L.J. Admin</h2>
+          <div className="admin-brand-badge-wrap">
+            <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Luxury Jewelry" />
+          </div>
+          <div className="admin-brand-copy">
+            <div className="admin-brand-topline">
+              <h2>L.J. Admin</h2>
+              <span className="admin-brand-pill">Admin</span>
+            </div>
             <span className="admin-brand-subtitle">Enterprise Console</span>
           </div>
         </div>
@@ -308,9 +306,7 @@ export default function AdminDashboard() {
       <main className="admin-main">
         <header className="admin-topbar">
           <div className="admin-topbar-left">
-            <span className="admin-kicker">Panel Administrativo</span>
             <h1 className="admin-page-title">{tabInfo.title}</h1>
-            <p className="admin-page-subtitle">{tabInfo.subtitle}</p>
           </div>
 
           <div className="admin-user-info">
@@ -325,7 +321,6 @@ export default function AdminDashboard() {
                 <span>Administrador del sistema</span>
               </div>
             </div>
-            <span className="admin-badge" style={{ boxShadow: '0 0 10px rgba(201, 168, 76, 0.2)' }}>Admin</span>
           </div>
         </header>
 

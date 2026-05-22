@@ -3,6 +3,7 @@
 ========================================================= */
 
 .admin-layout {
+  --admin-divider-color: rgba(201, 168, 76, 0.08);
   display: flex;
   height: 100vh;
   width: 100vw;
@@ -26,16 +27,42 @@
 }
 
 .admin-brand {
-  padding: 32px 24px;
+  min-height: 92px;
+  padding: 20px 24px;
   display: flex;
   align-items: center;
   gap: 16px;
-  border-bottom: 1px solid rgba(201, 168, 76, 0.08);
+  border-bottom: 1px solid var(--admin-divider-color);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(201, 168, 76, 0.04));
+}
+
+.admin-brand-badge-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201, 168, 76, 0.06);
+  border: 1px solid rgba(201, 168, 76, 0.14);
+  flex-shrink: 0;
 }
 
 .admin-brand img {
   width: 48px;
   filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.4));
+}
+
+.admin-brand-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-brand-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .admin-brand h2 {
@@ -47,9 +74,25 @@
   margin: 0;
 }
 
+.admin-brand-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 168, 76, 0.24);
+  background: rgba(201, 168, 76, 0.08);
+  color: var(--gold-light);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .admin-brand-subtitle {
   display: block;
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--text-muted);
   font-size: 0.68rem;
   letter-spacing: 1.8px;
@@ -97,7 +140,7 @@
 
 .admin-logout {
   padding: 24px;
-  border-top: 1px solid rgba(201, 168, 76, 0.08);
+  border-top: 1px solid var(--admin-divider-color);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(201, 168, 76, 0.03));
 }
 
@@ -165,13 +208,14 @@
 }
 
 .admin-topbar {
-  padding: 24px 48px;
+  min-height: 92px;
+  padding: 20px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: rgba(15, 15, 15, 0.6);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(201, 168, 76, 0.05);
+  border-bottom: 1px solid var(--admin-divider-color);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -182,7 +226,7 @@
   font-size: 2rem;
   color: var(--gold-light);
   letter-spacing: 1px;
-  margin: 6px 0 8px;
+  margin: 0;
 }
 
 .admin-user-info {
@@ -191,32 +235,10 @@
   gap: 16px;
 }
 
-.admin-kicker {
-  display: inline-block;
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.admin-page-subtitle {
-  margin: 0;
-  color: var(--text-muted);
-  max-width: 620px;
-  font-size: 0.92rem;
-  line-height: 1.6;
-}
-
-.admin-user-info .admin-badge {
-  background: rgba(201, 168, 76, 0.1);
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+.admin-topbar-left {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
 }
 
 .admin-status-card,
@@ -791,10 +813,16 @@
   }
 
   .admin-brand {
+    min-height: auto;
     padding: 0 0 14px;
-    border-bottom: 1px solid rgba(201, 168, 76, 0.08);
+    border-bottom: 1px solid var(--admin-divider-color);
     margin-bottom: 0;
     flex-shrink: 0;
+  }
+
+  .admin-brand-badge-wrap {
+    width: 44px;
+    height: 44px;
   }
 
   .admin-brand img {
@@ -804,6 +832,11 @@
   .admin-brand h2 {
     font-size: 1rem;
     letter-spacing: 1px;
+  }
+
+  .admin-brand-pill {
+    padding: 4px 10px;
+    font-size: 0.58rem;
   }
 
   .admin-nav {
@@ -866,20 +899,17 @@
   }
 
   .admin-topbar {
-    padding: 16px 20px !important;
+    min-height: auto !important;
+    padding: 14px 20px !important;
     position: relative !important;
   }
 
   .admin-topbar-left {
-    display: block !important;
+    display: flex !important;
   }
 
   .admin-page-title {
     font-size: 1.3rem !important;
-  }
-
-  .admin-page-subtitle {
-    font-size: 0.82rem !important;
   }
 
   .admin-content-area {
@@ -1003,12 +1033,12 @@
     padding: 12px !important;
   }
 
-  .admin-brand h2 {
-    display: none !important;
+  .admin-brand {
+    gap: 12px !important;
   }
 
-  .admin-brand-subtitle {
-    display: none !important;
+  .admin-brand h2 {
+    font-size: 0.92rem !important;
   }
 
   .admin-nav {
@@ -1034,16 +1064,15 @@
     font-size: 1.1rem !important;
   }
 
-  .admin-page-subtitle {
+  .admin-identity-card div span {
     display: none !important;
   }
 
-  .admin-user-info .admin-badge {
-    font-size: 0.6rem !important;
-    padding: 3px 8px !important;
+  .admin-brand-subtitle {
+    display: none !important;
   }
 
-  .admin-identity-card div span {
+  .admin-brand-pill {
     display: none !important;
   }
 
