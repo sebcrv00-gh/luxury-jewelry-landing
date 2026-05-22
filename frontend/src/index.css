@@ -933,6 +933,8 @@ button {
   display: flex;
   align-items: center;
   margin-bottom: 80px;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .carousel-track {
@@ -1740,13 +1742,26 @@ footer p+p {
     letter-spacing: 1px;
   }
 
+  .carousel-wrapper {
+    overflow: visible;
+  }
+
   .carousel-track {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
-    padding: 20px 27.5vw 40px;
+    padding: 20px 16px 40px;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    scroll-snap-type: none;
+    width: 100%;
+    max-width: 100%;
   }
 
   .carousel-track .product-card {
-    flex: 0 0 45vw;
+    flex: none;
+    width: 100%;
+    min-width: 0;
   }
 
   .carousel-arrow {
@@ -1754,16 +1769,28 @@ footer p+p {
   }
 
   .product-card img {
-    height: 280px;
+    height: 220px;
   }
 
   .product-card .product-info {
-    padding: 18px 16px 22px;
+    padding: 14px 12px 18px;
   }
 
   .product-card h3 {
+    font-size: 0.82rem;
+    letter-spacing: 1px;
+  }
+
+  .product-card .price {
     font-size: 0.9rem;
-    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+  }
+
+  .product-card .btn-outline {
+    min-width: unset;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.65rem;
   }
 
   /* ── PRODUCT DETAIL MODAL ── */
@@ -2007,20 +2034,23 @@ footer p+p {
     font-size: 2rem !important;
   }
 
+  .carousel-track {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+    padding: 16px 16px 40px;
+  }
+
   .carousel-track .product-card {
-    flex: 0 0 82vw;
+    flex: none;
+    width: 100%;
   }
 
   .product-card img {
-    height: 320px;
+    height: 280px;
   }
 
   .carousel-arrow {
     display: none !important;
-  }
-  
-  .carousel-track {
-    padding: 20px 9vw 40px;
   }
 
   .product-grid {
