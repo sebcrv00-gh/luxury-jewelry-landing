@@ -98,9 +98,9 @@ export default function SettingsAdmin() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '32px' }}>
+      <div className="settings-admin-layout" style={{ display: 'flex', gap: '32px' }}>
         {/* SIDEBAR DE SECCIONES */}
-        <div style={{ minWidth: '220px' }}>
+        <div className="settings-admin-sidebar" style={{ minWidth: '220px' }}>
           {sections.map(s => (
             <div
               key={s.id}

@@ -185,13 +185,71 @@ select.cd-input option {
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   .cd-layout { flex-direction: column; }
-  .cd-sidebar { width: 100%; min-height: auto; position: relative; top: 0; flex-direction: row; flex-wrap: wrap; padding: 16px; }
-  .cd-profile-card { border-bottom: none; padding-bottom: 12px; width: 100%; display: flex; align-items: center; gap: 16px; text-align: left; }
-  .cd-avatar { width: 48px; height: 48px; margin-bottom: 0; }
-  .cd-nav { display: flex; flex-wrap: wrap; gap: 4px; padding: 0; }
-  .cd-nav-item { padding: 8px 14px; font-size: 0.75rem; border-left: none; border-bottom: 2px solid transparent; }
-  .cd-nav-item.active { border-bottom-color: var(--gold); border-left-color: transparent; }
-  .cd-logout-btn { margin: 8px 0 0; }
+  .cd-sidebar {
+    width: 100% !important;
+    min-height: auto !important;
+    position: sticky !important;
+    top: var(--header-height) !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    padding: 10px 16px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    align-items: center !important;
+    gap: 16px !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(201,168,76,0.08) !important;
+  }
+  .cd-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+  .cd-profile-card {
+    border-bottom: none !important;
+    padding: 0 !important;
+    width: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    text-align: left !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  .cd-user-name, .cd-user-role {
+    display: none !important;
+  }
+  .cd-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    margin-bottom: 0 !important;
+  }
+  .cd-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    padding: 0 !important;
+    flex: none !important;
+  }
+  .cd-nav-item {
+    padding: 8px 12px !important;
+    font-size: 0.75rem !important;
+    border-left: none !important;
+    border-bottom: 2px solid transparent !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .cd-nav-item.active {
+    border-bottom-color: var(--gold) !important;
+    border-left-color: transparent !important;
+  }
+  .cd-logout-btn {
+    margin: 0 !important;
+    padding: 8px 12px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    margin-left: auto !important;
+  }
   .cd-main { padding: 24px 16px; }
   .cd-stats-row { grid-template-columns: repeat(2, 1fr); }
   .cd-form-grid { grid-template-columns: 1fr; }
@@ -212,7 +270,43 @@ select.cd-input option {
   .cd-wish-grid { grid-template-columns: 1fr; }
   .cd-nav-item { padding: 6px 10px; font-size: 0.68rem; }
   .cd-table th, .cd-table td { padding: 10px 8px; font-size: 0.78rem; }
-  .cd-step-dot { width: 28px; height: 28px; }
-  .cd-step-label { font-size: 0.6rem; }
+  
+  /* Vertical tracking progress bar timeline for mobile */
+  .cd-progress-bar {
+    flex-direction: column !important;
+    gap: 20px !important;
+    align-items: flex-start !important;
+    padding: 0 10px !important;
+  }
+  .cd-progress-step {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 16px !important;
+    width: 100% !important;
+    flex: none !important;
+  }
+  .cd-step-dot {
+    width: 28px !important;
+    height: 28px !important;
+    flex-shrink: 0 !important;
+  }
+  .cd-step-label {
+    margin-top: 0 !important;
+    text-align: left !important;
+    font-size: 0.65rem !important;
+  }
+  .cd-step-line {
+    position: absolute !important;
+    left: 14px !important;
+    top: 28px !important;
+    width: 2px !important;
+    height: 22px !important;
+  }
+  .cd-progress-step:last-child .cd-step-line {
+    display: none !important;
+  }
+
   .cd-ticket-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .cd-logout-btn span { display: none !important; }
+  .cd-logout-btn { padding: 8px !important; border-radius: 50% !important; }
 }

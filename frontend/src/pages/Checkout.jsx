@@ -200,7 +200,7 @@ export default function Checkout() {
                 <span>${total.toLocaleString('es-CO')}</span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
+            <div className="checkout-actions" style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
               <button className="btn-outline" style={{ flex: 1 }} onClick={() => navigate('/carrito')}>
                 ← Volver al Carrito
               </button>
@@ -216,7 +216,7 @@ export default function Checkout() {
           <>
             <h3 className="checkout-title">Datos de Envío</h3>
             <form onSubmit={handleSubmitOrder}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+              <div className="shipping-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '20px' }}>
                 <div className="form-group">
                   <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.65rem' }}>Nombre Completo</label>
                   <input type="text" value={shipping.nombre} onChange={e => setShipping({ ...shipping, nombre: e.target.value })} placeholder="Nombre y apellido" required />
@@ -232,7 +232,7 @@ export default function Checkout() {
                 <input type="text" value={shipping.direccion} onChange={e => setShipping({ ...shipping, direccion: e.target.value })} placeholder="Calle, número, apartamento..." required />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+              <div className="shipping-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
                 <div className="form-group">
                   <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.65rem' }}>Ciudad</label>
                   <input type="text" value={shipping.ciudad} onChange={e => setShipping({ ...shipping, ciudad: e.target.value })} placeholder="Ej: Bogotá" required />
@@ -249,7 +249,7 @@ export default function Checkout() {
                   <Lock size={18} style={{ color: 'var(--gold)' }}/> Método de Pago
                 </h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+                <div className="payment-methods-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
                   {PAYMENT_METHODS.map(pm => (
                     <button
                       type="button"
@@ -277,7 +277,7 @@ export default function Checkout() {
 
                 {/* ── Formulario Tarjeta ── */}
                 {paymentMethod === 'tarjeta' && (
-                  <div style={{ background: 'linear-gradient(145deg, rgba(52,152,219,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(52,152,219,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
+                  <div className="payment-card-form" style={{ background: 'linear-gradient(145deg, rgba(52,152,219,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(52,152,219,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                       <CreditCard size={20} style={{ color: '#3498db' }}/>
                       <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Información de Tarjeta</span>
@@ -291,7 +291,7 @@ export default function Checkout() {
                       <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Titular de la Tarjeta</label>
                       <input type="text" value={cardData.titular} onChange={e => setCardData({...cardData, titular: e.target.value.toUpperCase()})} placeholder="NOMBRE COMO APARECE EN LA TARJETA" style={{ textTransform: 'uppercase', letterSpacing: '1px' }}/>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="card-expiry-cvv-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                       <div className="form-group">
                         <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Expiración</label>
                         <input type="text" value={cardData.expiracion} onChange={e => setCardData({...cardData, expiracion: formatExpiration(e.target.value)})} placeholder="MM/YY" maxLength={5}/>
@@ -307,7 +307,7 @@ export default function Checkout() {
 
                 {/* ── Formulario Nequi ── */}
                 {paymentMethod === 'nequi' && (
-                  <div style={{ background: 'linear-gradient(145deg, rgba(233,30,99,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(233,30,99,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
+                  <div className="payment-nequi-form" style={{ background: 'linear-gradient(145deg, rgba(233,30,99,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(233,30,99,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                       <Smartphone size={20} style={{ color: '#e91e63' }}/>
                       <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Pago con Nequi</span>
@@ -324,7 +324,7 @@ export default function Checkout() {
 
                 {/* ── Efectivo Info ── */}
                 {paymentMethod === 'efectivo' && (
-                  <div style={{ background: 'linear-gradient(145deg, rgba(46,204,113,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(46,204,113,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
+                  <div className="payment-cash-info" style={{ background: 'linear-gradient(145deg, rgba(46,204,113,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(46,204,113,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                       <Banknote size={20} style={{ color: '#2ecc71' }}/>
                       <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Pago Contra Entrega</span>
@@ -357,7 +357,7 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
+              <div className="checkout-actions" style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
                 <button type="button" className="btn-outline" style={{ flex: 1 }} onClick={() => setStep(1)}>
                   ← Volver
                 </button>

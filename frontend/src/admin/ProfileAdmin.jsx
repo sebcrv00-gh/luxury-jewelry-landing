@@ -83,7 +83,7 @@ export default function ProfileAdmin() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '40px' }}>
+      <div className="profile-admin-layout" style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '40px' }}>
         {/* LADO IZQUIERDO: FOTO */}
         <div className="glass-card" style={{ padding: '40px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ position: 'relative', marginBottom: '24px' }}>
@@ -114,7 +114,7 @@ export default function ProfileAdmin() {
         {/* LADO DERECHO: FORMULARIO */}
         <div className="glass-card" style={{ padding: '40px' }}>
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+            <div className="profile-admin-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
               <div style={{ position: 'relative' }}>
                 <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Nombre Completo</label>
                 <div style={{ position: 'relative' }}>
@@ -131,7 +131,7 @@ export default function ProfileAdmin() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
+            <div className="profile-admin-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
               <div style={{ position: 'relative' }}>
                 <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Teléfono de Contacto</label>
                 <div style={{ position: 'relative' }}>

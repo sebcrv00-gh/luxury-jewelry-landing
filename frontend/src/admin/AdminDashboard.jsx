@@ -132,16 +132,17 @@ export default function AdminDashboard() {
       {/* ── MAIN CONTENT ── */}
       <main className="admin-main">
         <header className="admin-topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '38px' }}>
+          <div className="admin-topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '38px' }}>
             <img
               src="/images/Logo_Luxury_Joyeria-removebg-preview.png"
               alt="Luxury Logo"
+              className="admin-topbar-logo"
               style={{ width: '58px', height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(201, 168, 76, 0.3))', cursor: 'pointer', transition: 'filter 0.4s' }}
               onClick={() => navigate('/')}
               onMouseOver={e => e.currentTarget.style.filter = 'drop-shadow(0 0 14px rgba(201, 168, 76, 0.5))'}
               onMouseOut={e => e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(201, 168, 76, 0.3))'}
             />
-            <nav style={{ display: 'flex', gap: '26px', alignItems: 'center' }}>
+            <nav className="admin-topbar-nav" style={{ display: 'flex', gap: '26px', alignItems: 'center' }}>
               <span onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '2px', textTransform: 'uppercase', transition: 'all 0.35s' }} onMouseOver={e => { e.currentTarget.style.color = 'var(--gold-light)'; e.currentTarget.style.textShadow = '0 0 10px rgba(201,168,76,0.3)' }} onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.textShadow = 'none' }}>
                 <Home size={14} /> INICIO
               </span>

@@ -3576,4 +3576,94 @@ body:has(.auth-modal-overlay) {
     transform: translateY(0);
   }
 }
+
+/* =========================================================
+   DISEÑO RESPONSIVO ADICIONAL (CLIENTE Y VISITANTE)
+========================================================= */
+
+@media (max-width: 1024px) {
+  .hero-title {
+    font-size: 3.2rem !important;
+  }
+  .about-section {
+    padding: 48px 24px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem !important;
+    letter-spacing: 2px !important;
+  }
+  .hero-subtitle {
+    font-size: 0.95rem !important;
+  }
+  .profile-layout {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    margin-top: calc(var(--header-height) + 30px) !important;
+  }
+  
+  /* Checkout responsiveness */
+  .checkout-actions {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .checkout-actions button {
+    width: 100% !important;
+    flex: none !important;
+  }
+  .shipping-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+  }
+  .payment-methods-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2rem !important;
+  }
+  .form-container, .checkout-box, .cart-box, .profile-main, .profile-sidebar {
+    padding: 24px 16px !important;
+    border-radius: 12px !important;
+  }
+  .form-container h2 {
+    font-size: 1.8rem !important;
+  }
+  .cart-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 16px 0 !important;
+  }
+  .cart-item-name {
+    flex: none !important;
+    width: 100% !important;
+    font-size: 0.95rem !important;
+  }
+  .cart-item-price, .cart-item-qty, .cart-item-subtotal {
+    flex: none !important;
+    width: 100% !important;
+    text-align: left !important;
+  }
+  .cart-item-qty {
+    justify-content: flex-start !important;
+  }
+  .qty-btn {
+    width: 36px !important;
+    height: 36px !important; /* Larger touch target */
+  }
+  
+  .payment-card-form, .payment-nequi-form, .payment-cash-info {
+    padding: 16px !important;
+  }
+  .card-expiry-cvv-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
 
