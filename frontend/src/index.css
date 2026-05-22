@@ -1721,7 +1721,7 @@ footer p+p {
   }
 
   .carousel-track .product-card {
-    flex: 0 0 260px;
+    flex: 0 0 45vw;
   }
 
   .carousel-arrow {
@@ -1738,7 +1738,7 @@ footer p+p {
   }
 
   .product-card img {
-    height: 220px;
+    height: 280px;
   }
 
   .product-card .product-info {
@@ -1992,11 +1992,11 @@ footer p+p {
   }
 
   .carousel-track .product-card {
-    flex: 0 0 220px;
+    flex: 0 0 82vw;
   }
 
   .product-card img {
-    height: 180px;
+    height: 320px;
   }
 
   .carousel-arrow {
