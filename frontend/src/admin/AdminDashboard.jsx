@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getImageUrl } from '../api/axios';
+import api, { getImageUrl } from '../api/axios';
 import {
   LayoutDashboard,
   Package,
@@ -13,8 +13,8 @@ import {
   AlertTriangle,
   Layers,
   Database,
-  Home,
-  MessageSquare
+  MessageSquare,
+  Crown
 } from 'lucide-react';
 import AddProduct from './AddProduct';
 import ProductListAdmin from './ProductListAdmin';
@@ -24,6 +24,37 @@ import TicketListAdmin from './TicketListAdmin';
 import SettingsAdmin from './SettingsAdmin';
 import ProfileAdmin from './ProfileAdmin';
 import './admin-layout.css'; // Importamos el CSS premium
+
+const TAB_META = {
+  dashboard: {
+    title: 'Centro de Control',
+    subtitle: 'Visibilidad ejecutiva del sistema, operación comercial y monitoreo general del negocio.'
+  },
+  inventory: {
+    title: 'Catálogo e Inventario',
+    subtitle: 'Administra el portafolio, el stock disponible y la estructura del catálogo central.'
+  },
+  orders: {
+    title: 'Gestión de Pedidos',
+    subtitle: 'Supervisa órdenes registradas, estados operativos y trazabilidad comercial.'
+  },
+  clients: {
+    title: 'Gestión de Clientes',
+    subtitle: 'Consulta perfiles, segmenta clientes y administra privilegios comerciales.'
+  },
+  tickets: {
+    title: 'Soporte',
+    subtitle: 'Monitorea solicitudes, contacto web y tickets abiertos desde un solo buzón.'
+  },
+  settings: {
+    title: 'Configuración',
+    subtitle: 'Controla seguridad, parámetros del negocio y reglas operativas del panel.'
+  },
+  profile: {
+    title: 'Perfil Administrativo',
+    subtitle: 'Actualiza tu identidad operativa y los datos visibles dentro del sistema.'
+  }
+};
 
 export default function AdminDashboard() {
   const { isLoggedIn, isAdmin, loading, logout, user } = useAuth();
@@ -35,7 +66,53 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('inventory'); // 'dashboard', 'inventory', 'orders', 'clients', 'tickets' , 'settings', 'profile'
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [stats, setStats] = useState({ total: 0, lowStock: 0, categories: 0 });
+  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [overview, setOverview] = useState({
+    products: 0,
+    lowStock: 0,
+    categories: 0,
+    orders: 0,
+    pendingOrders: 0,
+    revenue: 0,
+    clients: 0,
+    vipClients: 0,
+    admins: 0,
+    openTickets: 0
+  });
+
+  const loadOverview = async () => {
+    setOverviewLoading(true);
+    try {
+      const [productsRes, ordersRes, clientsRes, ticketsRes] = await Promise.all([
+        api.get('/products/admin/all'),
+        api.get('/orders/admin/all'),
+        api.get('/auth/users'),
+        api.get('/tickets/admin/all')
+      ]);
+
+      const products = productsRes.data || [];
+      const orders = ordersRes.data || [];
+      const clients = clientsRes.data || [];
+      const tickets = ticketsRes.data || [];
+
+      setOverview({
+        products: products.length,
+        lowStock: products.filter(product => Number(product.stock) <= 2).length,
+        categories: [...new Set(products.map(product => product.categoria).filter(Boolean))].length,
+        orders: orders.length,
+        pendingOrders: orders.filter(order => order.estado === 'pendiente').length,
+        revenue: orders.reduce((sum, order) => sum + Number(order.total || 0), 0),
+        clients: clients.filter(client => client.rol !== 'admin').length,
+        vipClients: clients.filter(client => client.rol === 'vip').length,
+        admins: clients.filter(client => client.rol === 'admin').length,
+        openTickets: tickets.filter(ticket => ticket.estado === 'abierto').length
+      });
+    } catch (error) {
+      console.error('Error al cargar el resumen del panel:', error);
+    } finally {
+      setOverviewLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && (!isLoggedIn || !isAdmin)) navigate('/');
@@ -48,9 +125,31 @@ export default function AdminDashboard() {
     }
   }, [loading, isLoggedIn, isAdmin, navigate, location.search]);
 
+  useEffect(() => {
+    if (!loading && isLoggedIn && isAdmin) {
+      loadOverview();
+    }
+  }, [loading, isLoggedIn, isAdmin]);
+
+  const setInventoryStats = ({ total, lowStock, categories }) => {
+    setOverview(prev => ({
+      ...prev,
+      products: total,
+      lowStock,
+      categories
+    }));
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setShowAddForm(false);
+    navigate(`/admin?tab=${tab}`);
+  };
+
   const handleProductAdded = () => {
     setRefreshTrigger(prev => prev + 1);
     setShowAddForm(false);
+    loadOverview();
   };
 
   const handleLogout = async () => {
@@ -58,66 +157,137 @@ export default function AdminDashboard() {
     navigate('/');
   };
 
+  const tabInfo = TAB_META[activeTab] || TAB_META.dashboard;
+  const primaryStats = [
+    {
+      key: 'products',
+      icon: Package,
+      value: overview.products,
+      label: 'Productos activos',
+      helper: `${overview.categories} categorias registradas`
+    },
+    {
+      key: 'orders',
+      icon: ShoppingCart,
+      value: overview.pendingOrders,
+      label: 'Pedidos pendientes',
+      helper: `${overview.orders} pedidos acumulados`
+    },
+    {
+      key: 'clients',
+      icon: Users,
+      value: overview.clients,
+      label: 'Clientes registrados',
+      helper: `${overview.vipClients} clientes VIP`
+    },
+    {
+      key: 'tickets',
+      icon: MessageSquare,
+      value: overview.openTickets,
+      label: 'Tickets abiertos',
+      helper: `${overview.admins} administradores activos`
+    }
+  ];
+  const quickAccess = [
+    {
+      key: 'inventory',
+      icon: Gem,
+      title: 'Inventario',
+      description: 'Consulta, crea y edita productos del catálogo central.',
+      action: 'Abrir inventario'
+    },
+    {
+      key: 'orders',
+      icon: ShoppingCart,
+      title: 'Pedidos',
+      description: 'Revisa operaciones pendientes y comportamiento comercial.',
+      action: 'Ver pedidos'
+    },
+    {
+      key: 'clients',
+      icon: Users,
+      title: 'Clientes',
+      description: 'Administra perfiles, membresías VIP y actividad de compra.',
+      action: 'Ver clientes'
+    },
+    {
+      key: 'tickets',
+      icon: MessageSquare,
+      title: 'Soporte',
+      description: 'Atiende mensajes, devoluciones y solicitudes abiertas.',
+      action: 'Abrir soporte'
+    }
+  ];
+  const executiveSummary = [
+    { label: 'Valor procesado', value: `$${overview.revenue.toLocaleString('es-CO')}` },
+    { label: 'Alertas de stock', value: `${overview.lowStock} referencias` },
+    { label: 'Categorías activas', value: `${overview.categories} grupos` },
+    { label: 'Cobertura del equipo', value: `${overview.admins} administradores` }
+  ];
+
   if (loading) return <div className="loading-screen text-gold">Verificando Credenciales Luxury...</div>;
 
   return (
     <div className="admin-layout">
       {/* ── SIDEBAR ── */}
       <aside className="admin-sidebar">
-        <div className="admin-brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+        <div className="admin-brand" onClick={() => handleTabChange('dashboard')} style={{ cursor: 'pointer' }}>
           <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Luxury Jewelry" />
-          <h2>L.J. Admin</h2>
+          <div>
+            <h2>L.J. Admin</h2>
+            <span className="admin-brand-subtitle">Enterprise Console</span>
+          </div>
         </div>
 
         <nav className="admin-nav">
           <div
             className={`admin-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('dashboard'); setShowAddForm(false); }}
+            onClick={() => handleTabChange('dashboard')}
           >
             <LayoutDashboard size={20} />
-            <span>Dashboard</span>
+            <span>Resumen</span>
           </div>
           <div
             className={`admin-nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('inventory'); setShowAddForm(false); }}
+            onClick={() => handleTabChange('inventory')}
           >
             <Gem size={20} />
-            <span>Bóveda y Joyas</span>
+            <span>Inventario</span>
           </div>
           <div
             className={`admin-nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('orders'); setShowAddForm(false); }}
+            onClick={() => handleTabChange('orders')}
           >
             <ShoppingCart size={20} />
-            <span>Pedidos (Proximamente)</span>
+            <span>Pedidos</span>
           </div>
           <div
             className={`admin-nav-item ${activeTab === 'clients' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('clients'); setShowAddForm(false); }}
+            onClick={() => handleTabChange('clients')}
           >
             <Users size={20} />
             <span>Clientes</span>
           </div>
           <div
             className={`admin-nav-item ${activeTab === 'tickets' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('tickets'); setShowAddForm(false); }}
+            onClick={() => handleTabChange('tickets')}
           >
             <MessageSquare size={20} />
-            <span>Mensajes y Soporte</span>
+            <span>Soporte</span>
           </div>
           <div
             className={`admin-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('settings'); setShowAddForm(false); }}
+            onClick={() => handleTabChange('settings')}
           >
             <Settings size={20} />
             <span>Configuración</span>
           </div>
           <div
             className={`admin-nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('profile'); setShowAddForm(false); }}
+            onClick={() => handleTabChange('profile')}
           >
             <Users size={20} />
-            <span>Mi Perfil</span>
+            <span>Perfil</span>
           </div>
         </nav>
 
@@ -132,109 +302,150 @@ export default function AdminDashboard() {
       {/* ── MAIN CONTENT ── */}
       <main className="admin-main">
         <header className="admin-topbar">
-          <div className="admin-topbar-left" style={{ display: 'flex', alignItems: 'center', gap: '38px' }}>
-            <img
-              src="/images/Logo_Luxury_Joyeria-removebg-preview.png"
-              alt="Luxury Logo"
-              className="admin-topbar-logo"
-              style={{ width: '58px', height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(201, 168, 76, 0.3))', cursor: 'pointer', transition: 'filter 0.4s' }}
-              onClick={() => navigate('/')}
-              onMouseOver={e => e.currentTarget.style.filter = 'drop-shadow(0 0 14px rgba(201, 168, 76, 0.5))'}
-              onMouseOut={e => e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(201, 168, 76, 0.3))'}
-            />
-            <nav className="admin-topbar-nav" style={{ display: 'flex', gap: '26px', alignItems: 'center' }}>
-              <span onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '2px', textTransform: 'uppercase', transition: 'all 0.35s' }} onMouseOver={e => { e.currentTarget.style.color = 'var(--gold-light)'; e.currentTarget.style.textShadow = '0 0 10px rgba(201,168,76,0.3)' }} onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.textShadow = 'none' }}>
-                <Home size={14} /> INICIO
-              </span>
-              <span onClick={() => navigate('/carrito')} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '2px', textTransform: 'uppercase', transition: 'all 0.35s' }} onMouseOver={e => { e.currentTarget.style.color = 'var(--gold-light)'; e.currentTarget.style.textShadow = '0 0 10px rgba(201,168,76,0.3)' }} onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.textShadow = 'none' }}>
-                <ShoppingCart size={14} /> CARRITO
-              </span>
-              <span onClick={() => setActiveTab('profile')} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: '500', cursor: 'pointer', letterSpacing: '2px', textTransform: 'uppercase', transition: 'all 0.35s' }} onMouseOver={e => { e.currentTarget.style.color = 'var(--gold-light)'; e.currentTarget.style.textShadow = '0 0 10px rgba(201,168,76,0.3)' }} onMouseOut={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.textShadow = 'none' }}>
-                <img src={fotoSrc} alt="Perfil" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--gold)', pointerEvents: 'none' }} />
-                MI PERFIL
-              </span>
-            </nav>
+          <div className="admin-topbar-left">
+            <span className="admin-kicker">Panel Administrativo</span>
+            <h1 className="admin-page-title">{tabInfo.title}</h1>
+            <p className="admin-page-subtitle">{tabInfo.subtitle}</p>
           </div>
 
-          <div className="admin-user-info" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <h1 className="admin-page-title" style={{ fontSize: '1.2rem', margin: 0, paddingRight: '20px', borderRight: '1px solid rgba(201, 168, 76, 0.2)' }}>
-              {activeTab === 'dashboard' && 'Panel Principal'}
-              {activeTab === 'inventory' && 'Bóveda de Inventario'}
-              {activeTab === 'orders' && 'Gestión de Pedidos'}
-              {activeTab === 'clients' && 'Módulo de Clientes'}
-              {activeTab === 'tickets' && 'Buzón de Mensajes'}
-              {activeTab === 'settings' && 'Configuración'}
-              {activeTab === 'profile' && 'Editar Mi Perfil'}
-            </h1>
+          <div className="admin-user-info">
+            <div className="admin-status-card">
+              <span className="admin-status-label">Estado</span>
+              <strong>{overviewLoading ? 'Sincronizando...' : 'Sincronizado'}</strong>
+            </div>
+            <div className="admin-identity-card" onClick={() => handleTabChange('profile')}>
+              <img src={fotoSrc} alt="Perfil" />
+              <div>
+                <strong>{user?.nombre}</strong>
+                <span>Administrador del sistema</span>
+              </div>
+            </div>
             <span className="admin-badge" style={{ boxShadow: '0 0 10px rgba(201, 168, 76, 0.2)' }}>Admin</span>
           </div>
         </header>
 
         <div className="admin-content-area">
-          {/* STATS SECTION */}
-          {activeTab === 'inventory' && !showAddForm && (
-            <div className="admin-stats-grid">
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon">
-                  <Package size={28} />
-                </div>
-                <div className="admin-stat-content">
-                  <span className="admin-stat-value">{stats.total}</span>
-                  <span className="admin-stat-label">Stock Total</span>
-                </div>
-              </div>
-              <div className={`admin-stat-card ${stats.lowStock > 0 ? 'bg-danger' : ''}`}>
-                <div className={`admin-stat-icon ${stats.lowStock > 0 ? 'text-danger' : ''}`}>
-                  <AlertTriangle size={28} />
-                </div>
-                <div className="admin-stat-content">
-                  <span className="admin-stat-value" style={{ color: stats.lowStock > 0 ? 'var(--rose-gold)' : 'var(--gold)' }}>
-                    {stats.lowStock}
-                  </span>
-                  <span className="admin-stat-label">Poco Stock</span>
-                </div>
-              </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon">
-                  <Layers size={28} />
-                </div>
-                <div className="admin-stat-content">
-                  <span className="admin-stat-value">{stats.categories}</span>
-                  <span className="admin-stat-label">Familias</span>
-                </div>
-              </div>
-              <div className="admin-stat-card">
-                <div className="admin-stat-icon">
-                  <Database size={28} />
-                </div>
-                <div className="admin-stat-content">
-                  <span className="admin-stat-value" style={{ color: 'var(--success)', fontSize: '1.4rem', marginTop: '10px' }}>Sincronizado</span>
-                  <span className="admin-stat-label mt-1">Estado Servidor</span>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* DYNAMIC CONTENT */}
           {activeTab === 'dashboard' && (
-            <div className="glass-card" style={{ textAlign: 'center', padding: '60px' }}>
-              <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" style={{ width: '120px', opacity: 0.5, margin: '0 auto 20px' }} />
-              <h2 className="text-gold-light" style={{ fontSize: '2rem', marginBottom: '10px' }}>Bienvenido a la Administración</h2>
-              <p className="text-muted">Seleccione una opción en el menú lateral para gestionar el catálogo y más.</p>
-            </div>
+            <>
+              <div className="admin-dashboard-grid">
+                <section className="admin-surface admin-hero-card">
+                  <span className="admin-surface-kicker">Centro de Operaciones</span>
+                  <h2>Administra catálogo, clientes, pedidos y soporte desde un entorno enfocado en gestión.</h2>
+                  <p>
+                    El perfil administrador ya no necesita interactuar con el flujo de compra.
+                    Este panel concentra únicamente funciones de control, seguimiento y administración.
+                  </p>
+                  <div className="admin-hero-pills">
+                    <span className="admin-mini-pill"><Database size={14} /> Datos centralizados</span>
+                    <span className="admin-mini-pill"><Layers size={14} /> Catálogo consolidado</span>
+                    <span className="admin-mini-pill"><Crown size={14} /> Operación premium</span>
+                  </div>
+                </section>
+
+                <section className="admin-surface admin-summary-card">
+                  <span className="admin-surface-kicker">Resumen Ejecutivo</span>
+                  <div className="admin-summary-list">
+                    {executiveSummary.map(item => (
+                      <div key={item.label} className="admin-summary-item">
+                        <span>{item.label}</span>
+                        <strong>{item.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="admin-stats-grid">
+                {primaryStats.map(({ key, icon: Icon, value, label, helper }) => (
+                  <div key={key} className={`admin-stat-card ${key === 'products' && overview.lowStock > 0 ? 'admin-stat-alert' : ''}`}>
+                    <div className={`admin-stat-icon ${key === 'products' && overview.lowStock > 0 ? 'text-danger' : ''}`}>
+                      <Icon size={28} />
+                    </div>
+                    <div className="admin-stat-content">
+                      <span className="admin-stat-value">{overviewLoading ? '...' : value}</span>
+                      <span className="admin-stat-label">{label}</span>
+                      <span className="admin-stat-helper">{helper}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="admin-module-grid">
+                {quickAccess.map(({ key, icon: Icon, title, description, action }) => (
+                  <button key={key} className="admin-module-card" onClick={() => handleTabChange(key)}>
+                    <div className="admin-module-icon">
+                      <Icon size={20} />
+                    </div>
+                    <div className="admin-module-content">
+                      <strong>{title}</strong>
+                      <p>{description}</p>
+                      <span>{action}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           {activeTab === 'inventory' && (
             <div className="inventory-section">
+              {!showAddForm && (
+                <div className="admin-stats-grid" style={{ marginBottom: '32px' }}>
+                  <div className="admin-stat-card">
+                    <div className="admin-stat-icon">
+                      <Package size={28} />
+                    </div>
+                    <div className="admin-stat-content">
+                      <span className="admin-stat-value">{overview.products}</span>
+                      <span className="admin-stat-label">Productos activos</span>
+                      <span className="admin-stat-helper">Catálogo central disponible</span>
+                    </div>
+                  </div>
+                  <div className={`admin-stat-card ${overview.lowStock > 0 ? 'admin-stat-alert' : ''}`}>
+                    <div className={`admin-stat-icon ${overview.lowStock > 0 ? 'text-danger' : ''}`}>
+                      <AlertTriangle size={28} />
+                    </div>
+                    <div className="admin-stat-content">
+                      <span className="admin-stat-value" style={{ color: overview.lowStock > 0 ? 'var(--rose-gold)' : 'var(--gold)' }}>
+                        {overview.lowStock}
+                      </span>
+                      <span className="admin-stat-label">Stock crítico</span>
+                      <span className="admin-stat-helper">Referencias con alerta</span>
+                    </div>
+                  </div>
+                  <div className="admin-stat-card">
+                    <div className="admin-stat-icon">
+                      <Layers size={28} />
+                    </div>
+                    <div className="admin-stat-content">
+                      <span className="admin-stat-value">{overview.categories}</span>
+                      <span className="admin-stat-label">Categorías</span>
+                      <span className="admin-stat-helper">Estructura del catálogo</span>
+                    </div>
+                  </div>
+                  <div className="admin-stat-card">
+                    <div className="admin-stat-icon">
+                      <Database size={28} />
+                    </div>
+                    <div className="admin-stat-content">
+                      <span className="admin-stat-value" style={{ color: 'var(--success)', fontSize: '1.4rem', marginTop: '10px' }}>Activo</span>
+                      <span className="admin-stat-label">Estado del sistema</span>
+                      <span className="admin-stat-helper">Sincronización operativa</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h2 className="text-gold" style={{ fontSize: '1.4rem' }}>
-                  {showAddForm ? 'Registro de Nueva Joya' : 'Catálogo de Piezas'}
+                  {showAddForm ? 'Alta de Producto' : 'Catálogo Central de Productos'}
                 </h2>
                 <button
                   className={showAddForm ? 'btn-outline' : 'btn-primary'}
                   onClick={() => setShowAddForm(!showAddForm)}
                 >
-                  {showAddForm ? '✕ Cancelar Registro' : '+ Nueva Pieza Exclusiva'}
+                  {showAddForm ? 'Cerrar formulario' : 'Agregar producto'}
                 </button>
               </div>
 
@@ -243,7 +454,7 @@ export default function AdminDashboard() {
                   <AddProduct onProductAdded={handleProductAdded} />
                 </div>
               ) : (
-                <ProductListAdmin refreshTrigger={refreshTrigger} setStats={setStats} />
+                <ProductListAdmin refreshTrigger={refreshTrigger} setStats={setInventoryStats} />
               )}
             </div>
           )}

@@ -23,6 +23,20 @@ export default function Header() {
     : DEFAULT_AVATAR;
 
   const path = location.pathname;
+  const adminMenuLinks = [
+    { to: '/admin?tab=dashboard', label: 'Panel Ejecutivo' },
+    { to: '/admin?tab=inventory', label: 'Inventario' },
+    { to: '/admin?tab=orders', label: 'Pedidos' },
+    { to: '/admin?tab=clients', label: 'Clientes' },
+    { to: '/admin?tab=tickets', label: 'Soporte' },
+    { to: '/admin?tab=profile', label: 'Perfil Admin' }
+  ];
+  const clientMenuLinks = [
+    { to: '/mi-cuenta', label: 'Mi Panel' },
+    { to: '/mi-cuenta/perfil', label: 'Editar Perfil' },
+    { to: '/mi-cuenta/pedidos', label: 'Mis Pedidos' },
+    { to: '/mi-cuenta/wishlist', label: 'Lista de Deseos' }
+  ];
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -33,7 +47,7 @@ export default function Header() {
   return (
     <header className="main-header">
       <div className="header-content">
-        <div className="logo-box" onClick={() => navigate('/')}>
+        <div className="logo-box" onClick={() => navigate(isAdmin ? '/admin?tab=dashboard' : '/')}>
           <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Logo Luxury Jewelry" />
           <span>Luxury Jewelry</span>
         </div>
@@ -49,8 +63,9 @@ export default function Header() {
         </button>
 
         <nav className={`nav-bar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-          <Link to="/" className={path === '/' ? 'active-nav' : ''}>Inicio</Link>
-          <Link to="/catalogo" className={path === '/catalogo' ? 'active-nav' : ''}>Catálogo</Link>
+          {!isAdmin && <Link to="/" className={path === '/' ? 'active-nav' : ''}>Inicio</Link>}
+          {!isAdmin && <Link to="/catalogo" className={path === '/catalogo' ? 'active-nav' : ''}>Catálogo</Link>}
+          {isAdmin && <Link to="/admin?tab=dashboard" className={path.startsWith('/admin') ? 'active-nav' : ''}>Centro de Control</Link>}
 
           {isLoggedIn ? (
             <div className="user-dropdown-container">
@@ -67,11 +82,9 @@ export default function Header() {
                   <span className="dropdown-email">{user.email}</span>
                 </div>
 
-                <Link to="/mi-cuenta" onClick={() => setShowDropdown(false)}>Mi Panel</Link>
-                <Link to={isAdmin ? "/admin?tab=profile" : "/mi-cuenta/perfil"} onClick={() => setShowDropdown(false)}>Editar Perfil</Link>
-                <Link to="/mi-cuenta/pedidos" onClick={() => setShowDropdown(false)}>Mis Pedidos</Link>
-                <Link to="/mi-cuenta/wishlist" onClick={() => setShowDropdown(false)}>Lista de Deseos</Link>
-                {isAdmin && <Link to="/admin/productos" onClick={() => setShowDropdown(false)}>Dashboard Admin</Link>}
+                {(isAdmin ? adminMenuLinks : clientMenuLinks).map(({ to, label }) => (
+                  <Link key={to} to={to} onClick={() => setShowDropdown(false)}>{label}</Link>
+                ))}
 
                 <button onClick={handleLogout} className="btn-logout-dropdown">Cerrar Sesión</button>
               </div>
@@ -83,7 +96,7 @@ export default function Header() {
             </>
           )}
 
-          <Link to="/carrito" className={`carrito-btn no-underline ${path === '/carrito' ? 'active-nav' : ''}`}>🛒 Carrito</Link>
+          {!isAdmin && <Link to="/carrito" className={`carrito-btn no-underline ${path === '/carrito' ? 'active-nav' : ''}`}>🛒 Carrito</Link>}
         </nav>
       </div>
     </header>

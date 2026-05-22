@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, MessageSquare, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { RefreshCw, MessageSquare, AlertCircle, CheckCircle, Clock, Inbox, ShieldCheck, History } from 'lucide-react';
 import api from '../api/axios';
 
 export default function TicketListAdmin({ refreshTrigger }) {
@@ -56,98 +56,146 @@ export default function TicketListAdmin({ refreshTrigger }) {
     );
   }
 
+  const openTickets = tickets.filter(ticket => ticket.estado === 'abierto').length;
+  const resolvedTickets = tickets.filter(ticket => ticket.estado !== 'abierto').length;
+  const latestTicketDate = tickets[0]?.creado_en
+    ? new Date(tickets[0].creado_en).toLocaleDateString('es-CO')
+    : 'Sin registros';
+
   return (
-    <div className="inventory-section">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 className="text-gold" style={{ fontSize: '1.4rem' }}>Buzón de Consultas y Soporte</h2>
-        <button onClick={fetchTickets} className="btn-outline" style={{ padding: '8px 16px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className="admin-section-shell">
+      <div className="admin-section-header-block">
+        <div>
+          <h2>Centro de Soporte y Atención</h2>
+          <p>Controla tickets, mensajes de contacto y devoluciones desde una bandeja unificada pensada para tiempos de respuesta operativos.</p>
+        </div>
+        <button onClick={fetchTickets} className="btn-outline" style={{ padding: '10px 18px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <RefreshCw size={14} className={loading ? 'spinning' : ''} />
-          {loading ? 'Sincronizando...' : 'Actualizar Buzón'}
+          {loading ? 'Sincronizando...' : 'Actualizar soporte'}
         </button>
       </div>
 
-      <div className="table-wrapper">
-        <table className="luxury-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Asunto / Mensaje</th>
-              <th>Estado</th>
-              <th>Fecha</th>
-              <th style={{ textAlign: 'center' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tickets.length === 0 ? (
+      <div className="admin-summary-grid">
+        <div className="admin-info-card">
+          <div className="admin-info-card-top">
+            <strong>Bandeja total</strong>
+            <span className="admin-info-card-icon"><Inbox size={18} /></span>
+          </div>
+          <span className="admin-info-card-value">{tickets.length}</span>
+          <span className="admin-info-card-meta">Interacciones y solicitudes registradas</span>
+        </div>
+        <div className="admin-info-card">
+          <div className="admin-info-card-top">
+            <strong>Abiertos</strong>
+            <span className="admin-info-card-icon"><Clock size={18} /></span>
+          </div>
+          <span className="admin-info-card-value">{openTickets}</span>
+          <span className="admin-info-card-meta">Casos en espera de atención</span>
+        </div>
+        <div className="admin-info-card">
+          <div className="admin-info-card-top">
+            <strong>Resueltos</strong>
+            <span className="admin-info-card-icon"><ShieldCheck size={18} /></span>
+          </div>
+          <span className="admin-info-card-value">{resolvedTickets}</span>
+          <span className="admin-info-card-meta">Solicitudes gestionadas correctamente</span>
+        </div>
+        <div className="admin-info-card">
+          <div className="admin-info-card-top">
+            <strong>Último ingreso</strong>
+            <span className="admin-info-card-icon"><History size={18} /></span>
+          </div>
+          <span className="admin-info-card-value" style={{ fontSize: '1.2rem' }}>{latestTicketDate}</span>
+          <span className="admin-info-card-meta">Fecha de la interacción más reciente</span>
+        </div>
+      </div>
+
+      <div className="admin-table-card">
+        <div className="table-wrapper">
+          <div className="table-header-flex">
+            <div>
+              <h3 className="text-gold-light" style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.35rem' }}>Buzón unificado</h3>
+              <p className="admin-muted-note">Seguimiento de comunicación, devoluciones y solicitudes de soporte al cliente.</p>
+            </div>
+            <div className="admin-inline-actions">
+              <span className="admin-badge-pill pending">{openTickets} en espera</span>
+              <span className="admin-badge-pill success">{resolvedTickets} resueltos</span>
+            </div>
+          </div>
+
+          <table className="luxury-table">
+            <thead>
               <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: '80px 0' }}>
-                  <MessageSquare size={48} className="text-muted" style={{ margin: '0 auto 16px', opacity: 0.5 }} />
-                  <h4 className="text-gold-light" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Buzón Vacío</h4>
-                  <p className="text-muted" style={{ fontSize: '0.9rem' }}>No hay mensajes de contacto registrados.</p>
-                </td>
+                <th>Cliente</th>
+                <th>Asunto / Mensaje</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th style={{ textAlign: 'center' }}>Acciones</th>
               </tr>
-            ) : (
-              tickets.map(ticket => (
-                <tr key={ticket.id}>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span className="text-gold-light" style={{ fontWeight: 600 }}>{ticket.usuario_nombre}</span>
-                      <span className="text-muted" style={{ fontSize: '0.75rem' }}>{ticket.usuario_email}</span>
-                    </div>
-                  </td>
-                  <td style={{ maxWidth: '300px' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>{ticket.asunto}</div>
-                    <div className="text-muted" style={{ fontSize: '0.85rem', whiteSpace: 'pre-wrap', maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {ticket.mensaje}
-                    </div>
-                  </td>
-                  <td>
-                    <span style={{ 
-                      padding: '4px 12px', 
-                      borderRadius: '4px', 
-                      fontSize: '0.7rem', 
-                      fontWeight: '700', 
-                      textTransform: 'uppercase',
-                      background: ticket.estado === 'abierto' ? 'rgba(201, 168, 76, 0.15)' : 'rgba(78, 205, 196, 0.1)',
-                      color: ticket.estado === 'abierto' ? 'var(--gold)' : 'var(--success)',
-                      border: ticket.estado === 'abierto' ? '1px solid var(--gold-subtle)' : '1px solid rgba(78, 205, 196, 0.3)'
-                    }}>
-                      {ticket.estado === 'abierto' ? 'EN ESPERA' : 'RESUELTO'}
-                    </span>
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                    {new Date(ticket.creado_en).toLocaleDateString()}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      {ticket.estado === 'abierto' ? (
-                        <button 
-                          className="action-btn edit" 
-                          onClick={() => handleStatusChange(ticket.id, 'cerrado')}
-                          disabled={updating === ticket.id}
-                          style={{ borderColor: 'var(--success)', color: 'var(--success)' }}
-                          title="Marcar como Resuelto"
-                        >
-                          {updating === ticket.id ? <RefreshCw size={16} className="spinning" /> : <CheckCircle size={16} />}
-                        </button>
-                      ) : (
-                        <button 
-                          className="action-btn" 
-                          onClick={() => handleStatusChange(ticket.id, 'abierto')}
-                          disabled={updating === ticket.id}
-                          style={{ borderColor: 'var(--gold)', color: 'var(--gold)' }}
-                          title="Reabrir Ticket"
-                        >
-                          {updating === ticket.id ? <RefreshCw size={16} className="spinning" /> : <Clock size={16} />}
-                        </button>
-                      )}
-                    </div>
+            </thead>
+            <tbody>
+              {tickets.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '80px 0' }}>
+                    <MessageSquare size={48} className="text-muted" style={{ margin: '0 auto 16px', opacity: 0.5 }} />
+                    <h4 className="text-gold-light" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Buzón Vacío</h4>
+                    <p className="text-muted" style={{ fontSize: '0.9rem' }}>No hay mensajes de contacto registrados.</p>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                tickets.map(ticket => (
+                  <tr key={ticket.id}>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span className="text-gold-light" style={{ fontWeight: 600 }}>{ticket.usuario_nombre}</span>
+                        <span className="text-muted" style={{ fontSize: '0.75rem' }}>{ticket.usuario_email}</span>
+                      </div>
+                    </td>
+                    <td style={{ maxWidth: '300px' }}>
+                      <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>{ticket.asunto}</div>
+                      <div className="text-muted" style={{ fontSize: '0.85rem', whiteSpace: 'pre-wrap', maxHeight: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {ticket.mensaje}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`admin-badge-pill ${ticket.estado === 'abierto' ? 'pending' : 'success'}`}>
+                        {ticket.estado === 'abierto' ? 'en espera' : 'resuelto'}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                      {new Date(ticket.creado_en).toLocaleDateString('es-CO')}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        {ticket.estado === 'abierto' ? (
+                          <button 
+                            className="action-btn edit" 
+                            onClick={() => handleStatusChange(ticket.id, 'cerrado')}
+                            disabled={updating === ticket.id}
+                            style={{ borderColor: 'var(--success)', color: 'var(--success)' }}
+                            title="Marcar como Resuelto"
+                          >
+                            {updating === ticket.id ? <RefreshCw size={16} className="spinning" /> : <CheckCircle size={16} />}
+                          </button>
+                        ) : (
+                          <button 
+                            className="action-btn" 
+                            onClick={() => handleStatusChange(ticket.id, 'abierto')}
+                            disabled={updating === ticket.id}
+                            style={{ borderColor: 'var(--gold)', color: 'var(--gold)' }}
+                            title="Reabrir Ticket"
+                          >
+                            {updating === ticket.id ? <RefreshCw size={16} className="spinning" /> : <Clock size={16} />}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
