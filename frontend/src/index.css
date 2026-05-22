@@ -848,6 +848,122 @@ button {
   letter-spacing: 0.5px;
 }
 
+.catalog-auth-prompt {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 12000;
+  width: min(420px, calc(100vw - 32px));
+  padding: 22px 22px 20px;
+  border-radius: 18px;
+  border: 1px solid rgba(201, 168, 76, 0.18);
+  background: linear-gradient(160deg, rgba(18, 18, 18, 0.96), rgba(10, 10, 10, 0.98));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 24px rgba(201, 168, 76, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: catalogAuthPromptIn 0.35s var(--ease-out-expo) forwards;
+}
+
+.catalog-auth-prompt::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(226, 201, 126, 0.7), transparent);
+}
+
+.catalog-auth-prompt-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s var(--ease-out-expo);
+}
+
+.catalog-auth-prompt-close:hover {
+  color: var(--text-primary);
+  border-color: rgba(201, 168, 76, 0.24);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.catalog-auth-prompt-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201, 168, 76, 0.09);
+  border: 1px solid rgba(201, 168, 76, 0.18);
+  color: var(--gold-light);
+}
+
+.catalog-auth-prompt-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 28px;
+}
+
+.catalog-auth-prompt-kicker {
+  color: var(--gold);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.catalog-auth-prompt-copy strong {
+  color: var(--text-primary);
+  font-size: 1.02rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.catalog-auth-prompt-copy p {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.catalog-auth-prompt-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.catalog-auth-prompt-actions .btn-primary,
+.catalog-auth-prompt-actions .btn-outline {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 18px;
+  font-size: 0.72rem;
+  letter-spacing: 1.8px;
+  border-radius: 10px;
+}
+
+@keyframes catalogAuthPromptIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* =========================================================
    CATALOG — Product Grid
 ========================================================= */
@@ -3636,6 +3752,23 @@ body:has(.auth-modal-overlay) {
     max-width: none;
     animation: toastFadeInDownMobile 0.4s var(--ease-out-expo) forwards;
   }
+
+  .catalog-auth-prompt {
+    right: 16px;
+    left: 16px;
+    bottom: 16px;
+    width: auto;
+    padding: 20px 18px 18px;
+  }
+
+  .catalog-auth-prompt-actions {
+    flex-direction: column;
+  }
+
+  .catalog-auth-prompt-actions .btn-primary,
+  .catalog-auth-prompt-actions .btn-outline {
+    width: 100%;
+  }
 }
 
 @keyframes toastFadeInDownMobile {
@@ -3738,4 +3871,4 @@ body:has(.auth-modal-overlay) {
     gap: 12px !important;
   }
 }
-
+

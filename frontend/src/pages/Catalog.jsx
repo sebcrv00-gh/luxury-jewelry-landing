@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
 
 const STATIC_PRODUCTS = [
@@ -306,17 +306,38 @@ export default function Catalog() {
       )}
 
       {showPopup && (
-        <>
-          <div className="overlay" onClick={() => setShowPopup(false)} />
-          <div className="popup">
-            <h4>Acceso Restringido</h4>
-            <p>Debes crear una cuenta o iniciar sesión para poder usar el carrito de compras.</p>
-            <div className="popup-actions">
-              <button className="btn-primary" onClick={() => { setShowPopup(false); openAuthModal('login'); }}><span>Iniciar Sesión</span></button>
-              <button className="btn-outline" onClick={() => { setShowPopup(false); openAuthModal('register'); }}>Registrarme</button>
-            </div>
+        <div className="catalog-auth-prompt" role="alert" aria-live="polite">
+          <button
+            type="button"
+            className="catalog-auth-prompt-close"
+            aria-label="Cerrar aviso"
+            onClick={() => setShowPopup(false)}
+          >
+            <X size={16} />
+          </button>
+          <div className="catalog-auth-prompt-icon">
+            <Lock size={18} />
           </div>
-        </>
+          <div className="catalog-auth-prompt-copy">
+            <span className="catalog-auth-prompt-kicker">Acceso requerido</span>
+            <strong>Inicia sesión o crea tu cuenta para usar el carrito.</strong>
+            <p>Activa una experiencia de compra completa y guarda tus piezas favoritas con seguridad.</p>
+          </div>
+          <div className="catalog-auth-prompt-actions">
+            <button
+              className="btn-primary"
+              onClick={() => { setShowPopup(false); openAuthModal('login'); }}
+            >
+              <span>Iniciar Sesión</span>
+            </button>
+            <button
+              className="btn-outline"
+              onClick={() => { setShowPopup(false); openAuthModal('register'); }}
+            >
+              Registrarme
+            </button>
+          </div>
+        </div>
       )}
     </>
   );
