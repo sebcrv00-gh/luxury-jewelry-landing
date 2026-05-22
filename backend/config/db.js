@@ -10,7 +10,10 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   charset: 'utf8mb4',
-  connectTimeout: 10000
+  connectTimeout: 10000,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 /**
@@ -23,7 +26,10 @@ async function initDB() {
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     port: (process.env.DB_PORT && process.env.DB_PORT !== "") ? parseInt(process.env.DB_PORT, 10) : 3306,
-    connectTimeout: 10000
+    connectTimeout: 10000,
+    ssl: {
+      rejectUnauthorized: false
+    }
   };
 
   console.log('--- Intentando conectar con: ---');
