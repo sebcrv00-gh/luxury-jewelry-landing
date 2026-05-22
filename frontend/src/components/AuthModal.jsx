@@ -12,6 +12,7 @@ export default function AuthModal() {
   const [regNombre, setRegNombre] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regClave, setRegClave] = useState('');
+  const [regConfirmClave, setRegConfirmClave] = useState('');
   const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [nums, setNums] = useState([0, 0]);
   
@@ -38,6 +39,7 @@ export default function AuthModal() {
       setRecoveryEmail('');
       setRecoveryCode('');
       setPhoneHint('');
+      setRegConfirmClave('');
       if (authModalMode === 'register') {
         setNums([Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 10) + 1]);
       }
@@ -81,13 +83,17 @@ export default function AuthModal() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError(''); setSuccess('');
+    if (regClave !== regConfirmClave) {
+      setError('La confirmación de la contraseña debe coincidir');
+      return;
+    }
     if (parseInt(captchaAnswer) !== nums[0] + nums[1]) {
       setError('La respuesta de verificación es incorrecta');
       return;
     }
     setLoading(true);
     try {
-      await register(regNombre, regEmail, regClave);
+      await register(regNombre, regEmail, regClave, regConfirmClave);
       await login(regEmail, regClave); // Log in immediately
       handleClose(); // Close the modal, global WelcomeAnimation kicks in
     } catch (err) {
@@ -364,6 +370,21 @@ export default function AuthModal() {
                         onChange={e => setRegClave(e.target.value)} 
                         placeholder="Mínimo 6 caracteres" 
                         required 
+                      />
+                      <button type="button" className="auth-eye-btn" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="auth-field">
+                    <label>Confirmar contraseña</label>
+                    <div className="auth-password-wrap">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={regConfirmClave}
+                        onChange={e => setRegConfirmClave(e.target.value)}
+                        placeholder="Repite tu contraseña"
+                        required
                       />
                       <button type="button" className="auth-eye-btn" onClick={() => setShowPassword(!showPassword)}>
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

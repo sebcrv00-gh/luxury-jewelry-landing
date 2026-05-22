@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock, Star, MessageSquare } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
 
 const STATIC_PRODUCTS = [
@@ -28,6 +28,28 @@ const getCategoryFromName = (name) => {
   return 'Otros';
 };
 
+const buildProductReviewRef = (name) => {
+  return String(name || 'producto')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' y ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'producto';
+};
+
+const RatingStars = ({ rating, size = 14 }) => (
+  <span className="catalog-rating-stars" aria-hidden="true">
+    {[1, 2, 3, 4, 5].map(star => (
+      <Star
+        key={star}
+        size={size}
+        fill={star <= Math.round(rating) ? 'currentColor' : 'none'}
+      />
+    ))}
+  </span>
+);
+
 export default function Catalog() {
   const { isLoggedIn, user, openAuthModal } = useAuth();
   const carouselRef = useRef(null);
@@ -38,6 +60,10 @@ export default function Catalog() {
   const [addedProduct, setAddedProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [reviewSummaryMap, setReviewSummaryMap] = useState({});
+  const [selectedProductReviews, setSelectedProductReviews] = useState([]);
+  const [selectedProductReviewSummary, setSelectedProductReviewSummary] = useState({ average_rating: 0, total_reviews: 0 });
+  const [loadingProductReviews, setLoadingProductReviews] = useState(false);
 
   const isVip = user?.rol === 'vip';
   const VIP_DISCOUNT = 0.10;
@@ -53,6 +79,20 @@ export default function Catalog() {
 
   useEffect(() => {
     api.get('/products').then(r => setDbProducts(r.data)).catch(() => { });
+    api.get('/reviews/summary')
+      .then(({ data }) => {
+        const mapped = {};
+        data.forEach(item => {
+          const summary = {
+            average_rating: Number(item.average_rating || 0),
+            total_reviews: Number(item.total_reviews || 0)
+          };
+          if (item.producto_id) mapped[`db_${item.producto_id}`] = summary;
+          if (item.producto_ref) mapped[item.producto_ref] = summary;
+        });
+        setReviewSummaryMap(mapped);
+      })
+      .catch(() => {});
     if (isLoggedIn) {
       api.get('/wishlist').then(r => {
         setWishlistIds(new Set(r.data.map(w => w.producto_id)));
@@ -95,14 +135,21 @@ export default function Catalog() {
   };
 
   const allProducts = [
-    ...STATIC_PRODUCTS.map(p => ({ ...p, categoria: getCategoryFromName(p.nombre) })),
+    ...STATIC_PRODUCTS.map(p => ({
+      ...p,
+      categoria: getCategoryFromName(p.nombre),
+      reviewRef: buildProductReviewRef(p.nombre),
+      dbProductId: null
+    })),
     ...dbProducts.map(p => ({
       id: `db_${p.id}`,
+      dbProductId: p.id,
       nombre: p.nombre,
       precio: Number(p.precio),
       img: p.imagen_url ? getImageUrl(p.imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png',
       stock: p.stock,
-      categoria: getCategoryFromName(p.nombre)
+      categoria: getCategoryFromName(p.nombre),
+      reviewRef: buildProductReviewRef(p.nombre)
     }))
   ];
 
@@ -139,6 +186,52 @@ export default function Catalog() {
     setAddedProduct(product);
     setTimeout(() => setAddedProduct(null), 3500);
   };
+
+  const getProductReviewSummary = (product) => {
+    if (!product) return { average_rating: 0, total_reviews: 0 };
+    return reviewSummaryMap[product.dbProductId ? `db_${product.dbProductId}` : product.reviewRef]
+      || reviewSummaryMap[product.reviewRef]
+      || { average_rating: 0, total_reviews: 0 };
+  };
+
+  useEffect(() => {
+    if (!selectedProduct) {
+      setSelectedProductReviews([]);
+      setSelectedProductReviewSummary({ average_rating: 0, total_reviews: 0 });
+      return;
+    }
+
+    let ignore = false;
+    const loadProductReviews = async () => {
+      setLoadingProductReviews(true);
+      try {
+        const { data } = await api.get('/reviews/product', {
+          params: {
+            productId: selectedProduct.dbProductId || undefined,
+            productRef: selectedProduct.reviewRef
+          }
+        });
+
+        if (!ignore) {
+          setSelectedProductReviewSummary({
+            average_rating: Number(data.summary?.average_rating || 0),
+            total_reviews: Number(data.summary?.total_reviews || 0)
+          });
+          setSelectedProductReviews(data.reviews || []);
+        }
+      } catch (err) {
+        if (!ignore) {
+          setSelectedProductReviews([]);
+          setSelectedProductReviewSummary({ average_rating: 0, total_reviews: 0 });
+        }
+      } finally {
+        if (!ignore) setLoadingProductReviews(false);
+      }
+    };
+
+    loadProductReviews();
+    return () => { ignore = true; };
+  }, [selectedProduct]);
 
   return (
     <>
@@ -198,7 +291,9 @@ export default function Catalog() {
             </button>
             
             <div className="carousel-track" ref={carouselRef}>
-              {filtered.map(p => (
+              {filtered.map(p => {
+                const reviewSummary = getProductReviewSummary(p);
+                return (
                 <div className={`product-card ${p.stock === 0 ? 'out-of-stock' : ''}`} key={p.id}>
                   <div className="product-image-wrap">
                     <img src={p.img} alt={p.nombre} style={p.stock === 0 ? { filter: 'grayscale(0.8) opacity(0.6)' } : {}} />
@@ -230,6 +325,16 @@ export default function Catalog() {
                     ) : (
                       <p className="price">${p.precio.toLocaleString('es-CO')}</p>
                     )}
+                    <div className="catalog-card-review-meta">
+                      <div className="catalog-card-review-stars">
+                        <RatingStars rating={reviewSummary.average_rating} size={13} />
+                        <span>{reviewSummary.average_rating ? reviewSummary.average_rating.toFixed(1) : 'Nuevo'}</span>
+                      </div>
+                      <span className="catalog-card-review-count">
+                        <MessageSquare size={12} />
+                        {reviewSummary.total_reviews} reseñas
+                      </span>
+                    </div>
                     <button
                       className={p.stock === 0 ? 'btn-outline disabled' : 'btn-outline'}
                       onClick={() => { if(p.stock !== 0) { setSelectedProduct(p); setQuantity(1); } }}
@@ -240,7 +345,7 @@ export default function Catalog() {
                     </button>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         )}
@@ -281,6 +386,45 @@ export default function Catalog() {
                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.7', marginBottom: '40px', fontWeight: '300' }}>
                   Descubre la majestuosidad de esta pieza exclusiva. Diseñada con los estándares más estrictos y finos materiales de la alta joyería, ofrece un nivel de perfeccionismo impecable que iluminará y transformará cualquier ocasión especial en un evento memorable.
                </p>
+               <div className="catalog-product-reviews-box">
+                 <div className="catalog-product-reviews-head">
+                   <div>
+                     <span className="catalog-product-reviews-kicker">Reseñas verificadas</span>
+                     <div className="catalog-product-reviews-score">
+                       <RatingStars rating={selectedProductReviewSummary.average_rating} size={15} />
+                       <strong>
+                         {selectedProductReviewSummary.total_reviews > 0
+                           ? `${selectedProductReviewSummary.average_rating.toFixed(1)} / 5`
+                           : 'Sin reseñas aún'}
+                       </strong>
+                     </div>
+                   </div>
+                   <span className="catalog-product-reviews-count">
+                     {selectedProductReviewSummary.total_reviews} opiniones publicadas
+                   </span>
+                 </div>
+
+                 {loadingProductReviews ? (
+                   <div className="catalog-product-review-empty">Cargando reseñas del producto...</div>
+                 ) : selectedProductReviews.length === 0 ? (
+                   <div className="catalog-product-review-empty">
+                     Este producto aún no tiene reseñas visibles. Sé de los primeros en compartir tu experiencia cuando recibas tu pedido.
+                   </div>
+                 ) : (
+                   <div className="catalog-product-review-list">
+                     {selectedProductReviews.slice(0, 3).map(review => (
+                       <div key={review.id} className="catalog-product-review-item">
+                         <div className="catalog-product-review-item-head">
+                           <strong>{review.usuario_nombre}</strong>
+                           <span>{new Date(review.creado_en).toLocaleDateString('es-CO')}</span>
+                         </div>
+                         <RatingStars rating={review.calificacion} size={13} />
+                         <p>{review.comentario}</p>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
                <div style={{ display: 'flex', alignItems: 'center', gap: '30px', marginBottom: '40px' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>Cantidad</span>
                   <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(201, 168, 76, 0.4)', borderRadius: '50px', padding: '4px' }}>

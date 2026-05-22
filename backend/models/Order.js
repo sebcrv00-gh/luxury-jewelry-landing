@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+const { pool, buildProductRef } = require('../config/db');
 
 const Order = {
   /**
@@ -28,15 +28,19 @@ const Order = {
 
       for (const item of items) {
         const subtotal = item.precio * item.cantidad;
+        const dbId = item.id && String(item.id).startsWith('db_')
+          ? Number(String(item.id).replace('db_', ''))
+          : null;
+        const productRef = dbId ? `db_${dbId}` : buildProductRef(item.nombre);
+
         await conn.query(
-          `INSERT INTO orden_items (orden_id, producto_nombre, producto_precio, cantidad, subtotal)
-           VALUES (?, ?, ?, ?, ?)`,
-          [orderId, item.nombre, item.precio, item.cantidad, subtotal]
+          `INSERT INTO orden_items (orden_id, producto_id, producto_ref, producto_nombre, producto_precio, cantidad, subtotal)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [orderId, dbId, productRef, item.nombre, item.precio, item.cantidad, subtotal]
         );
 
         // Si el producto viene de la base de datos, reducir stock
-        if (item.id && String(item.id).startsWith('db_')) {
-          const dbId = String(item.id).replace('db_', '');
+        if (dbId) {
           await conn.query(
             'UPDATE productos SET stock = GREATEST(stock - ?, 0) WHERE id = ?',
             [item.cantidad, dbId]

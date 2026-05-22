@@ -12,6 +12,7 @@ const addressRoutes = require('./routes/addressRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const recoveryRoutes = require('./routes/passwordRecoveryRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -61,6 +62,7 @@ app.use('/api/addresses', addressRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/recovery', recoveryRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Ruta de salud
 app.get('/api/health', (req, res) => {

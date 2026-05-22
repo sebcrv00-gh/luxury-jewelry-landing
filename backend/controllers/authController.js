@@ -6,9 +6,15 @@ const authController = {
   // POST /api/auth/register
   async register(req, res) {
     try {
-      const { nombre, email, clave } = req.body;
+      const { nombre, email, clave, confirmarClave } = req.body;
       if (!nombre || !email || !clave) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+      }
+      if (confirmarClave !== undefined && clave !== confirmarClave) {
+        return res.status(400).json({ error: 'La confirmación de la contraseña no coincide' });
+      }
+      if (String(clave).length < 6) {
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
       }
 
       const claveHash = crypto.createHash('sha256').update(clave).digest('hex');

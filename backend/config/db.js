@@ -1,6 +1,16 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+function buildProductRef(name) {
+  return String(name || 'producto')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' y ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'producto';
+}
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -117,6 +127,8 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS orden_items (
         id INT(11) AUTO_INCREMENT PRIMARY KEY,
         orden_id INT(11) NOT NULL,
+        producto_id INT(11) DEFAULT NULL,
+        producto_ref VARCHAR(255) DEFAULT NULL,
         producto_nombre VARCHAR(255) NOT NULL,
         producto_precio DECIMAL(12,2) NOT NULL,
         cantidad INT NOT NULL,
@@ -124,6 +136,24 @@ async function initDB() {
         FOREIGN KEY (orden_id) REFERENCES ordenes(id) ON DELETE CASCADE
       )
     `);
+
+    try {
+      const [productIdColumn] = await conn.query("SHOW COLUMNS FROM orden_items LIKE 'producto_id'");
+      if (productIdColumn.length === 0) {
+        await conn.query('ALTER TABLE orden_items ADD COLUMN producto_id INT(11) DEFAULT NULL AFTER orden_id');
+      }
+    } catch (err) {
+      console.warn('⚠️ No se pudo verificar/agregar la columna producto_id en orden_items:', err.message);
+    }
+
+    try {
+      const [productRefColumn] = await conn.query("SHOW COLUMNS FROM orden_items LIKE 'producto_ref'");
+      if (productRefColumn.length === 0) {
+        await conn.query('ALTER TABLE orden_items ADD COLUMN producto_ref VARCHAR(255) DEFAULT NULL AFTER producto_id');
+      }
+    } catch (err) {
+      console.warn('⚠️ No se pudo verificar/agregar la columna producto_ref en orden_items:', err.message);
+    }
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS wishlist (
@@ -167,10 +197,50 @@ async function initDB() {
       )
     `);
 
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS resenas_producto (
+        id INT(11) AUTO_INCREMENT PRIMARY KEY,
+        usuario_id INT(11) NOT NULL,
+        orden_id INT(11) NOT NULL,
+        orden_item_id INT(11) NOT NULL,
+        producto_id INT(11) DEFAULT NULL,
+        producto_ref VARCHAR(255) NOT NULL,
+        calificacion TINYINT NOT NULL,
+        comentario TEXT NOT NULL,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_review_per_item (usuario_id, orden_item_id),
+        INDEX idx_resenas_producto_ref (producto_ref),
+        INDEX idx_resenas_producto_id (producto_id),
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+        FOREIGN KEY (orden_id) REFERENCES ordenes(id) ON DELETE CASCADE,
+        FOREIGN KEY (orden_item_id) REFERENCES orden_items(id) ON DELETE CASCADE
+      )
+    `);
+
+    try {
+      const [legacyItems] = await conn.query(`
+        SELECT oi.id, oi.producto_nombre, oi.producto_id, oi.producto_ref, p.id AS matched_product_id
+        FROM orden_items oi
+        LEFT JOIN productos p ON p.nombre = oi.producto_nombre
+        WHERE oi.producto_id IS NULL OR oi.producto_ref IS NULL OR oi.producto_ref = ''
+      `);
+
+      for (const item of legacyItems) {
+        const productId = item.matched_product_id || item.producto_id || null;
+        const productRef = productId ? `db_${productId}` : buildProductRef(item.producto_nombre);
+        await conn.query(
+          'UPDATE orden_items SET producto_id = ?, producto_ref = ? WHERE id = ?',
+          [productId, productRef, item.id]
+        );
+      }
+    } catch (err) {
+      console.warn('⚠️ No se pudieron completar las referencias legacy de orden_items:', err.message);
+    }
+
     console.log('✅ Base de datos y tablas verificadas');
   } finally {
     conn.release();
   }
 }
 
-module.exports = { pool, initDB };
+module.exports = { pool, initDB, buildProductRef };
