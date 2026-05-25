@@ -1,200 +1,274 @@
-# Recuperacion de Contrasena en Produccion
+# Plan De Recuperacion De Contrasena Sin SMTP
 
-## Estado Actual
+## Objetivo
 
-El flujo actual de recuperacion de contrasena funciona en local, pero es fragil en nube por tres razones principales:
+Definir una estrategia de recuperacion de contrasena que funcione en `Render` sin usar credenciales de `SMTP`, sin dominio propio y priorizando opciones gratuitas.
 
-1. Los codigos se guardan en memoria con `Map`, por lo que se pierden si el servidor se reinicia o cambia de instancia.
-2. El envio de correos depende de `Gmail SMTP`, que suele fallar en produccion por bloqueos, credenciales o politicas del proveedor.
-3. El flujo actual no permite que el usuario defina una nueva contrasena; en su lugar, genera una contrasena temporal y la envia por correo.
+Importante:
 
-## Donde Esta El Problema
+- Este documento describe un plan.
+- No aplica cambios al codigo.
+- La meta es elegir una ruta viable antes de implementar.
 
-- `backend/routes/passwordRecoveryRoutes.js`
-  - Usa `recoveryCodes = new Map()`
-  - Genera y valida el codigo en memoria
-  - Envia una nueva contrasena por correo tras verificar el codigo
+## Contexto Del Problema
 
-- `render.yaml`
-  - Ya contempla `EMAIL_USER` y `EMAIL_PASS`, pero eso no garantiza que Gmail funcione de forma estable en produccion
+Hoy no se quieren usar credenciales de `SMTP` porque no existen credenciales disponibles para eso.
 
-## Por Que Funciona En Local Y Falla En La Nube
+Ademas, se busca una solucion que:
 
-### En local
+- funcione en nube
+- no dependa de un dominio propio
+- sea gratis o lo mas cercana posible a costo cero
+- no obligue a montar `Docker`
 
-- El proceso vive mas tiempo sin reiniciarse
-- El `Map` no se pierde con tanta facilidad
-- Gmail puede aceptar mejor el envio desde tu equipo
+## Conclusion Tecnica Principal
 
-### En nube
+Si se quiere recuperacion de contrasena por correo en produccion, no hace falta `SMTP`, pero si hace falta algun servicio externo que envie emails.
 
-- La instancia puede dormirse, reiniciarse o ser reemplazada
-- Al reiniciarse, el `Map` queda vacio y el codigo deja de existir
-- Gmail puede bloquear o limitar el SMTP desde servidores cloud
+Eso significa:
 
-## Lo Que Docker Si Hace
+- no es obligatorio usar `Gmail SMTP`
+- si es obligatorio usar algun proveedor de envio por `API HTTP` o servicio similar
 
-Docker ayuda a:
+La mejor estrategia es:
 
-- empaquetar el backend y sus dependencias
-- estandarizar el entorno
-- evitar diferencias entre local y servidor
+1. mantener `Render` como backend
+2. mantener la base de datos para guardar codigos o tokens
+3. reemplazar el envio `SMTP` por una `Email API`
 
-Docker no soluciona por si solo:
+## Opcion Recomendada
 
-- la perdida de codigos en memoria
-- la inestabilidad de Gmail SMTP
-- el diseno inseguro del flujo actual
+### Render + Base De Datos + Email API Gratuita
 
-## Opciones Viables
+La ruta recomendada es:
 
-## Opcion 1: Parche Minimo
+- `frontend`: formulario "Olvide mi contrasena"
+- `backend en Render`: genera el codigo o token
+- `base de datos`: guarda el hash del codigo, expiracion, estado e intentos
+- `proveedor de email`: envia el correo por `API`, no por `SMTP`
 
-Mantener el flujo actual, pero reemplazar el almacenamiento en memoria por MySQL.
+Ventajas:
 
-### Cambios
+- evita dependencias de `SMTP`
+- funciona mejor en nube
+- no requiere `Docker`
+- no obliga a cambiar toda la arquitectura del proyecto
 
-- crear una tabla para codigos de recuperacion
-- guardar codigo, correo, expiracion y estado de uso
-- validar el codigo contra base de datos
-- seguir usando Gmail
+## Que Tipo De Recuperacion Conviene
 
-### Ventajas
+Hay dos formas validas:
 
-- cambio rapido
-- poco impacto en frontend
+### Opcion A: Codigo De 6 Digitos
 
-### Desventajas
+Flujo:
 
-- Gmail sigue siendo fragil en produccion
-- el flujo sigue enviando una contrasena por correo, lo cual no es lo ideal
+1. el usuario escribe su correo
+2. el backend genera un codigo de 6 digitos
+3. se guarda solo el `hash` del codigo
+4. el sistema envia el codigo por email
+5. el usuario valida el codigo
+6. el usuario define la nueva contrasena
 
-## Opcion 2: Solucion Recomendada
+Ventajas:
 
-Redisenar el flujo para produccion real.
+- facil de entender para el usuario
+- encaja bien con el flujo actual del proyecto
+- facil de conectar al modal actual
 
-### Flujo recomendado
+### Opcion B: Enlace De Recuperacion
 
-1. El usuario ingresa su correo
-2. El sistema genera un codigo o token con expiracion y lo guarda en MySQL
-3. El usuario recibe el codigo por correo
-4. El usuario ingresa:
-   - correo
-   - codigo
-   - nueva contrasena
-   - confirmar contrasena
-5. El sistema valida el codigo y actualiza la contrasena
-6. El codigo queda marcado como usado o se elimina
+Flujo:
 
-### Ventajas
+1. el usuario escribe su correo
+2. el backend genera un token seguro
+3. el sistema envia un enlace temporal
+4. el usuario abre el enlace
+5. el usuario escribe la nueva contrasena
 
-- funciona bien en produccion
-- no depende de memoria del proceso
-- es mas seguro y profesional
-- permite una mejor experiencia de usuario
+Ventajas:
 
-### Desventajas
+- experiencia mas moderna
+- menos pasos visuales
 
-- requiere refactor del backend y del modal de recuperacion
+Desventaja:
 
-## Opcion 3: Gmail Bien Configurado
+- requiere manejar mejor URLs publicas y validacion de token
 
-Si se quiere seguir con Gmail, se necesita:
+## Recomendacion De Flujo
 
-- cuenta con autenticacion en dos pasos
-- `App Password`, no contrasena normal
-- revisar que `EMAIL_USER` y `EMAIL_PASS` esten definidos realmente en el panel del proveedor cloud
+Para este proyecto conviene mas el flujo por `codigo`, porque:
 
-### Riesgo
+- ya se adapta bien al modal actual
+- evita depender tanto de enlaces externos
+- es mas simple de controlar
+- facilita una migracion sin rehacer toda la interfaz
 
-Aunque quede funcionando, Gmail no es la mejor opcion para un ecommerce en produccion.
+## Requisitos Minimos Del Sistema
 
-## Opcion 4: Proveedor Transaccional
+La recuperacion deberia incluir:
 
-La mejor opcion para produccion es usar un servicio de correo transaccional:
+- codigo o token temporal
+- expiracion corta, por ejemplo `10` a `15` minutos
+- invalidacion de codigos anteriores al generar uno nuevo
+- limite de intentos por correo
+- limite de solicitudes por IP o por usuario
+- contrasena nueva solo despues de verificacion exitosa
+- invalidacion despues de uso
 
-- Resend
-- Brevo
-- SendGrid
-- Postmark
+## Seguridad Minima Recomendada
 
-### Ventajas
+Nunca se debe guardar el codigo plano en base de datos.
 
-- mayor entregabilidad
-- mejor estabilidad
-- menos bloqueos que Gmail
-- enfoque pensado para aplicaciones
+Se recomienda:
+
+- guardar solo `hash` del codigo
+- registrar `expires_at`
+- registrar `used_at`
+- limpiar codigos vencidos
+- limitar solicitudes repetidas
+- devolver respuestas genericas para no revelar si el email existe o no
+
+Ejemplo de respuesta segura:
+
+- "Si el correo existe en el sistema, te enviaremos instrucciones de recuperacion."
+
+## Variables De Entorno Esperadas
+
+Si se usa un proveedor por API, el backend deberia trabajar con variables como estas:
+
+- `EMAIL_API_KEY`
+- `EMAIL_FROM`
+- `APP_URL`
+- `RECOVERY_CODE_TTL_MINUTES`
+
+Segun el proveedor elegido, el nombre exacto puede cambiar.
+
+## Escenarios Posibles
+
+### Escenario 1: Un Proveedor Gratis Permite Remitente Sin Dominio
+
+Este es el mejor caso.
+
+Plan:
+
+- verificar un remitente basico
+- usar su `API key`
+- enviar codigos desde `Render`
+- mantener el flujo completo por email
+
+Resultado:
+
+- recuperacion real por correo
+- sin `SMTP`
+- sin dominio propio
+- con costo `0` mientras alcance el plan gratis
+
+### Escenario 2: El Proveedor Gratis Permite Solo Pruebas O Emails Limitados
+
+En este caso el sistema sirve para desarrollo o pruebas controladas, pero no para todos los clientes.
+
+Plan:
+
+- usar el proveedor solo para testing
+- dejar lista la integracion
+- mas adelante cambiar a un proveedor que permita envio publico
+
+Resultado:
+
+- la arquitectura queda correcta
+- pero el alcance de correos queda limitado
+
+### Escenario 3: Ningun Proveedor Gratis Permite Envio Real Sin Dominio
+
+Si pasa esto, no existe una solucion seria de recuperacion por correo completamente independiente de terceros.
+
+En ese caso hay dos salidas:
+
+- aceptar un proveedor con restricciones gratuitas
+- o cambiar el concepto de recuperacion por una via manual o administrativa
+
+## Alternativas Gratuitas Si No Se Puede Enviar Email Publico
+
+Si definitivamente no se puede usar correo real gratis sin dominio, las alternativas son estas:
+
+### Alternativa 1: Recuperacion Manual Por Soporte
+
+Flujo:
+
+- el usuario solicita ayuda
+- el admin verifica identidad
+- el admin fuerza reinicio o genera codigo manual
+
+Ventaja:
+
+- costo cero
+
+Desventaja:
+
+- no es automatica
+- no escala bien
+
+### Alternativa 2: Codigo Mostrado Solo En Entorno De Pruebas
+
+Flujo:
+
+- el sistema genera el codigo
+- lo muestra solo en logs o panel interno
+
+Ventaja:
+
+- gratis
+- util para testing
+
+Desventaja:
+
+- no sirve para produccion real
+
+### Alternativa 3: Recuperacion Solo Para Usuarios Ya Autenticados
+
+Flujo:
+
+- desde perfil, el usuario autenticado cambia su contrasena
+
+Ventaja:
+
+- gratis
+- no requiere email
+
+Desventaja:
+
+- no resuelve un verdadero "olvide mi contrasena"
+
+## Lo Que No Hace Falta
+
+Para esta solucion no hace falta:
+
+- `SMTP`
+- `Docker`
+- rehacer toda la app
+- dominio propio, si el proveedor elegido no lo exige
+
+## Plan De Implementacion Futuro
+
+Cuando se decida aplicar este plan, el orden recomendado seria:
+
+1. elegir proveedor de email por `API`
+2. confirmar si permite uso sin dominio
+3. definir si se usara `codigo` o `link`
+4. dejar la tabla de recuperacion en MySQL
+5. integrar el envio desde `Render`
+6. validar expiracion, reintentos y bloqueo por abuso
+7. probar el flujo completo en nube
 
 ## Recomendacion Final
 
-La opcion recomendada es:
+La mejor decision para este proyecto es:
 
-1. mover los codigos a MySQL
-2. dejar de enviar contrasenas nuevas por correo
-3. usar flujo de `codigo + nueva contrasena + confirmar contrasena`
-4. migrar de Gmail a un proveedor transaccional
+- usar `Render`
+- usar base de datos para codigos
+- usar una `Email API` gratuita en lugar de `SMTP`
+- mantener recuperacion por `codigo`
 
-## Estructura Recomendada
+Si el proveedor gratuito deja enviar sin dominio, esa es la ruta ideal.
 
-### Nueva tabla sugerida
-
-`password_reset_codes`
-
-Campos sugeridos:
-
-- `id`
-- `email`
-- `code_hash`
-- `expires_at`
-- `used`
-- `created_at`
-
-### Endpoints sugeridos
-
-- `POST /api/recovery/request-code`
-- `POST /api/recovery/verify-code`
-- `POST /api/recovery/reset-password`
-
-### Frontend sugerido
-
-Paso 1:
-
-- ingresar correo
-
-Paso 2:
-
-- ingresar codigo
-
-Paso 3:
-
-- nueva contrasena
-- confirmar contrasena
-
-## Que No Se Recomienda
-
-- guardar codigos en memoria
-- enviar contrasenas nuevas por correo
-- depender de Gmail como solucion final enterprise
-- pensar que Docker por si solo resuelve el problema
-
-## Siguiente Implementacion Recomendada
-
-Si se va a corregir este modulo, el siguiente orden ideal es:
-
-1. crear tabla de recuperacion en MySQL
-2. refactorizar `passwordRecoveryRoutes.js`
-3. actualizar el modal del frontend para nueva contrasena y confirmacion
-4. probar en local
-5. desplegar en nube con proveedor de correo estable
-
-## Conclusion
-
-El fallo actual en nube no depende principalmente de compilacion ni de Docker.
-
-El problema real es una combinacion de:
-
-- estado temporal guardado en memoria
-- dependencia fragil de Gmail SMTP
-- flujo de recuperacion poco apropiado para produccion
-
-La solucion correcta es redisenar el modulo para persistencia real y correo transaccional.
+Si no lo permite, el sistema todavia puede mantenerse listo y luego cambiar solo el proveedor, sin rehacer el flujo completo.
