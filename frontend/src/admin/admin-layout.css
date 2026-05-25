@@ -796,13 +796,14 @@
   max-height: calc(100vh - 40px);
   overflow-y: auto;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .admin-edit-product-header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+  position: relative;
   background: linear-gradient(145deg, rgba(21, 21, 21, 0.98), rgba(15, 15, 15, 0.99));
+  padding-top: 4px;
 }
 
 .admin-edit-product-form {
@@ -844,12 +845,11 @@
 }
 
 .admin-edit-product-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
+  position: relative;
   background: linear-gradient(180deg, rgba(15, 15, 15, 0.82), rgba(10, 10, 10, 0.98));
   padding-top: 18px !important;
-  margin-top: 8px;
+  margin-top: 24px;
+  padding-bottom: 4px;
 }
 
 .action-btn {
