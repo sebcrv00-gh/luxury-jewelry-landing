@@ -1134,6 +1134,7 @@ button {
   border: 1px solid rgba(201, 168, 76, 0.08);
   display: flex;
   flex-direction: column;
+  min-height: 100%;
 }
 
 .product-card:hover {
@@ -1145,12 +1146,15 @@ button {
 .product-card .product-image-wrap {
   position: relative;
   overflow: hidden;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(180deg, rgba(22, 22, 22, 0.96), rgba(10, 10, 10, 0.98));
 }
 
 .product-card img {
   width: 100%;
-  height: 320px;
+  height: 100%;
   object-fit: cover;
+  object-position: center;
   transition: transform 0.8s var(--ease-out-expo), filter 0.5s;
   filter: brightness(0.9) contrast(1.05);
 }
@@ -1167,6 +1171,7 @@ button {
   flex-direction: column;
   align-items: center;
   text-align: center;
+  justify-content: flex-start;
 }
 
 .product-card h3 {
@@ -1177,6 +1182,11 @@ button {
   color: var(--text-primary);
   margin-bottom: 8px;
   letter-spacing: 2px;
+  min-height: 2.7em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .product-card .price {
@@ -1185,6 +1195,24 @@ button {
   color: var(--gold-light);
   margin-bottom: 24px;
   letter-spacing: 1px;
+}
+
+.catalog-product-card {
+  height: 100%;
+}
+
+.catalog-product-desc {
+  width: 100%;
+  min-height: 3.8em !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.catalog-product-colors-note {
+  min-height: 1.3em;
+  width: 100%;
 }
 
 .catalog-card-review-meta {
@@ -1196,6 +1224,7 @@ button {
   margin: -8px 0 22px;
   color: var(--text-muted);
   font-size: 0.76rem;
+  min-height: 22px;
 }
 
 .catalog-card-review-stars,
@@ -2010,7 +2039,7 @@ footer p+p {
   }
 
   .product-card img {
-    height: 220px;
+    height: 100%;
   }
 
   .product-card .product-info {
@@ -2020,6 +2049,11 @@ footer p+p {
   .product-card h3 {
     font-size: 0.82rem;
     letter-spacing: 1px;
+    min-height: 2.5em;
+  }
+
+  .catalog-product-desc {
+    min-height: 3.5em !important;
   }
 
   .product-card .price {
@@ -2298,7 +2332,7 @@ footer p+p {
   }
 
   .product-card img {
-    height: 280px;
+    height: 100%;
   }
 
   .carousel-arrow {

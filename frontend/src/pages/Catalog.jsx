@@ -275,7 +275,7 @@ export default function Catalog() {
               {filtered.map(p => {
                 const reviewSummary = getProductReviewSummary(p);
                 return (
-                <div className={`product-card ${p.stock === 0 ? 'out-of-stock' : ''}`} key={p.id}>
+                <div className={`product-card catalog-product-card ${p.stock === 0 ? 'out-of-stock' : ''}`} key={p.id}>
                   <div className="product-image-wrap">
                     <img src={p.img} alt={p.nombre} style={p.stock === 0 ? { filter: 'grayscale(0.8) opacity(0.6)' } : {}} />
                     <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p.dbProductId); }} style={{ position: 'absolute', top: '12px', right: '12px', background: isInWishlist(p.dbProductId) ? 'rgba(231,76,60,0.9)' : 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', zIndex: 3, color: '#fff' }}
@@ -298,7 +298,7 @@ export default function Catalog() {
                   </div>
                   <div className="product-info">
                     <h3>{p.nombre}</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: '1.55', minHeight: '42px', marginBottom: '14px' }}>
+                    <p className="catalog-product-desc" style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: '1.55', minHeight: '42px', marginBottom: '14px' }}>
                       {p.descripcion.length > 92 ? `${p.descripcion.slice(0, 92)}...` : p.descripcion}
                     </p>
                     {isVip ? (
@@ -320,7 +320,7 @@ export default function Catalog() {
                       </span>
                     </div>
                     {p.variantes.length > 0 && (
-                      <div style={{ color: 'var(--gold)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '14px' }}>
+                      <div className="catalog-product-colors-note" style={{ color: 'var(--gold)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '14px' }}>
                         {p.variantes.length} colores disponibles
                       </div>
                     )}

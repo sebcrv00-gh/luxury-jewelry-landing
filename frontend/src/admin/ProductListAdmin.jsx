@@ -326,9 +326,9 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
 
       {/* ── Modal de Edición ── */}
       {editProduct && (
-        <div className="modal-overlay" onClick={() => setEditProduct(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="luxury-modal-content" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '640px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px' }}>
+        <div className="modal-overlay admin-edit-product-overlay" onClick={() => setEditProduct(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="luxury-modal-content admin-edit-product-modal" onClick={e => e.stopPropagation()}>
+            <div className="admin-edit-product-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '16px' }}>
               <h3 className="text-gold-light" style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.6rem' }}>
                 Auditoria de Pieza
               </h3>
@@ -341,8 +341,8 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
               </div>
             )}
 
-            <form onSubmit={handleEditSave}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+            <form onSubmit={handleEditSave} className="admin-edit-product-form">
+              <div className="admin-edit-product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Denominación</label>
                   <input type="text" value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} required />
@@ -364,7 +364,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                 <textarea rows="3" value={editForm.descripcion} onChange={e => setEditForm({ ...editForm, descripcion: e.target.value })} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+              <div className="admin-edit-product-grid admin-edit-product-grid--compact" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '24px', marginBottom: '32px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Valor (COP)</label>
                   <input type="number" step="0.01" value={editForm.precio} onChange={e => setEditForm({ ...editForm, precio: e.target.value })} required />
@@ -381,7 +381,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginBottom: '24px' }}>
+              <div className="form-group admin-edit-upload-group" style={{ marginBottom: '24px' }}>
                   <label>Actualizar Fotografía</label>
                   <input id="edit-main-image" type="file" accept="image/*" onChange={e => assignMainEditImage(e.target.files[0])} style={{ display: 'none' }} />
                   <label
@@ -421,7 +421,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                   </label>
               </div>
 
-              <div className="glass-card" style={{ padding: '20px', marginBottom: '24px' }}>
+              <div className="glass-card admin-edit-variants-panel" style={{ padding: '20px', marginBottom: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '18px', flexWrap: 'wrap' }}>
                   <div>
                     <h4 className="text-gold-light" style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.15rem' }}>
@@ -447,10 +447,10 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                     Este producto no tiene variantes de color registradas.
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gap: '18px' }}>
+                  <div className="admin-edit-variants-list" style={{ display: 'grid', gap: '18px' }}>
                     {(editForm.variantes || []).map((variant, index) => (
-                      <div key={variant.key} style={{ border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '16px', background: 'rgba(255,255,255,0.02)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <div key={variant.key} className="admin-edit-variant-card" style={{ border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '16px', background: 'rgba(255,255,255,0.02)' }}>
+                        <div className="admin-edit-variant-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                           <strong style={{ color: 'var(--gold-light)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Palette size={16} />
                             Variante {index + 1}
@@ -464,7 +464,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                           </button>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                        <div className="admin-edit-variant-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                           <div className="form-group" style={{ marginBottom: 0 }}>
                             <label>Nombre del color</label>
                             <input type="text" value={variant.colorNombre} onChange={e => updateEditVariant(variant.key, 'colorNombre', e.target.value)} required />
@@ -533,7 +533,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
+              <div className="admin-edit-product-actions" style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
                 <button type="button" className="btn-outline" onClick={() => setEditProduct(null)}>
                   Descartar
                 </button>
