@@ -169,22 +169,24 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
       );
       if (editImage) formData.append('imagen', editImage);
 
-      const payloadVariantes = variants.map((variant, index) => {
-        const imageField = `variante_imagen_${index}`;
-        if (variant.imagen) {
-          formData.append(imageField, variant.imagen);
-        }
-        return {
-          id: variant.id,
-          color_nombre: variant.colorNombre,
-          color_codigo: variant.colorCodigo,
-          stock: Number(variant.stock || 0),
-          existingImageUrl: variant.existingImageUrl,
-          imageField,
-          orden: index
-        };
-      });
-      formData.append('variantes', JSON.stringify(payloadVariantes));
+      if (hasVariants) {
+        const payloadVariantes = variants.map((variant, index) => {
+          const imageField = `variante_imagen_${index}`;
+          if (variant.imagen) {
+            formData.append(imageField, variant.imagen);
+          }
+          return {
+            id: variant.id,
+            color_nombre: variant.colorNombre,
+            color_codigo: variant.colorCodigo,
+            stock: Number(variant.stock || 0),
+            existingImageUrl: variant.existingImageUrl,
+            imageField,
+            orden: index
+          };
+        });
+        formData.append('variantes', JSON.stringify(payloadVariantes));
+      }
 
       await api.put(`/products/${editProduct.id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }

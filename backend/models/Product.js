@@ -151,13 +151,14 @@ const Product = {
       const values = [];
       const variantsProvided = Object.prototype.hasOwnProperty.call(data, 'variantes');
       const variants = variantsProvided ? normalizeVariants(data.variantes) : current.variantes || [];
+      const shouldManageVariants = variantsProvided && (variants.length > 0 || (current.variantes || []).length > 0);
 
       if (data.nombre !== undefined) { fields.push('nombre = ?'); values.push(data.nombre); }
       if (data.descripcion !== undefined) { fields.push('descripcion = ?'); values.push(data.descripcion); }
       if (data.precio !== undefined) { fields.push('precio = ?'); values.push(data.precio); }
       if (data.categoria !== undefined) { fields.push('categoria = ?'); values.push(data.categoria); }
 
-      if (variantsProvided) {
+      if (shouldManageVariants) {
         fields.push('stock = ?');
         values.push(getVariantTotalStock(variants));
       } else if (data.stock !== undefined) {
@@ -178,7 +179,7 @@ const Product = {
         await conn.query(`UPDATE productos SET ${fields.join(', ')} WHERE id = ?`, values);
       }
 
-      if (variantsProvided) {
+      if (shouldManageVariants) {
         await conn.query('DELETE FROM producto_variantes WHERE producto_id = ?', [id]);
         if (variants.length > 0) {
           await this.insertVariants(conn, id, variants);
