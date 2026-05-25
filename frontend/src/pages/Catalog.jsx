@@ -4,18 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock, Star, MessageSquare } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
 
-const STATIC_PRODUCTS = [
-  { id: 's1', nombre: 'Reloj Invicta Original', precio: 790000, img: '/images/WhatsApp Image 2025-10-02 at 10.03.51 AM.jpeg' },
-  { id: 's2', nombre: 'Curren Cronograph', precio: 170000, img: '/images/WhatsApp Image 2025-10-02 at 10.06.07 AM.jpeg' },
-  { id: 's3', nombre: 'Q&Q Metálico Hombre', precio: 98000, img: '/images/WhatsApp Image 2025-10-02 at 10.06.59 AM.jpeg' },
-  { id: 's4', nombre: 'Q&Q Sumergible Dama', precio: 75000, img: '/images/WhatsApp Image 2025-10-02 at 10.11.35 AM.jpeg' },
-  { id: 's5', nombre: 'Pulsera Elegante', precio: 44000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.10 AM.jpeg' },
-  { id: 's6', nombre: 'Pulsera Oro Laminado', precio: 35000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.08 AM.jpeg' },
-  { id: 's7', nombre: 'Conjunto Collar y Aretes', precio: 38000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.04 AM.jpeg' },
-  { id: 's8', nombre: 'Pulsera Dorada', precio: 38000, img: '/images/WhatsApp Image 2025-10-10 at 10.23.51 AM.jpeg' },
-  { id: 's9', nombre: 'Aretes Artesanales', precio: 28000, img: '/images/WhatsApp Image 2025-10-10 at 10.23.34 AM.jpeg' },
-];
-
 const CATEGORIES = ['Todas las colecciones', 'Relojes', 'Pulseras', 'Collares', 'Aretes', 'Anillos', 'Otros'];
 
 const getCategoryFromName = (name) => {
@@ -68,7 +56,6 @@ export default function Catalog() {
   const isVip = user?.rol === 'vip';
   const VIP_DISCOUNT = 0.10;
   const [wishlistIds, setWishlistIds] = useState(new Set());
-  const [localWishlist, setLocalWishlist] = useState(new Set());
 
   const scrollCarousel = (direction) => {
     if (carouselRef.current) {
@@ -97,32 +84,13 @@ export default function Catalog() {
       api.get('/wishlist').then(r => {
         setWishlistIds(new Set(r.data.map(w => w.producto_id)));
       }).catch(() => {});
-      // Load local wishlist for static products
-      const saved = JSON.parse(localStorage.getItem(`luxury_local_wishlist_${user?.id}`) || '[]');
-      setLocalWishlist(new Set(saved));
     }
   }, [isLoggedIn]);
 
-  const isInWishlist = (productId) => {
-    if (typeof productId === 'string') return localWishlist.has(productId);
-    return wishlistIds.has(productId);
-  };
+  const isInWishlist = (productId) => wishlistIds.has(productId);
 
   const toggleWishlist = async (productId) => {
     if (!isLoggedIn) { setShowPopup(true); return; }
-
-    // Static products (string IDs) -> localStorage
-    if (typeof productId === 'string') {
-      setLocalWishlist(prev => {
-        const n = new Set(prev);
-        if (n.has(productId)) n.delete(productId); else n.add(productId);
-        localStorage.setItem(`luxury_local_wishlist_${user?.id}`, JSON.stringify([...n]));
-        return n;
-      });
-      return;
-    }
-
-    // DB products (numeric IDs) -> API
     try {
       if (wishlistIds.has(productId)) {
         await api.delete(`/wishlist/${productId}`);
@@ -134,24 +102,16 @@ export default function Catalog() {
     } catch (e) { console.error(e); }
   };
 
-  const allProducts = [
-    ...STATIC_PRODUCTS.map(p => ({
-      ...p,
-      categoria: getCategoryFromName(p.nombre),
-      reviewRef: buildProductReviewRef(p.nombre),
-      dbProductId: null
-    })),
-    ...dbProducts.map(p => ({
-      id: `db_${p.id}`,
-      dbProductId: p.id,
-      nombre: p.nombre,
-      precio: Number(p.precio),
-      img: p.imagen_url ? getImageUrl(p.imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png',
-      stock: p.stock,
-      categoria: getCategoryFromName(p.nombre),
-      reviewRef: buildProductReviewRef(p.nombre)
-    }))
-  ];
+  const allProducts = dbProducts.map(p => ({
+    id: `db_${p.id}`,
+    dbProductId: p.id,
+    nombre: p.nombre,
+    precio: Number(p.precio),
+    img: p.imagen_url ? getImageUrl(p.imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png',
+    stock: p.stock,
+    categoria: getCategoryFromName(p.nombre),
+    reviewRef: buildProductReviewRef(p.nombre)
+  }));
 
   const filtered = allProducts.filter(p => {
     const matchSearch = p.nombre.toLowerCase().includes(search.toLowerCase());
@@ -297,11 +257,11 @@ export default function Catalog() {
                 <div className={`product-card ${p.stock === 0 ? 'out-of-stock' : ''}`} key={p.id}>
                   <div className="product-image-wrap">
                     <img src={p.img} alt={p.nombre} style={p.stock === 0 ? { filter: 'grayscale(0.8) opacity(0.6)' } : {}} />
-                    <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }} style={{ position: 'absolute', top: '12px', right: '12px', background: isInWishlist(p.id) ? 'rgba(231,76,60,0.9)' : 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', zIndex: 3, color: '#fff' }}
+                    <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p.dbProductId); }} style={{ position: 'absolute', top: '12px', right: '12px', background: isInWishlist(p.dbProductId) ? 'rgba(231,76,60,0.9)' : 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', zIndex: 3, color: '#fff' }}
                       onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
                       onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                     >
-                      <Heart size={16} fill={isInWishlist(p.id) ? '#fff' : 'none'} />
+                      <Heart size={16} fill={isInWishlist(p.dbProductId) ? '#fff' : 'none'} />
                     </button>
                     {p.stock === 0 && (
                       <div style={{

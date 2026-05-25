@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 import { RefreshCw, PackageOpen, AlertCircle, Receipt, Clock3, CircleDollarSign, Truck } from 'lucide-react';
 import api from '../api/axios';
 
+const ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
+
 export default function OrderListAdmin({ refreshTrigger }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [statusFeedback, setStatusFeedback] = useState('');
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -22,6 +26,22 @@ export default function OrderListAdmin({ refreshTrigger }) {
   useEffect(() => {
     fetchOrders();
   }, [refreshTrigger]);
+
+  const updateOrderStatus = async (orderId, nextStatus) => {
+    setUpdatingOrderId(orderId);
+    setStatusFeedback('');
+    try {
+      const { data } = await api.put(`/orders/${orderId}/status`, { estado: nextStatus });
+      setOrders(prev => prev.map(order => (
+        order.id === orderId ? { ...order, ...data.order } : order
+      )));
+      setStatusFeedback(`Pedido #${String(orderId).padStart(5, '0')} actualizado a ${nextStatus}.`);
+    } catch (err) {
+      setStatusFeedback(err.response?.data?.error || 'No fue posible actualizar el estado del pedido.');
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
 
   if (loading && orders.length === 0) {
     return (
@@ -118,6 +138,15 @@ export default function OrderListAdmin({ refreshTrigger }) {
             </div>
           </div>
 
+          {statusFeedback && (
+            <div
+              className="admin-badge-pill info"
+              style={{ marginBottom: '18px', display: 'inline-flex', width: 'fit-content' }}
+            >
+              {statusFeedback}
+            </div>
+          )}
+
           <table className="luxury-table">
             <thead>
               <tr>
@@ -126,13 +155,14 @@ export default function OrderListAdmin({ refreshTrigger }) {
                 <th>Ciudad Destino</th>
                 <th>Total (COP)</th>
                 <th>Estado</th>
+                <th>Gestión</th>
                 <th style={{ textAlign: 'center' }}>Fecha</th>
               </tr>
             </thead>
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '80px 0' }}>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '80px 0' }}>
                     <PackageOpen size={48} className="text-muted" style={{ margin: '0 auto 16px', opacity: 0.5 }} />
                     <h4 className="text-gold-light" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Sin Pedidos Registrados</h4>
                   </td>
@@ -159,6 +189,31 @@ export default function OrderListAdmin({ refreshTrigger }) {
                       <span className={`admin-badge-pill ${getStatusClass(order.estado)}`}>
                         {order.estado}
                       </span>
+                    </td>
+                    <td>
+                      <select
+                        value={order.estado}
+                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                        disabled={updatingOrderId === order.id}
+                        style={{
+                          width: '100%',
+                          minWidth: '150px',
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(201, 168, 76, 0.18)',
+                          borderRadius: '10px',
+                          color: 'var(--text-primary)',
+                          padding: '10px 12px',
+                          outline: 'none',
+                          textTransform: 'capitalize',
+                          cursor: updatingOrderId === order.id ? 'wait' : 'pointer'
+                        }}
+                      >
+                        {ORDER_STATUSES.map(status => (
+                          <option key={status} value={status} style={{ color: '#111' }}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                       {new Date(order.creado_en).toLocaleDateString('es-CO')}

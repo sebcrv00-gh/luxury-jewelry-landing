@@ -30,18 +30,6 @@ const STATUS_MAP = {
   cancelado: { label: 'Cancelado', color: '#e74c3c', icon: AlertCircle },
 };
 
-const STATIC_PRODUCTS = [
-  { id: 's1', nombre: 'Reloj Invicta Original', precio: 790000, img: '/images/WhatsApp Image 2025-10-02 at 10.03.51 AM.jpeg' },
-  { id: 's2', nombre: 'Curren Cronograph', precio: 170000, img: '/images/WhatsApp Image 2025-10-02 at 10.06.07 AM.jpeg' },
-  { id: 's3', nombre: 'Q&Q Metálico Hombre', precio: 98000, img: '/images/WhatsApp Image 2025-10-02 at 10.06.59 AM.jpeg' },
-  { id: 's4', nombre: 'Q&Q Sumergible Dama', precio: 75000, img: '/images/WhatsApp Image 2025-10-02 at 10.11.35 AM.jpeg' },
-  { id: 's5', nombre: 'Pulsera Elegante', precio: 44000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.10 AM.jpeg' },
-  { id: 's6', nombre: 'Pulsera Oro Laminado', precio: 35000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.08 AM.jpeg' },
-  { id: 's7', nombre: 'Conjunto Collar y Aretes', precio: 38000, img: '/images/WhatsApp Image 2025-10-10 at 10.24.04 AM.jpeg' },
-  { id: 's8', nombre: 'Pulsera Dorada', precio: 38000, img: '/images/WhatsApp Image 2025-10-10 at 10.23.51 AM.jpeg' },
-  { id: 's9', nombre: 'Aretes Artesanales', precio: 28000, img: '/images/WhatsApp Image 2025-10-10 at 10.23.34 AM.jpeg' },
-];
-
 const RETURN_REASONS = [
   'Producto equivocado',
   'Producto dañado o defectuoso',
@@ -113,29 +101,15 @@ export default function ClientDashboard() {
   const loadWishlist = async () => {
     try {
       const { data } = await api.get('/wishlist');
-      // Merge DB items with local static wishlist
-      const localIds = JSON.parse(localStorage.getItem(`luxury_local_wishlist_${user?.id}`) || '[]');
-      const localItems = localIds.map(id => {
-        const sp = STATIC_PRODUCTS.find(p => p.id === id);
-        if (!sp) return null;
-        return { id: `local_${sp.id}`, producto_id: sp.id, nombre: sp.nombre, precio: sp.precio, imagen_url: null, img: sp.img, stock: 99, isLocal: true };
-      }).filter(Boolean);
-      setWishlist([...data, ...localItems]);
+      setWishlist(data);
     } catch (e) { console.error(e); }
   };
   const loadAddresses = async () => { try { const { data } = await api.get('/addresses'); setAddresses(data); } catch (e) { console.error(e); } };
   const loadTickets = async () => { try { const { data } = await api.get('/tickets'); setTickets(data); } catch (e) { console.error(e); } };
 
-  const removeWishlistItem = async (productId, isLocal = false) => {
-    if (isLocal) {
-      const localIds = JSON.parse(localStorage.getItem(`luxury_local_wishlist_${user?.id}`) || '[]');
-      const updated = localIds.filter(id => id !== productId);
-      localStorage.setItem(`luxury_local_wishlist_${user?.id}`, JSON.stringify(updated));
-      loadWishlist();
-    } else {
-      await api.delete(`/wishlist/${productId}`);
-      loadWishlist();
-    }
+  const removeWishlistItem = async (productId) => {
+    await api.delete(`/wishlist/${productId}`);
+    loadWishlist();
   };
   const deleteAddress = async (id) => { await api.delete(`/addresses/${id}`); loadAddresses(); };
   const setDefaultAddress = async (id) => { await api.put(`/addresses/${id}/default`); loadAddresses(); };
@@ -357,19 +331,16 @@ export default function ClientDashboard() {
                 {wishlist.map(item => (
                   <div className="cd-wish-card" key={item.id}>
                     <div className="cd-wish-img">
-                      {item.isLocal
-                        ? <img src={item.img} alt={item.nombre}/>
-                        : item.imagen_url ? <img src={getImageUrl(item.imagen_url)} alt={item.nombre}/> : <div className="cd-wish-placeholder"><Heart size={32}/></div>
-                      }
+                      {item.imagen_url ? <img src={getImageUrl(item.imagen_url)} alt={item.nombre}/> : <div className="cd-wish-placeholder"><Heart size={32}/></div>}
                     </div>
                     <div className="cd-wish-info">
                       <h4>{item.nombre}</h4>
                       <p className="cd-wish-price">${Number(item.precio).toLocaleString('es-CO')}</p>
-                      <span className="cd-wish-stock">{item.isLocal ? 'Disponible' : item.stock > 0 ? `${item.stock} en stock` : 'Agotado'}</span>
+                      <span className="cd-wish-stock">{item.stock > 0 ? `${item.stock} en stock` : 'Agotado'}</span>
                     </div>
                     <div className="cd-wish-actions">
                       <button className="cd-action-btn small" onClick={() => navigate('/catalogo')}>Ver en tienda</button>
-                      <button className="cd-remove-btn" onClick={() => removeWishlistItem(item.isLocal ? item.producto_id : item.producto_id, !!item.isLocal)}><Trash2 size={14}/></button>
+                      <button className="cd-remove-btn" onClick={() => removeWishlistItem(item.producto_id)}><Trash2 size={14}/></button>
                     </div>
                   </div>
                 ))}

@@ -93,6 +93,24 @@ const Order = {
   async getAll() {
     const [orders] = await pool.query('SELECT o.*, u.nombre as usuario_nombre, u.email as usuario_email FROM ordenes o JOIN usuarios u ON o.usuario_id = u.id ORDER BY o.creado_en DESC');
     return orders;
+  },
+
+  async updateStatus(orderId, estado) {
+    const [result] = await pool.query(
+      'UPDATE ordenes SET estado = ? WHERE id = ?',
+      [estado, orderId]
+    );
+
+    if (result.affectedRows === 0) {
+      return null;
+    }
+
+    const [orders] = await pool.query(
+      'SELECT o.*, u.nombre as usuario_nombre, u.email as usuario_email FROM ordenes o JOIN usuarios u ON o.usuario_id = u.id WHERE o.id = ? LIMIT 1',
+      [orderId]
+    );
+
+    return orders[0] || null;
   }
 };
 

@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const ALLOWED_ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
 
 const orderController = {
   // POST /api/orders — Crear una nueva orden
@@ -68,6 +69,27 @@ const orderController = {
       return res.json(orders);
     } catch (err) {
       console.error('Error al obtener todas las órdenes:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+  },
+
+  // PUT /api/orders/:id/status — Actualizar estado de orden (admin)
+  async updateStatus(req, res) {
+    try {
+      const { estado } = req.body;
+
+      if (!estado || !ALLOWED_ORDER_STATUSES.includes(estado)) {
+        return res.status(400).json({ error: 'Estado de pedido no válido' });
+      }
+
+      const updatedOrder = await Order.updateStatus(req.params.id, estado);
+      if (!updatedOrder) {
+        return res.status(404).json({ error: 'Orden no encontrada' });
+      }
+
+      return res.json({ ok: true, order: updatedOrder });
+    } catch (err) {
+      console.error('Error al actualizar estado de la orden:', err);
       return res.status(500).json({ error: 'Error del servidor' });
     }
   }
