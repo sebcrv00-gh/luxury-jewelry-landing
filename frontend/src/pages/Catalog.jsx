@@ -357,47 +357,48 @@ export default function Catalog() {
             borderRadius: '16px', border: '1px solid var(--border-gold)', boxShadow: '0 30px 80px rgba(0,0,0,0.8)',
             display: 'flex', overflow: 'hidden'
           }}>
-            <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', zIndex: 2, transition: 'color 0.3s' }} onMouseOver={e => e.currentTarget.style.color='var(--rose-gold)'} onMouseOut={e => e.currentTarget.style.color='var(--text-muted)'}>
+            <button className="product-detail-close" onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', zIndex: 2, transition: 'color 0.3s' }} onMouseOver={e => e.currentTarget.style.color='var(--rose-gold)'} onMouseOut={e => e.currentTarget.style.color='var(--text-muted)'}>
               <X size={32} strokeWidth={1} />
             </button>
             <div className="modal-img-col" style={{ flex: '1', position: 'relative', minHeight: '480px' }}>
                <img src={activeImage} alt={selectedProduct.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.95)' }} />
-               <div style={{ position: 'absolute', top: '24px', left: '24px', background: 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: '1px solid var(--gold)', padding: '6px 16px', borderRadius: '4px', color: 'var(--gold)', letterSpacing: '2px', fontSize: '0.7rem', textTransform: 'uppercase' }}>
+               <div className="product-detail-category" style={{ position: 'absolute', top: '24px', left: '24px', background: 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: '1px solid var(--gold)', padding: '6px 16px', borderRadius: '4px', color: 'var(--gold)', letterSpacing: '2px', fontSize: '0.7rem', textTransform: 'uppercase' }}>
                   {selectedProduct.categoria}
                </div>
             </div>
             <div className="modal-info-col" style={{ flex: '1', padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: '1.1' }}>{selectedProduct.nombre}</h2>
+               <h2 className="product-detail-title" style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: '1.1' }}>{selectedProduct.nombre}</h2>
                {isVip ? (
-                 <div style={{ marginBottom: '24px' }}>
-                   <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '1rem', marginRight: '14px' }}>${selectedProduct.precio.toLocaleString('es-CO')}</span>
-                   <span style={{ fontSize: '1.8rem', color: '#FFD700', fontWeight: '500', letterSpacing: '1px' }}>${Math.round(selectedProduct.precio * (1 - VIP_DISCOUNT)).toLocaleString('es-CO')}</span>
-                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '12px', background: 'rgba(255,215,0,0.1)', padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(255,215,0,0.25)' }}>
+                 <div className="product-detail-price-block" style={{ marginBottom: '24px' }}>
+                   <span className="product-detail-price-original" style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '1rem', marginRight: '14px' }}>${selectedProduct.precio.toLocaleString('es-CO')}</span>
+                   <span className="product-detail-price-vip" style={{ fontSize: '1.8rem', color: '#FFD700', fontWeight: '500', letterSpacing: '1px' }}>${Math.round(selectedProduct.precio * (1 - VIP_DISCOUNT)).toLocaleString('es-CO')}</span>
+                   <div className="product-detail-vip-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginLeft: '12px', background: 'rgba(255,215,0,0.1)', padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(255,215,0,0.25)' }}>
                      <Crown size={12} style={{ color: '#FFD700' }}/>
                      <span style={{ color: '#FFD700', fontSize: '0.65rem', fontWeight: '600', letterSpacing: '1.5px', textTransform: 'uppercase' }}>-10% VIP</span>
                    </div>
                  </div>
                ) : (
-                 <p style={{ fontSize: '1.6rem', color: 'var(--gold-light)', fontWeight: '400', marginBottom: '24px', letterSpacing: '1px' }}>${selectedProduct.precio.toLocaleString('es-CO')}</p>
+                 <p className="product-detail-price" style={{ fontSize: '1.6rem', color: 'var(--gold-light)', fontWeight: '400', marginBottom: '24px', letterSpacing: '1px' }}>${selectedProduct.precio.toLocaleString('es-CO')}</p>
                )}
-               <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.7', marginBottom: '40px', fontWeight: '300' }}>
+               <p className="product-detail-description" style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.7', marginBottom: '40px', fontWeight: '300' }}>
                   {selectedProduct.descripcion}
                </p>
                {selectedProduct.variantes.length > 0 && (
-                 <div style={{ marginBottom: '28px' }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                 <div className="product-detail-variants" style={{ marginBottom: '28px' }}>
+                   <div className="product-detail-variants-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                     <span className="product-detail-variants-label" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>
                        Selecciona un color
                      </span>
-                     <strong style={{ color: 'var(--gold-light)', fontSize: '0.9rem' }}>
+                     <strong className="product-detail-variant-name" style={{ color: 'var(--gold-light)', fontSize: '0.9rem' }}>
                        {activeVariant?.color_nombre || 'Sin color seleccionado'}
                      </strong>
                    </div>
-                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                   <div className="product-detail-variants-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                      {selectedProduct.variantes.map(variant => {
                        const isActive = activeVariant?.id === variant.id;
                        return (
                          <button
+                           className={`product-detail-variant-chip ${isActive ? 'active' : ''}`}
                            key={variant.id}
                            type="button"
                            onClick={() => {
@@ -416,15 +417,15 @@ export default function Catalog() {
                              cursor: 'pointer'
                            }}
                          >
-                           <span style={{
+                           <span className="product-detail-variant-swatch" style={{
                              width: '16px',
                              height: '16px',
                              borderRadius: '50%',
                              background: variant.color_codigo || '#D4AF37',
                              border: '1px solid rgba(255,255,255,0.4)'
                            }} />
-                           <span>{variant.color_nombre}</span>
-                           <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                           <span className="product-detail-variant-chip-name">{variant.color_nombre}</span>
+                           <span className="product-detail-variant-chip-stock" style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                              {variant.stock > 0 ? `${variant.stock} uds` : 'Agotado'}
                            </span>
                          </button>
@@ -472,16 +473,16 @@ export default function Catalog() {
                    </div>
                  )}
                </div>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '30px', marginBottom: '40px' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>Cantidad</span>
-                  <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(201, 168, 76, 0.4)', borderRadius: '50px', padding: '4px' }}>
-                     <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }} onMouseOver={e=>e.currentTarget.style.color='var(--gold)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-secondary)'}><Minus size={16} /></button>
-                     <span style={{ width: '40px', textAlign: 'center', fontSize: '1rem', color: 'var(--text-primary)', fontWeight: '500' }}>{quantity}</span>
-                     <button onClick={() => setQuantity(selectedStock !== undefined ? Math.min(selectedStock, quantity + 1) : quantity + 1)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }} onMouseOver={e=>e.currentTarget.style.color='var(--gold)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-secondary)'}><Plus size={16} /></button>
+               <div className="product-detail-quantity-row" style={{ display: 'flex', alignItems: 'center', gap: '30px', marginBottom: '40px' }}>
+                  <span className="product-detail-quantity-label" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>Cantidad</span>
+                  <div className="product-detail-quantity-box" style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(201, 168, 76, 0.4)', borderRadius: '50px', padding: '4px' }}>
+                     <button className="product-detail-quantity-btn" onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }} onMouseOver={e=>e.currentTarget.style.color='var(--gold)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-secondary)'}><Minus size={16} /></button>
+                     <span className="product-detail-quantity-value" style={{ width: '40px', textAlign: 'center', fontSize: '1rem', color: 'var(--text-primary)', fontWeight: '500' }}>{quantity}</span>
+                     <button className="product-detail-quantity-btn" onClick={() => setQuantity(selectedStock !== undefined ? Math.min(selectedStock, quantity + 1) : quantity + 1)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }} onMouseOver={e=>e.currentTarget.style.color='var(--gold)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-secondary)'}><Plus size={16} /></button>
                   </div>
                </div>
                <button 
-                  className={addedProduct && addedProduct.id === cartSelectionId ? "btn-success" : "btn-primary"} 
+                  className={`product-detail-cta ${addedProduct && addedProduct.id === cartSelectionId ? "btn-success" : "btn-primary"}`} 
                   onClick={() => addToCart({ ...selectedProduct, selectedVariant: activeVariant }, quantity)} 
                   disabled={selectedStock === 0 || (addedProduct && addedProduct.id === cartSelectionId)}
                   style={{ padding: '18px', fontSize: '0.9rem', letterSpacing: '3px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.3s' }}>
