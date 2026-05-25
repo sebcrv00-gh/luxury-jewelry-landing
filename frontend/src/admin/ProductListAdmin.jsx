@@ -1,17 +1,44 @@
 import { useState, useEffect } from 'react';
-import { Edit3, Trash2, RefreshCw, AlertCircle, PackageOpen } from 'lucide-react';
+import {
+  Edit3,
+  Trash2,
+  RefreshCw,
+  AlertCircle,
+  PackageOpen,
+  X,
+  CheckCircle2,
+  ImagePlus,
+  Palette,
+  Plus
+} from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
+
+const mapVariantToForm = (variant = {}) => ({
+  key: variant.id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+  id: variant.id || null,
+  colorNombre: variant.color_nombre || '',
+  colorCodigo: variant.color_codigo || '#D4AF37',
+  stock: String(variant.stock ?? ''),
+  imagen: null,
+  preview: variant.imagen_url ? getImageUrl(variant.imagen_url) : '',
+  existingImageUrl: variant.imagen_url || '',
+  fileName: variant.imagen_url ? variant.imagen_url.split('/').pop() : ''
+});
 
 export default function ProductListAdmin({ refreshTrigger, setStats }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [deleteProduct, setDeleteProduct] = useState(null);
+  const [dragTarget, setDragTarget] = useState('');
 
   // ── Estado del modal de edición ──
   const [editProduct, setEditProduct] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [editImage, setEditImage] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
   const [editMsg, setEditMsg] = useState('');
 
@@ -37,18 +64,61 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
     fetchProducts();
   }, [refreshTrigger]);
 
-  // ── Eliminar producto ──
-  const handleDelete = async (id, nombre) => {
-    if (!confirm(`¿Eliminar permanentemente "${nombre}" del catálogo?`)) return;
-    setDeleting(id);
+  const openDeleteDialog = (product) => {
+    setDeleteProduct(product);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteProduct) return;
+    setDeleting(deleteProduct.id);
     try {
-      await api.delete(`/products/${id}`);
+      await api.delete(`/products/${deleteProduct.id}`);
+      setFeedback({
+        type: 'success',
+        text: `"${deleteProduct.nombre}" fue retirado del catálogo de Luxury correctamente.`
+      });
+      setDeleteProduct(null);
       fetchProducts();
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al eliminar');
+      setFeedback({
+        type: 'error',
+        text: err.response?.data?.error || 'No fue posible eliminar la pieza seleccionada.'
+      });
     } finally {
       setDeleting(null);
     }
+  };
+
+  const assignMainEditImage = (file) => {
+    if (!file) return;
+    setEditImage(file);
+    setEditImagePreview(URL.createObjectURL(file));
+  };
+
+  const updateEditVariant = (key, field, value) => {
+    setEditForm(prev => ({
+      ...prev,
+      variantes: (prev.variantes || []).map(variant => (
+        variant.key === key ? { ...variant, [field]: value } : variant
+      ))
+    }));
+  };
+
+  const assignEditVariantImage = (key, file) => {
+    if (!file) return;
+    setEditForm(prev => ({
+      ...prev,
+      variantes: (prev.variantes || []).map(variant => (
+        variant.key === key
+          ? {
+              ...variant,
+              imagen: file,
+              preview: URL.createObjectURL(file),
+              fileName: file.name
+            }
+          : variant
+      ))
+    }));
   };
 
   // ── Abrir modal de edición ──
@@ -59,15 +129,30 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
       categoria: p.categoria,
       descripcion: p.descripcion || '',
       precio: p.precio,
-      stock: p.stock
+      stock: p.stock,
+      variantes: (p.variantes || []).map(mapVariantToForm)
     });
     setEditImage(null);
+    setEditImagePreview(p.imagen_url ? getImageUrl(p.imagen_url) : '');
     setEditMsg('');
   };
 
   // ── Guardar edición ──
   const handleEditSave = async (e) => {
     e.preventDefault();
+    const variants = editForm.variantes || [];
+    const hasVariants = variants.length > 0;
+
+    if (hasVariants) {
+      const invalidVariant = variants.find(variant =>
+        !variant.colorNombre.trim() || (!variant.imagen && !variant.existingImageUrl) || Number(variant.stock || 0) < 0
+      );
+      if (invalidVariant) {
+        setEditMsg('Cada color debe tener nombre, imagen y stock valido.');
+        return;
+      }
+    }
+
     setSaving(true);
     setEditMsg('');
     try {
@@ -76,8 +161,30 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
       formData.append('categoria', editForm.categoria);
       formData.append('descripcion', editForm.descripcion);
       formData.append('precio', editForm.precio);
-      formData.append('stock', editForm.stock);
+      formData.append(
+        'stock',
+        hasVariants
+          ? String(variants.reduce((sum, variant) => sum + Number(variant.stock || 0), 0))
+          : editForm.stock
+      );
       if (editImage) formData.append('imagen', editImage);
+
+      const payloadVariantes = variants.map((variant, index) => {
+        const imageField = `variante_imagen_${index}`;
+        if (variant.imagen) {
+          formData.append(imageField, variant.imagen);
+        }
+        return {
+          id: variant.id,
+          color_nombre: variant.colorNombre,
+          color_codigo: variant.colorCodigo,
+          stock: Number(variant.stock || 0),
+          existingImageUrl: variant.existingImageUrl,
+          imageField,
+          orden: index
+        };
+      });
+      formData.append('variantes', JSON.stringify(payloadVariantes));
 
       await api.put(`/products/${editProduct.id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -123,6 +230,18 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
           </button>
         </div>
 
+        {feedback && (
+          <div className={`alert ${feedback.type === 'success' ? 'alert-success' : 'alert-error'}`} style={{ marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {feedback.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+              {feedback.text}
+            </span>
+            <button type="button" className="action-btn" onClick={() => setFeedback(null)}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         <table className="luxury-table">
           <thead>
             <tr>
@@ -149,10 +268,20 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                   <td>
                     <div className="product-cell">
                       <img
-                        src={p.imagen_url ? getImageUrl(p.imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png'}
+                        src={p.imagen_url ? getImageUrl(p.imagen_url) : (p.variantes?.[0]?.imagen_url ? getImageUrl(p.variantes[0].imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png')}
                         alt={p.nombre}
                       />
-                      <span className="product-name text-gold-light">{p.nombre}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span className="product-name text-gold-light">{p.nombre}</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem', maxWidth: '320px', lineHeight: 1.5 }}>
+                          {p.descripcion || 'Sin descripción personalizada registrada todavía.'}
+                        </span>
+                        {Array.isArray(p.variantes) && p.variantes.length > 0 && (
+                          <span style={{ color: 'var(--gold)', fontSize: '0.72rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                            {p.variantes.length} colores disponibles
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td><code style={{ background: 'rgba(0,0,0,0.5)', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{p.sku}</code></td>
@@ -183,7 +312,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                       <button className="action-btn edit" onClick={() => openEdit(p)} title="Editar Detalles">
                         <Edit3 size={18} />
                       </button>
-                      <button className="action-btn delete" onClick={() => handleDelete(p.id, p.nombre)} disabled={deleting === p.id} title="Retirar del Catálogo">
+                      <button className="action-btn delete" onClick={() => openDeleteDialog(p)} disabled={deleting === p.id} title="Retirar del Catálogo">
                         {deleting === p.id ? <RefreshCw size={18} className="spinning" /> : <Trash2 size={18} />}
                       </button>
                     </div>
@@ -242,21 +371,209 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Unidades Disponibles</label>
-                  <input type="number" value={editForm.stock} onChange={e => setEditForm({ ...editForm, stock: e.target.value })} required />
-                </div>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Actualizar Fotografía</label>
-                  <input type="file" accept="image/*" onChange={e => setEditImage(e.target.files[0])} style={{ padding: '10px' }} />
+                  <input
+                    type="number"
+                    value={(editForm.variantes || []).length > 0 ? (editForm.variantes || []).reduce((sum, variant) => sum + Number(variant.stock || 0), 0) : editForm.stock}
+                    onChange={e => setEditForm({ ...editForm, stock: e.target.value })}
+                    required
+                    disabled={(editForm.variantes || []).length > 0}
+                  />
                 </div>
               </div>
 
+              <div className="form-group" style={{ marginBottom: '24px' }}>
+                  <label>Actualizar Fotografía</label>
+                  <input id="edit-main-image" type="file" accept="image/*" onChange={e => assignMainEditImage(e.target.files[0])} style={{ display: 'none' }} />
+                  <label
+                    htmlFor="edit-main-image"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragTarget('edit-main');
+                    }}
+                    onDragLeave={() => setDragTarget('')}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragTarget('');
+                      assignMainEditImage(e.dataTransfer.files?.[0]);
+                    }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      minHeight: '170px',
+                      borderRadius: '16px',
+                      border: dragTarget === 'edit-main' ? '1px solid rgba(201,168,76,0.7)' : '1px dashed rgba(201,168,76,0.35)',
+                      background: dragTarget === 'edit-main' ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.03)',
+                      cursor: 'pointer',
+                      padding: '16px'
+                    }}
+                  >
+                    {editImagePreview ? (
+                      <img src={editImagePreview} alt="Portada actual" style={{ width: '100%', maxHeight: '150px', objectFit: 'cover', borderRadius: '12px' }} />
+                    ) : (
+                      <>
+                        <ImagePlus size={24} />
+                        <strong>Arrastra una nueva portada o haz clic</strong>
+                      </>
+                    )}
+                  </label>
+              </div>
+
+              <div className="glass-card" style={{ padding: '20px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '18px', flexWrap: 'wrap' }}>
+                  <div>
+                    <h4 className="text-gold-light" style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.15rem' }}>
+                      Colores del producto
+                    </h4>
+                    <p style={{ margin: '8px 0 0', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
+                      Ajusta imagen y stock de cada color sin duplicar el producto.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => setEditForm(prev => ({ ...prev, variantes: [...(prev.variantes || []), mapVariantToForm()] }))}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <Plus size={16} />
+                    Agregar color
+                  </button>
+                </div>
+
+                {(editForm.variantes || []).length === 0 ? (
+                  <div style={{ border: '1px dashed rgba(201,168,76,0.28)', borderRadius: '16px', padding: '18px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Este producto no tiene variantes de color registradas.
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gap: '18px' }}>
+                    {(editForm.variantes || []).map((variant, index) => (
+                      <div key={variant.key} style={{ border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '16px', background: 'rgba(255,255,255,0.02)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                          <strong style={{ color: 'var(--gold-light)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Palette size={16} />
+                            Variante {index + 1}
+                          </strong>
+                          <button
+                            type="button"
+                            className="action-btn delete"
+                            onClick={() => setEditForm(prev => ({ ...prev, variantes: (prev.variantes || []).filter(item => item.key !== variant.key) }))}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label>Nombre del color</label>
+                            <input type="text" value={variant.colorNombre} onChange={e => updateEditVariant(variant.key, 'colorNombre', e.target.value)} required />
+                          </div>
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label>Codigo visual</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <input type="color" value={variant.colorCodigo} onChange={e => updateEditVariant(variant.key, 'colorCodigo', e.target.value)} style={{ width: '52px', height: '52px', padding: 0, border: 'none', background: 'transparent' }} />
+                              <input type="text" value={variant.colorCodigo} onChange={e => updateEditVariant(variant.key, 'colorCodigo', e.target.value)} />
+                            </div>
+                          </div>
+                          <div className="form-group" style={{ marginBottom: 0 }}>
+                            <label>Stock del color</label>
+                            <input type="number" min="0" value={variant.stock} onChange={e => updateEditVariant(variant.key, 'stock', e.target.value)} required />
+                          </div>
+                        </div>
+
+                        <input
+                          id={`edit-variant-upload-${variant.key}`}
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={e => assignEditVariantImage(variant.key, e.target.files?.[0])}
+                        />
+                        <label
+                          htmlFor={`edit-variant-upload-${variant.key}`}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setDragTarget(`edit_variant_${variant.key}`);
+                          }}
+                          onDragLeave={() => setDragTarget('')}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setDragTarget('');
+                            assignEditVariantImage(variant.key, e.dataTransfer.files?.[0]);
+                          }}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '10px',
+                            minHeight: '145px',
+                            borderRadius: '14px',
+                            border: dragTarget === `edit_variant_${variant.key}` ? '1px solid rgba(201,168,76,0.7)' : '1px dashed rgba(201,168,76,0.35)',
+                            background: dragTarget === `edit_variant_${variant.key}` ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.03)',
+                            cursor: 'pointer',
+                            padding: '16px'
+                          }}
+                        >
+                          {variant.preview ? (
+                            <>
+                              <img src={variant.preview} alt={variant.colorNombre || `Variante ${index + 1}`} style={{ width: '100%', maxHeight: '135px', objectFit: 'cover', borderRadius: '12px' }} />
+                              <span style={{ color: 'var(--gold-light)', fontSize: '0.78rem' }}>{variant.fileName || 'Imagen actual'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <ImagePlus size={22} />
+                              <strong>Sube la imagen del color</strong>
+                            </>
+                          )}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
-                <button type="button" className="btn-outline" onClick={() => setEditProduct(null)}>Descartar</button>
+                <button type="button" className="btn-outline" onClick={() => setEditProduct(null)}>
+                  Descartar
+                </button>
                 <button type="submit" className="btn-primary" disabled={saving}>
                   {saving ? 'Registrando...' : 'Confirmar Cambios'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteProduct && (
+        <div className="modal-overlay" onClick={() => setDeleteProduct(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
+          <div className="luxury-modal-content" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '560px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+              <div>
+                <span className="admin-surface-kicker">Confirmación Luxury</span>
+                <h3 className="text-gold-light" style={{ margin: '10px 0 0', fontFamily: 'var(--font-display)', fontSize: '1.5rem' }}>
+                  Retirar pieza del catálogo
+                </h3>
+              </div>
+              <button type="button" className="action-btn" onClick={() => setDeleteProduct(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '24px' }}>
+              Vas a eliminar <strong style={{ color: 'var(--gold-light)' }}>{deleteProduct.nombre}</strong> del catálogo administrativo.
+              Esta acción retira la pieza y sus colores asociados del sistema activo.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '14px' }}>
+              <button type="button" className="btn-outline" onClick={() => setDeleteProduct(null)}>
+                Conservar producto
+              </button>
+              <button type="button" className="btn-primary" onClick={confirmDelete} disabled={deleting === deleteProduct.id}>
+                {deleting === deleteProduct.id ? 'Retirando...' : 'Eliminar definitivamente'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,57 +1,199 @@
 const { pool } = require('../config/db');
 
+const normalizeVariants = (variants = []) => variants
+  .map((variant, index) => ({
+    color_nombre: String(variant.color_nombre || '').trim(),
+    color_codigo: variant.color_codigo ? String(variant.color_codigo).trim() : null,
+    imagen_url: variant.imagen_url || null,
+    stock: Number(variant.stock || 0),
+    orden: Number(variant.orden ?? index)
+  }))
+  .filter(variant => variant.color_nombre);
+
+const getVariantTotalStock = (variants = []) =>
+  variants.reduce((sum, variant) => sum + Number(variant.stock || 0), 0);
+
 const Product = {
+  async attachVariants(products, conn = pool) {
+    if (!products || products.length === 0) return products;
+
+    const productIds = products.map(product => product.id);
+    const [variantRows] = await conn.query(
+      `SELECT id, producto_id, color_nombre, color_codigo, imagen_url, stock, orden
+       FROM producto_variantes
+       WHERE producto_id IN (?)
+       ORDER BY orden ASC, id ASC`,
+      [productIds]
+    );
+
+    const variantMap = new Map();
+    variantRows.forEach(variant => {
+      if (!variantMap.has(variant.producto_id)) {
+        variantMap.set(variant.producto_id, []);
+      }
+      variantMap.get(variant.producto_id).push({
+        id: variant.id,
+        producto_id: variant.producto_id,
+        color_nombre: variant.color_nombre,
+        color_codigo: variant.color_codigo,
+        imagen_url: variant.imagen_url,
+        stock: Number(variant.stock || 0),
+        orden: Number(variant.orden || 0)
+      });
+    });
+
+    products.forEach(product => {
+      product.stock = Number(product.stock || 0);
+      product.variantes = variantMap.get(product.id) || [];
+    });
+
+    return products;
+  },
+
+  async insertVariants(conn, productId, variants = []) {
+    const sanitizedVariants = normalizeVariants(variants);
+    for (const variant of sanitizedVariants) {
+      await conn.query(
+        `INSERT INTO producto_variantes (producto_id, color_nombre, color_codigo, imagen_url, stock, orden)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          productId,
+          variant.color_nombre,
+          variant.color_codigo,
+          variant.imagen_url,
+          variant.stock,
+          variant.orden
+        ]
+      );
+    }
+  },
+
+  async syncStock(conn, productId) {
+    const [variantTotals] = await conn.query(
+      'SELECT COALESCE(SUM(stock), 0) AS total_stock, COUNT(*) AS total_variants FROM producto_variantes WHERE producto_id = ?',
+      [productId]
+    );
+
+    if (Number(variantTotals[0]?.total_variants || 0) > 0) {
+      await conn.query(
+        'UPDATE productos SET stock = ? WHERE id = ?',
+        [Number(variantTotals[0].total_stock || 0), productId]
+      );
+    }
+  },
+
   async getAll() {
     const [rows] = await pool.query(
-      'SELECT id, sku, nombre, descripcion, precio, stock, categoria, imagen_url FROM productos WHERE stock > 0 ORDER BY creado_en DESC'
+      'SELECT id, sku, nombre, descripcion, precio, stock, categoria, imagen_url, creado_en FROM productos WHERE stock > 0 ORDER BY creado_en DESC'
     );
-    return rows;
+    return this.attachVariants(rows);
   },
 
   // Incluye productos con stock 0 para la vista de administrador
   async getAllAdmin() {
     const [rows] = await pool.query(
-      'SELECT id, sku, nombre, descripcion, precio, stock, categoria, imagen_url FROM productos ORDER BY creado_en DESC'
+      'SELECT id, sku, nombre, descripcion, precio, stock, categoria, imagen_url, creado_en FROM productos ORDER BY creado_en DESC'
     );
-    return rows;
+    return this.attachVariants(rows);
   },
 
   async getById(id) {
     const [rows] = await pool.query('SELECT * FROM productos WHERE id = ?', [id]);
-    return rows[0] || null;
+    if (!rows[0]) return null;
+    const [product] = await this.attachVariants(rows);
+    return product || null;
   },
 
   async create(data) {
+    const conn = await pool.getConnection();
     // Generar SKU automático
-    const [maxRow] = await pool.query('SELECT MAX(id) as max_id FROM productos');
-    const nextId = (maxRow[0].max_id || 0) + 1;
-    const prefijo = data.categoria.substring(0, 2).toUpperCase();
-    const sku = prefijo + String(nextId).padStart(4, '0');
+    try {
+      await conn.beginTransaction();
 
-    const [result] = await pool.query(
-      'INSERT INTO productos (sku, nombre, descripcion, precio, stock, categoria, imagen_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [sku, data.nombre, data.descripcion, data.precio, data.stock, data.categoria, data.imagen_url]
-    );
-    return { id: result.insertId, sku };
+      const variants = normalizeVariants(data.variantes);
+      const [maxRow] = await conn.query('SELECT MAX(id) as max_id FROM productos');
+      const nextId = (maxRow[0].max_id || 0) + 1;
+      const prefijo = data.categoria.substring(0, 2).toUpperCase();
+      const sku = prefijo + String(nextId).padStart(4, '0');
+      const computedStock = variants.length > 0 ? getVariantTotalStock(variants) : Number(data.stock || 0);
+      const fallbackImage = data.imagen_url || variants[0]?.imagen_url || null;
+
+      const [result] = await conn.query(
+        'INSERT INTO productos (sku, nombre, descripcion, precio, stock, categoria, imagen_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [sku, data.nombre, data.descripcion, data.precio, computedStock, data.categoria, fallbackImage]
+      );
+
+      if (variants.length > 0) {
+        await this.insertVariants(conn, result.insertId, variants);
+      }
+
+      await conn.commit();
+      return this.getById(result.insertId);
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   },
 
   async update(id, data) {
-    const fields = [];
-    const values = [];
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const current = await this.getById(id);
+      if (!current) {
+        await conn.rollback();
+        return null;
+      }
 
-    if (data.nombre !== undefined) { fields.push('nombre = ?'); values.push(data.nombre); }
-    if (data.descripcion !== undefined) { fields.push('descripcion = ?'); values.push(data.descripcion); }
-    if (data.precio !== undefined) { fields.push('precio = ?'); values.push(data.precio); }
-    if (data.stock !== undefined) { fields.push('stock = ?'); values.push(data.stock); }
-    if (data.categoria !== undefined) { fields.push('categoria = ?'); values.push(data.categoria); }
-    if (data.imagen_url !== undefined) { fields.push('imagen_url = ?'); values.push(data.imagen_url); }
+      const fields = [];
+      const values = [];
+      const variantsProvided = Object.prototype.hasOwnProperty.call(data, 'variantes');
+      const variants = variantsProvided ? normalizeVariants(data.variantes) : current.variantes || [];
 
-    if (fields.length === 0) return null;
+      if (data.nombre !== undefined) { fields.push('nombre = ?'); values.push(data.nombre); }
+      if (data.descripcion !== undefined) { fields.push('descripcion = ?'); values.push(data.descripcion); }
+      if (data.precio !== undefined) { fields.push('precio = ?'); values.push(data.precio); }
+      if (data.categoria !== undefined) { fields.push('categoria = ?'); values.push(data.categoria); }
 
-    values.push(id);
-    await pool.query(`UPDATE productos SET ${fields.join(', ')} WHERE id = ?`, values);
+      if (variantsProvided) {
+        fields.push('stock = ?');
+        values.push(getVariantTotalStock(variants));
+      } else if (data.stock !== undefined) {
+        fields.push('stock = ?');
+        values.push(data.stock);
+      }
 
-    return this.getById(id);
+      if (data.imagen_url !== undefined) {
+        fields.push('imagen_url = ?');
+        values.push(data.imagen_url);
+      } else if (!current.imagen_url && variants.length > 0) {
+        fields.push('imagen_url = ?');
+        values.push(variants[0].imagen_url || null);
+      }
+
+      if (fields.length > 0) {
+        values.push(id);
+        await conn.query(`UPDATE productos SET ${fields.join(', ')} WHERE id = ?`, values);
+      }
+
+      if (variantsProvided) {
+        await conn.query('DELETE FROM producto_variantes WHERE producto_id = ?', [id]);
+        if (variants.length > 0) {
+          await this.insertVariants(conn, id, variants);
+        }
+        await this.syncStock(conn, id);
+      }
+
+      await conn.commit();
+      return this.getById(id);
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   },
 
   async delete(id) {

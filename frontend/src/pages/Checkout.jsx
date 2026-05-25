@@ -176,6 +176,11 @@ export default function Checkout() {
                 <div className="checkout-item" key={i}>
                   <div className="checkout-item-info">
                     <span className="checkout-item-name">{item.nombre}</span>
+                    {item.color && (
+                      <span className="text-gold" style={{ fontSize: '0.72rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                        Color: {item.color}
+                      </span>
+                    )}
                     <span className="text-muted" style={{ fontSize: '0.8rem' }}>
                       Cantidad: {item.cantidad}
                     </span>

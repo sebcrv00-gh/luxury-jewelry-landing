@@ -28,19 +28,35 @@ const Order = {
 
       for (const item of items) {
         const subtotal = item.precio * item.cantidad;
-        const dbId = item.id && String(item.id).startsWith('db_')
-          ? Number(String(item.id).replace('db_', ''))
+        const productMatch = item.id
+          ? String(item.id).match(/^db_(\d+)(?:__variant_(\d+))?$/)
           : null;
+        const dbId = productMatch ? Number(productMatch[1]) : null;
+        const variantId = productMatch && productMatch[2] ? Number(productMatch[2]) : null;
+        const displayName = item.color ? `${item.nombre} - ${item.color}` : item.nombre;
         const productRef = dbId ? `db_${dbId}` : buildProductRef(item.nombre);
 
         await conn.query(
           `INSERT INTO orden_items (orden_id, producto_id, producto_ref, producto_nombre, producto_precio, cantidad, subtotal)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [orderId, dbId, productRef, item.nombre, item.precio, item.cantidad, subtotal]
+          [orderId, dbId, productRef, displayName, item.precio, item.cantidad, subtotal]
         );
 
-        // Si el producto viene de la base de datos, reducir stock
-        if (dbId) {
+        if (variantId) {
+          await conn.query(
+            'UPDATE producto_variantes SET stock = GREATEST(stock - ?, 0) WHERE id = ? AND producto_id = ?',
+            [item.cantidad, variantId, dbId]
+          );
+          const [variantStockRows] = await conn.query(
+            'SELECT COALESCE(SUM(stock), 0) AS total_stock FROM producto_variantes WHERE producto_id = ?',
+            [dbId]
+          );
+          await conn.query(
+            'UPDATE productos SET stock = ? WHERE id = ?',
+            [Number(variantStockRows[0]?.total_stock || 0), dbId]
+          );
+        } else if (dbId) {
+          // Si el producto viene de la base de datos, reducir stock
           await conn.query(
             'UPDATE productos SET stock = GREATEST(stock - ?, 0) WHERE id = ?',
             [item.cantidad, dbId]
@@ -93,7 +109,7 @@ const Order = {
   async getAll() {
     const [orders] = await pool.query('SELECT o.*, u.nombre as usuario_nombre, u.email as usuario_email FROM ordenes o JOIN usuarios u ON o.usuario_id = u.id ORDER BY o.creado_en DESC');
     return orders;
-  },
+   },
 
   async updateStatus(orderId, estado) {
     const [result] = await pool.query(

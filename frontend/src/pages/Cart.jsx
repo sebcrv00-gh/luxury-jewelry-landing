@@ -81,7 +81,14 @@ export default function Cart() {
           <>
             {cart.map((item, i) => (
               <div className="cart-item" key={i}>
-                <span className="cart-item-name">{item.nombre}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span className="cart-item-name">{item.nombre}</span>
+                  {item.color && (
+                    <span style={{ color: 'var(--gold)', fontSize: '0.72rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                      Color: {item.color}
+                    </span>
+                  )}
+                </div>
                 <span className="cart-item-price">${item.precio.toLocaleString('es-CO')}</span>
                 <div className="cart-item-qty">
                   <button className="qty-btn" onClick={() => changeQty(i, -1)}>-</button>

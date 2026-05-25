@@ -1,5 +1,38 @@
 const Product = require('../models/Product');
 
+const hasValue = (value) => value !== undefined && value !== null && String(value).trim() !== '';
+
+const getUploadedImagePath = (req, fieldName) => {
+  const file = (req.files || []).find(entry => entry.fieldname === fieldName);
+  return file ? `uploads/${file.filename}` : null;
+};
+
+const parseVariants = (req) => {
+  if (!hasValue(req.body.variantes)) return [];
+
+  let rawVariants = req.body.variantes;
+  if (typeof rawVariants === 'string') {
+    rawVariants = JSON.parse(rawVariants);
+  }
+
+  if (!Array.isArray(rawVariants)) return [];
+
+  return rawVariants
+    .map((variant, index) => {
+      const imageField = variant.imageField || `variante_imagen_${index}`;
+      return {
+        color_nombre: String(variant.color_nombre || variant.colorNombre || '').trim(),
+        color_codigo: hasValue(variant.color_codigo || variant.colorCodigo)
+          ? String(variant.color_codigo || variant.colorCodigo).trim()
+          : null,
+        stock: Number(variant.stock || 0),
+        imagen_url: getUploadedImagePath(req, imageField) || variant.existingImageUrl || variant.imagen_url || null,
+        orden: Number(variant.orden ?? index)
+      };
+    })
+    .filter(variant => variant.color_nombre);
+};
+
 const productController = {
   // GET /api/products
   async getAll(req, res) {
@@ -39,20 +72,30 @@ const productController = {
   async create(req, res) {
     try {
       const { nombre, descripcion, precio, stock, categoria } = req.body;
-      if (!nombre || !precio || !stock || !categoria) {
+      const variantes = parseVariants(req);
+      const hasVariantStock = variantes.length > 0;
+
+      if (!hasValue(nombre) || !hasValue(precio) || !hasValue(categoria) || (!hasVariantStock && !hasValue(stock))) {
         return res.status(400).json({ error: 'Faltan campos obligatorios' });
       }
 
-      let imagen_url = null;
-      if (req.file) {
-        imagen_url = 'uploads/' + req.file.filename;
+      if (variantes.length > 0 && variantes.some(variant => !variant.imagen_url)) {
+        return res.status(400).json({ error: 'Cada color debe incluir una imagen identificable' });
       }
 
+      const imagen_url = getUploadedImagePath(req, 'imagen');
+
       const result = await Product.create({
-        nombre, descripcion, precio, stock, categoria, imagen_url
+        nombre,
+        descripcion,
+        precio,
+        stock,
+        categoria,
+        imagen_url,
+        variantes
       });
 
-      return res.json({ ok: true, id: result.id, sku: result.sku });
+      return res.json({ ok: true, id: result.id, sku: result.sku, product: result });
     } catch (err) {
       console.error('Error al crear producto:', err);
       return res.status(500).json({ error: 'Error del servidor' });
@@ -64,12 +107,20 @@ const productController = {
     try {
       const { nombre, descripcion, precio, stock, categoria } = req.body;
       const data = {};
+      const variantes = parseVariants(req);
       if (nombre !== undefined) data.nombre = nombre;
       if (descripcion !== undefined) data.descripcion = descripcion;
       if (precio !== undefined) data.precio = precio;
       if (stock !== undefined) data.stock = stock;
       if (categoria !== undefined) data.categoria = categoria;
-      if (req.file) data.imagen_url = 'uploads/' + req.file.filename;
+      if (hasValue(req.body.variantes)) {
+        if (variantes.some(variant => !variant.imagen_url)) {
+          return res.status(400).json({ error: 'Cada color debe incluir una imagen identificable' });
+        }
+        data.variantes = variantes;
+      }
+      const imagen_url = getUploadedImagePath(req, 'imagen');
+      if (imagen_url) data.imagen_url = imagen_url;
 
       const updated = await Product.update(req.params.id, data);
       if (!updated) return res.status(404).json({ error: 'Producto no encontrado o sin cambios' });
@@ -95,4 +146,3 @@ const productController = {
 };
 
 module.exports = productController;
-

@@ -105,6 +105,20 @@ async function initDB() {
     `);
 
     await conn.query(`
+      CREATE TABLE IF NOT EXISTS producto_variantes (
+        id INT(11) AUTO_INCREMENT PRIMARY KEY,
+        producto_id INT(11) NOT NULL,
+        color_nombre VARCHAR(100) NOT NULL,
+        color_codigo VARCHAR(20) DEFAULT NULL,
+        imagen_url VARCHAR(255) DEFAULT NULL,
+        stock INT DEFAULT 0,
+        orden INT DEFAULT 0,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE
+      )
+    `);
+
+    await conn.query(`
       CREATE TABLE IF NOT EXISTS ordenes (
         id INT(11) AUTO_INCREMENT PRIMARY KEY,
         usuario_id INT(11) NOT NULL,

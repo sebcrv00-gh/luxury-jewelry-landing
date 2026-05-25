@@ -47,6 +47,7 @@ export default function Catalog() {
   const [showPopup, setShowPopup] = useState(false);
   const [addedProduct, setAddedProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [reviewSummaryMap, setReviewSummaryMap] = useState({});
   const [selectedProductReviews, setSelectedProductReviews] = useState([]);
@@ -106,11 +107,21 @@ export default function Catalog() {
     id: `db_${p.id}`,
     dbProductId: p.id,
     nombre: p.nombre,
+    descripcion: p.descripcion || 'Sin descripcion personalizada para esta pieza.',
     precio: Number(p.precio),
-    img: p.imagen_url ? getImageUrl(p.imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png',
+    img: p.imagen_url
+      ? getImageUrl(p.imagen_url)
+      : (p.variantes?.[0]?.imagen_url ? getImageUrl(p.variantes[0].imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png'),
     stock: p.stock,
     categoria: getCategoryFromName(p.nombre),
-    reviewRef: buildProductReviewRef(p.nombre)
+    reviewRef: buildProductReviewRef(p.nombre),
+    variantes: Array.isArray(p.variantes)
+      ? p.variantes.map(variant => ({
+          ...variant,
+          stock: Number(variant.stock || 0),
+          img: variant.imagen_url ? getImageUrl(variant.imagen_url) : (p.imagen_url ? getImageUrl(p.imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png')
+        }))
+      : []
   }));
 
   const filtered = allProducts.filter(p => {
@@ -125,25 +136,32 @@ export default function Catalog() {
       return;
     }
 
-    if (product.stock === 0) return;
+    const activeStock = product.selectedVariant ? product.selectedVariant.stock : product.stock;
+    if (activeStock === 0) return;
 
     const finalPrice = isVip ? Math.round(product.precio * (1 - VIP_DISCOUNT)) : product.precio;
+    const cartItemId = product.selectedVariant
+      ? `db_${product.dbProductId}__variant_${product.selectedVariant.id}`
+      : product.id;
 
     const key = `carrito_${user.id}`;
     const cart = JSON.parse(localStorage.getItem(key) || '[]');
-    const existing = cart.find(i => i.id === product.id);
+    const existing = cart.find(i => i.id === cartItemId);
     if (existing) {
       existing.cantidad += qty;
     } else {
       cart.push({
-        id: product.id,
+        id: cartItemId,
+        baseProductId: product.dbProductId,
+        variantId: product.selectedVariant?.id || null,
+        color: product.selectedVariant?.color_nombre || null,
         nombre: product.nombre,
         precio: finalPrice,
         cantidad: qty,
       });
     }
     localStorage.setItem(key, JSON.stringify(cart));
-    setAddedProduct(product);
+    setAddedProduct({ id: cartItemId });
     setTimeout(() => setAddedProduct(null), 3500);
   };
 
@@ -158,8 +176,11 @@ export default function Catalog() {
     if (!selectedProduct) {
       setSelectedProductReviews([]);
       setSelectedProductReviewSummary({ average_rating: 0, total_reviews: 0 });
+      setSelectedVariant(null);
       return;
     }
+
+    setSelectedVariant(selectedProduct.variantes?.[0] || null);
 
     let ignore = false;
     const loadProductReviews = async () => {
@@ -277,6 +298,9 @@ export default function Catalog() {
                   </div>
                   <div className="product-info">
                     <h3>{p.nombre}</h3>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: '1.55', minHeight: '42px', marginBottom: '14px' }}>
+                      {p.descripcion.length > 92 ? `${p.descripcion.slice(0, 92)}...` : p.descripcion}
+                    </p>
                     {isVip ? (
                       <div className="price" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                         <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.8rem' }}>${p.precio.toLocaleString('es-CO')}</span>
@@ -295,6 +319,11 @@ export default function Catalog() {
                         {reviewSummary.total_reviews} reseñas
                       </span>
                     </div>
+                    {p.variantes.length > 0 && (
+                      <div style={{ color: 'var(--gold)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '14px' }}>
+                        {p.variantes.length} colores disponibles
+                      </div>
+                    )}
                     <button
                       className={p.stock === 0 ? 'btn-outline disabled' : 'btn-outline'}
                       onClick={() => { if(p.stock !== 0) { setSelectedProduct(p); setQuantity(1); } }}
@@ -312,6 +341,14 @@ export default function Catalog() {
       </div>
 
       {selectedProduct && (
+          (() => {
+            const activeVariant = selectedVariant || null;
+            const selectedStock = activeVariant ? activeVariant.stock : selectedProduct.stock;
+            const activeImage = activeVariant?.img || selectedProduct.img;
+            const cartSelectionId = activeVariant
+              ? `db_${selectedProduct.dbProductId}__variant_${activeVariant.id}`
+              : selectedProduct.id;
+            return (
         <>
           <div className="overlay" style={{ backdropFilter: 'blur(15px)', background: 'rgba(5, 5, 5, 0.85)', zIndex: 9999 }} onClick={() => setSelectedProduct(null)} />
           <div className="product-detail-modal" style={{
@@ -324,7 +361,7 @@ export default function Catalog() {
               <X size={32} strokeWidth={1} />
             </button>
             <div className="modal-img-col" style={{ flex: '1', position: 'relative', minHeight: '480px' }}>
-               <img src={selectedProduct.img} alt={selectedProduct.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.95)' }} />
+               <img src={activeImage} alt={selectedProduct.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.95)' }} />
                <div style={{ position: 'absolute', top: '24px', left: '24px', background: 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: '1px solid var(--gold)', padding: '6px 16px', borderRadius: '4px', color: 'var(--gold)', letterSpacing: '2px', fontSize: '0.7rem', textTransform: 'uppercase' }}>
                   {selectedProduct.categoria}
                </div>
@@ -344,8 +381,58 @@ export default function Catalog() {
                  <p style={{ fontSize: '1.6rem', color: 'var(--gold-light)', fontWeight: '400', marginBottom: '24px', letterSpacing: '1px' }}>${selectedProduct.precio.toLocaleString('es-CO')}</p>
                )}
                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.7', marginBottom: '40px', fontWeight: '300' }}>
-                  Descubre la majestuosidad de esta pieza exclusiva. Diseñada con los estándares más estrictos y finos materiales de la alta joyería, ofrece un nivel de perfeccionismo impecable que iluminará y transformará cualquier ocasión especial en un evento memorable.
+                  {selectedProduct.descripcion}
                </p>
+               {selectedProduct.variantes.length > 0 && (
+                 <div style={{ marginBottom: '28px' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>
+                       Selecciona un color
+                     </span>
+                     <strong style={{ color: 'var(--gold-light)', fontSize: '0.9rem' }}>
+                       {activeVariant?.color_nombre || 'Sin color seleccionado'}
+                     </strong>
+                   </div>
+                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                     {selectedProduct.variantes.map(variant => {
+                       const isActive = activeVariant?.id === variant.id;
+                       return (
+                         <button
+                           key={variant.id}
+                           type="button"
+                           onClick={() => {
+                             setSelectedVariant(variant);
+                             setQuantity(1);
+                           }}
+                           style={{
+                             display: 'inline-flex',
+                             alignItems: 'center',
+                             gap: '10px',
+                             borderRadius: '999px',
+                             padding: '10px 14px',
+                             border: isActive ? '1px solid rgba(201,168,76,0.8)' : '1px solid rgba(255,255,255,0.12)',
+                             background: isActive ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
+                             color: 'var(--text-primary)',
+                             cursor: 'pointer'
+                           }}
+                         >
+                           <span style={{
+                             width: '16px',
+                             height: '16px',
+                             borderRadius: '50%',
+                             background: variant.color_codigo || '#D4AF37',
+                             border: '1px solid rgba(255,255,255,0.4)'
+                           }} />
+                           <span>{variant.color_nombre}</span>
+                           <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                             {variant.stock > 0 ? `${variant.stock} uds` : 'Agotado'}
+                           </span>
+                         </button>
+                       );
+                     })}
+                   </div>
+                 </div>
+               )}
                <div className="catalog-product-reviews-box">
                  <div className="catalog-product-reviews-head">
                    <div>
@@ -390,16 +477,16 @@ export default function Catalog() {
                   <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(201, 168, 76, 0.4)', borderRadius: '50px', padding: '4px' }}>
                      <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }} onMouseOver={e=>e.currentTarget.style.color='var(--gold)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-secondary)'}><Minus size={16} /></button>
                      <span style={{ width: '40px', textAlign: 'center', fontSize: '1rem', color: 'var(--text-primary)', fontWeight: '500' }}>{quantity}</span>
-                     <button onClick={() => setQuantity(selectedProduct.stock !== undefined ? Math.min(selectedProduct.stock, quantity + 1) : quantity + 1)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }} onMouseOver={e=>e.currentTarget.style.color='var(--gold)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-secondary)'}><Plus size={16} /></button>
+                     <button onClick={() => setQuantity(selectedStock !== undefined ? Math.min(selectedStock, quantity + 1) : quantity + 1)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s' }} onMouseOver={e=>e.currentTarget.style.color='var(--gold)'} onMouseOut={e=>e.currentTarget.style.color='var(--text-secondary)'}><Plus size={16} /></button>
                   </div>
                </div>
                <button 
-                  className={addedProduct && addedProduct.id === selectedProduct.id ? "btn-success" : "btn-primary"} 
-                  onClick={() => addToCart(selectedProduct, quantity)} 
-                  disabled={selectedProduct.stock === 0 || (addedProduct && addedProduct.id === selectedProduct.id)}
+                  className={addedProduct && addedProduct.id === cartSelectionId ? "btn-success" : "btn-primary"} 
+                  onClick={() => addToCart({ ...selectedProduct, selectedVariant: activeVariant }, quantity)} 
+                  disabled={selectedStock === 0 || (addedProduct && addedProduct.id === cartSelectionId)}
                   style={{ padding: '18px', fontSize: '0.9rem', letterSpacing: '3px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.3s' }}>
-                  {selectedProduct.stock === 0 ? 'AGOTADO' : (
-                    (addedProduct && addedProduct.id === selectedProduct.id) 
+                  {selectedStock === 0 ? 'AGOTADO' : (
+                    (addedProduct && addedProduct.id === cartSelectionId) 
                       ? <><CheckCircle size={18} /> AÑADIDO EXITOSAMENTE</> 
                       : 'AÑADIR AL CARRITO'
                   )}
@@ -407,6 +494,8 @@ export default function Catalog() {
             </div>
           </div>
         </>
+            );
+          })()
       )}
 
       {showPopup && (
