@@ -1,8 +1,8 @@
 const express = require('express');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const PasswordResetCode = require('../models/PasswordResetCode');
+const { sendEmail } = require('../services/emailService');
 
 const router = express.Router();
 const CODE_TTL_MINUTES = Number(process.env.RECOVERY_CODE_TTL_MINUTES || 10);
@@ -19,46 +19,11 @@ function generateCode() {
   return crypto.randomInt(100000, 1000000).toString();
 }
 
-function createTransporter() {
-  if (process.env.SMTP_HOST) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: String(process.env.SMTP_SECURE || 'false') === 'true',
-      auth: process.env.SMTP_USER
-        ? {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-          }
-        : undefined
-    });
-  }
-
-  return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-}
-
-function getFromAddress() {
-  return process.env.EMAIL_FROM || process.env.SMTP_FROM || process.env.EMAIL_USER || process.env.SMTP_USER;
-}
-
 async function sendRecoveryCodeEmail({ email, name, code }) {
-  const transporter = createTransporter();
-  const fromAddress = getFromAddress();
-
-  if (!fromAddress) {
-    throw new Error('No hay remitente configurado para el correo de recuperacion');
-  }
-
-  await transporter.sendMail({
-    from: `"Luxury Jewelry" <${fromAddress}>`,
+  await sendEmail({
     to: email,
     subject: 'Codigo de recuperacion - Luxury Jewelry',
+    text: `Hola ${name}, tu codigo de recuperacion es ${code}. Expira en ${CODE_TTL_MINUTES} minutos.`,
     html: `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; background: #0a0a0a; border: 1px solid rgba(201,168,76,0.3); border-radius: 12px; overflow: hidden;">
         <div style="background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(183,110,121,0.08)); padding: 30px; text-align: center; border-bottom: 1px solid rgba(201,168,76,0.2);">
