@@ -24,10 +24,12 @@ export default function AuthModal() {
   const overlayRef = useRef(null);
 
   // Recovery state
-  const [recoveryMode, setRecoveryMode] = useState(null); // null | 'email' | 'code' | 'success'
+  const [recoveryMode, setRecoveryMode] = useState(null); // null | 'email' | 'code' | 'reset' | 'success'
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
-  const [phoneHint, setPhoneHint] = useState('');
+  const [recoveryEmailHint, setRecoveryEmailHint] = useState('');
+  const [recoveryNewPassword, setRecoveryNewPassword] = useState('');
+  const [recoveryConfirmPassword, setRecoveryConfirmPassword] = useState('');
 
   useEffect(() => {
     if (isAuthModalOpen) {
@@ -38,7 +40,9 @@ export default function AuthModal() {
       setRecoveryMode(null);
       setRecoveryEmail('');
       setRecoveryCode('');
-      setPhoneHint('');
+      setRecoveryEmailHint('');
+      setRecoveryNewPassword('');
+      setRecoveryConfirmPassword('');
       setRegConfirmClave('');
       if (authModalMode === 'register') {
         setNums([Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 10) + 1]);
@@ -111,7 +115,7 @@ export default function AuthModal() {
     setLoading(true);
     try {
       const { data } = await api.post('/recovery/request-code', { email: recoveryEmail });
-      setPhoneHint(data.phoneHint || '');
+      setRecoveryEmailHint(data.emailHint || '');
       setSuccess(data.message);
       setRecoveryMode('code');
     } catch (err) {
@@ -129,9 +133,37 @@ export default function AuthModal() {
     try {
       const { data } = await api.post('/recovery/verify-code', { email: recoveryEmail, code: recoveryCode });
       setSuccess(data.message);
+      setRecoveryMode('reset');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Codigo invalido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError(''); setSuccess('');
+    if (!recoveryNewPassword || !recoveryConfirmPassword) {
+      setError('Debes completar la nueva contraseña y su confirmación');
+      return;
+    }
+    if (recoveryNewPassword !== recoveryConfirmPassword) {
+      setError('La confirmación de la contraseña debe coincidir');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data } = await api.post('/recovery/reset-password', {
+        email: recoveryEmail,
+        code: recoveryCode,
+        newPassword: recoveryNewPassword,
+        confirmPassword: recoveryConfirmPassword
+      });
+      setSuccess(data.message);
       setRecoveryMode('success');
     } catch (err) {
-      setError(err.response?.data?.error || 'Código inválido');
+      setError(err.response?.data?.error || 'No fue posible actualizar la contraseña');
     } finally {
       setLoading(false);
     }
@@ -141,7 +173,9 @@ export default function AuthModal() {
     setRecoveryMode(null);
     setRecoveryEmail('');
     setRecoveryCode('');
-    setPhoneHint('');
+    setRecoveryEmailHint('');
+    setRecoveryNewPassword('');
+    setRecoveryConfirmPassword('');
     setError('');
     setSuccess('');
   };
@@ -159,7 +193,7 @@ export default function AuthModal() {
             </button>
             <div className="recovery-icon"><Mail size={28} /></div>
             <h3 className="recovery-title">Recuperar Contraseña</h3>
-            <p className="recovery-desc">Ingresa tu correo electrónico y te enviaremos un código de verificación.</p>
+            <p className="recovery-desc">Ingresa tu correo electrónico y te enviaremos un código temporal para restablecer el acceso.</p>
           </div>
           <div className="auth-field">
             <label>Correo Electrónico</label>
@@ -182,8 +216,7 @@ export default function AuthModal() {
             <div className="recovery-icon"><ShieldCheck size={28} /></div>
             <h3 className="recovery-title">Verificar Código</h3>
             <p className="recovery-desc">
-              Hemos enviado un código de 6 dígitos a <strong>{recoveryEmail}</strong>.
-              {phoneHint && <><br/>Teléfono registrado: <strong>{phoneHint}</strong></>}
+              Hemos enviado un código de 6 dígitos a <strong>{recoveryEmailHint || recoveryEmail}</strong>.
             </p>
           </div>
           <div className="auth-field">
@@ -196,11 +229,62 @@ export default function AuthModal() {
               required 
               autoFocus
               maxLength={6}
-              style={{ textAlign: 'center', letterSpacing: '8px', fontSize: '1.4rem', fontWeight: '600' }}
+              className="recovery-code-input"
             />
           </div>
           <button type="submit" className="auth-submit-btn" disabled={loading || recoveryCode.length < 6}>
-            {loading ? <span className="auth-spinner"></span> : <>Verificar y Recuperar</>}
+            {loading ? <span className="auth-spinner"></span> : <>Verificar Código</>}
+          </button>
+        </form>
+      );
+    }
+
+    if (recoveryMode === 'reset') {
+      return (
+        <form onSubmit={handleResetPassword} className="auth-form-fields">
+          <div className="recovery-header">
+            <button type="button" className="recovery-back-btn" onClick={() => { setRecoveryMode('code'); setError(''); setSuccess(''); }}>
+              <ArrowLeft size={16} /> Volver
+            </button>
+            <div className="recovery-icon"><KeyRound size={28} /></div>
+            <h3 className="recovery-title">Nueva Contraseña</h3>
+            <p className="recovery-desc">
+              Define una nueva contraseña para <strong>{recoveryEmailHint || recoveryEmail}</strong>. El código verificado seguirá activo hasta completar el cambio.
+            </p>
+          </div>
+          <div className="auth-field">
+            <label>Nueva contraseña</label>
+            <div className="auth-password-wrap">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={recoveryNewPassword}
+                onChange={e => setRecoveryNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                required
+              />
+              <button type="button" className="auth-eye-btn" onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+          <div className="auth-field">
+            <label>Confirmar nueva contraseña</label>
+            <div className="auth-password-wrap">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={recoveryConfirmPassword}
+                onChange={e => setRecoveryConfirmPassword(e.target.value)}
+                placeholder="Repite tu nueva contraseña"
+                required
+              />
+              <button type="button" className="auth-eye-btn" onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+          <p className="recovery-note">Usa una contraseña robusta y distinta a la anterior para mantener tu cuenta protegida.</p>
+          <button type="submit" className="auth-submit-btn" disabled={loading}>
+            {loading ? <span className="auth-spinner"></span> : <>Actualizar Contraseña</>}
           </button>
         </form>
       );
@@ -211,9 +295,9 @@ export default function AuthModal() {
         <div className="auth-form-fields" style={{ textAlign: 'center' }}>
           <div className="recovery-header">
             <div className="recovery-icon recovery-icon-success"><KeyRound size={28} /></div>
-            <h3 className="recovery-title">¡Contraseña Recuperada!</h3>
+            <h3 className="recovery-title">¡Contraseña Actualizada!</h3>
             <p className="recovery-desc">
-              Tu nueva contraseña ha sido enviada a <strong>{recoveryEmail}</strong>. Revisa tu bandeja de entrada.
+              Tu contraseña fue actualizada correctamente para <strong>{recoveryEmailHint || recoveryEmail}</strong>. Ya puedes iniciar sesión con la nueva clave.
             </p>
           </div>
           <button type="button" className="auth-submit-btn" onClick={exitRecovery}>

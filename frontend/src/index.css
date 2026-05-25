@@ -3588,6 +3588,20 @@ body:has(.auth-modal-overlay) {
   line-height: 1.5;
 }
 
+.recovery-code-input {
+  text-align: center;
+  letter-spacing: 8px;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.recovery-note {
+  margin: -2px 0 2px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
 .auth-submit-btn {
   width: 100%;
   padding: 14px 24px;
