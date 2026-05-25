@@ -11,6 +11,11 @@ function buildProductRef(name) {
     .replace(/^-+|-+$/g, '') || 'producto';
 }
 
+const connectionLimit =
+  process.env.DB_CONNECTION_LIMIT && process.env.DB_CONNECTION_LIMIT !== ''
+    ? parseInt(process.env.DB_CONNECTION_LIMIT, 10)
+    : 3;
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -18,7 +23,10 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   port: (process.env.DB_PORT && process.env.DB_PORT !== "") ? parseInt(process.env.DB_PORT, 10) : 3306,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit,
+  maxIdle: Math.min(connectionLimit, 2),
+  idleTimeout: 60000,
+  queueLimit: 0,
   charset: 'utf8mb4',
   connectTimeout: 10000,
   ssl: {
