@@ -21,6 +21,11 @@ export const getImageUrl = (path) => {
     return path;
   }
   
+  // 1.5. Si es un asset estático del frontend (imágenes de prueba/catálogo en carpeta public)
+  if (path.startsWith('/images/') || path.startsWith('images/')) {
+    return path.startsWith('/') ? path : `/${path}`;
+  }
+  
   const backendBase = isLocal ? 'http://localhost:3001' : 'https://luxury-jewelry-api.onrender.com';
   
   // 2. Limpiar prefijos de localhost si existen (común en bases de datos migradas)
