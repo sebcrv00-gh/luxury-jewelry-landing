@@ -275,7 +275,7 @@ export default function Catalog() {
                 <div className={`product-card catalog-product-card ${p.stock === 0 ? 'out-of-stock' : ''}`} key={p.id}>
                   <div className="product-image-wrap">
                     <img src={p.img} alt={p.nombre} style={p.stock === 0 ? { filter: 'grayscale(0.8) opacity(0.6)' } : {}} />
-                    <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p.dbProductId); }} style={{ position: 'absolute', top: '12px', right: '12px', background: isInWishlist(p.dbProductId) ? 'rgba(231,76,60,0.9)' : 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', zIndex: 3, color: '#fff' }}
+                    <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p.dbProductId); }} style={{ position: 'absolute', top: '12px', left: '12px', background: isInWishlist(p.dbProductId) ? 'rgba(231,76,60,0.9)' : 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', zIndex: 3, color: '#fff' }}
                       onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
                       onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                     >
@@ -388,14 +388,14 @@ export default function Catalog() {
         <div 
           className="modal-overlay"
           style={{ 
-            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', 
+            position: 'fixed', top: 'var(--header-height)', left: 0, width: '100vw', height: 'calc(100vh - var(--header-height))', 
             background: 'rgba(5, 5, 5, 0.85)', backdropFilter: 'blur(15px)', zIndex: 9999, 
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
           }} 
           onClick={(e) => { if(e.target === e.currentTarget) setSelectedProduct(null) }}
         >
           <div className="product-detail-modal" style={{
-            width: '100%', maxWidth: '960px', maxHeight: '90vh', height: 'auto',
+            width: '100%', maxWidth: '960px', maxHeight: 'calc(100vh - var(--header-height) - 40px)', height: 'auto',
             background: 'linear-gradient(145deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98))',
             borderRadius: '16px', border: '1px solid var(--border-gold)', boxShadow: '0 30px 80px rgba(0,0,0,0.8)',
             display: 'flex', overflow: 'hidden', position: 'relative'
@@ -431,7 +431,7 @@ export default function Catalog() {
                  </div>
                )}
             </div>
-            <div className="modal-info-col" style={{ flex: '1', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', overflowY: 'auto', height: '100%' }}>
+            <div className="modal-info-col" style={{ flex: '1', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', overflowY: 'auto', height: '100%', minHeight: 0 }}>
                <h2 className="product-detail-title" style={{ marginTop: '0', fontFamily: 'var(--font-display)', fontSize: '2.2rem', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: '1.2' }}>{selectedProduct.nombre}</h2>
                {isVip ? (
                  <div className="product-detail-price-block" style={{ marginBottom: '24px' }}>
