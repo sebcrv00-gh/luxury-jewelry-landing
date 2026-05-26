@@ -58,12 +58,12 @@ export default function Catalog() {
   const VIP_DISCOUNT = 0.10;
   const [wishlistIds, setWishlistIds] = useState(new Set());
 
-  const scrollCarousel = (direction) => {
-    if (carouselRef.current) {
-      const scrollAmount = direction === 'left' ? -340 : 340;
-      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, activeCategory]);
 
   useEffect(() => {
     api.get('/products').then(r => setDbProducts(r.data)).catch(() => { });
@@ -129,6 +129,9 @@ export default function Catalog() {
     const matchCategory = activeCategory === 'Todas las colecciones' || p.categoria === activeCategory;
     return matchSearch && matchCategory;
   });
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const addToCart = (product, qty = 1) => {
     if (!isLoggedIn) {
@@ -263,16 +266,9 @@ export default function Catalog() {
             <p>Intenta con otra búsqueda u otra categoría.</p>
           </div>
         ) : (
-          <div className="carousel-wrapper">
-            <button className="carousel-arrow left" onClick={() => scrollCarousel('left')} aria-label="Anterior">
-              <ChevronLeft size={28} />
-            </button>
-            <button className="carousel-arrow right" onClick={() => scrollCarousel('right')} aria-label="Siguiente">
-              <ChevronRight size={28} />
-            </button>
-            
-            <div className="carousel-track" ref={carouselRef}>
-              {filtered.map(p => {
+          <>
+            <div className="catalog-grid">
+              {currentItems.map(p => {
                 const reviewSummary = getProductReviewSummary(p);
                 return (
                 <div className={`product-card catalog-product-card ${p.stock === 0 ? 'out-of-stock' : ''}`} key={p.id}>
@@ -336,7 +332,46 @@ export default function Catalog() {
                 </div>
               )})}
             </div>
-          </div>
+            
+            {totalPages > 1 && (
+              <div className="pagination-container">
+                <button 
+                  className="pagination-btn" 
+                  disabled={currentPage === 1} 
+                  onClick={() => {
+                    setCurrentPage(prev => prev - 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button 
+                    key={page} 
+                    className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                    onClick={() => {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
+                
+                <button 
+                  className="pagination-btn" 
+                  disabled={currentPage === totalPages} 
+                  onClick={() => {
+                    setCurrentPage(prev => prev + 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
