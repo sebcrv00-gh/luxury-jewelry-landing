@@ -29,7 +29,7 @@ const STATUS_MAP = {
   entregado: { label: 'Entregado', color: '#2ecc71', icon: CheckCircle },
   cancelado: { label: 'Cancelado', color: '#e74c3c', icon: AlertCircle },
 };
-
+  
 const RETURN_REASONS = [
   'Producto equivocado',
   'Producto dañado o defectuoso',

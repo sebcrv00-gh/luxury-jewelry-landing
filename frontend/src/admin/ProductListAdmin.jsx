@@ -186,6 +186,8 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
           };
         });
         formData.append('variantes', JSON.stringify(payloadVariantes));
+      } else if (editProduct.variantes && editProduct.variantes.length > 0) {
+        formData.append('variantes', "[]");
       }
 
       await api.put(`/products/${editProduct.id}`, formData, {
@@ -313,6 +315,16 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                     <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                       <button className="action-btn edit" onClick={() => openEdit(p)} title="Editar Detalles">
                         <Edit3 size={18} />
+                      </button>
+                      <button className="action-btn" onClick={() => {
+                          openEdit(p);
+                          setTimeout(() => {
+                            const variantsSection = document.querySelector('.admin-edit-variants-panel');
+                            if (variantsSection) variantsSection.scrollIntoView({ behavior: 'smooth' });
+                            setEditForm(prev => ({ ...prev, variantes: [...(prev.variantes || []), mapVariantToForm()] }));
+                          }, 100);
+                        }} title="Agregar Color Rápido" style={{ color: 'var(--gold)' }}>
+                        <Plus size={18} />
                       </button>
                       <button className="action-btn delete" onClick={() => openDeleteDialog(p)} disabled={deleting === p.id} title="Retirar del Catálogo">
                         {deleting === p.id ? <RefreshCw size={18} className="spinning" /> : <Trash2 size={18} />}

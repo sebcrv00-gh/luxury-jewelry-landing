@@ -365,6 +365,28 @@ export default function Catalog() {
                <div className="product-detail-category" style={{ position: 'absolute', top: '24px', left: '24px', background: 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: '1px solid var(--gold)', padding: '6px 16px', borderRadius: '4px', color: 'var(--gold)', letterSpacing: '2px', fontSize: '0.7rem', textTransform: 'uppercase' }}>
                   {selectedProduct.categoria}
                </div>
+               {selectedProduct.variantes.length > 0 && (
+                 <div className="product-detail-gallery">
+                   <img 
+                     src={selectedProduct.img} 
+                     alt="Original"
+                     className={`product-detail-thumbnail ${!activeVariant ? 'active' : ''}`}
+                     onClick={() => setSelectedVariant(null)}
+                   />
+                   {selectedProduct.variantes.map(variant => (
+                     <img
+                       key={variant.id}
+                       src={variant.img}
+                       alt={variant.color_nombre}
+                       className={`product-detail-thumbnail ${activeVariant?.id === variant.id ? 'active' : ''}`}
+                       onClick={() => {
+                         setSelectedVariant(variant);
+                         setQuantity(1);
+                       }}
+                     />
+                   ))}
+                 </div>
+               )}
             </div>
             <div className="modal-info-col" style={{ flex: '1', padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                <h2 className="product-detail-title" style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: '1.1' }}>{selectedProduct.nombre}</h2>

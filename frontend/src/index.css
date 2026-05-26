@@ -1079,6 +1079,7 @@ button {
   width: 100%;
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+  align-items: stretch;
 }
 
 .carousel-track::-webkit-scrollbar {
@@ -1117,11 +1118,11 @@ button {
 }
 
 .carousel-arrow.left {
-  left: -20px;
+  left: 12px;
 }
 
 .carousel-arrow.right {
-  right: -20px;
+  right: 12px;
 }
 
 .product-card {
@@ -1348,6 +1349,46 @@ button {
   height: 100%;
   object-fit: cover;
   object-position: center;
+  transition: opacity 0.3s ease;
+}
+
+.product-detail-gallery {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  padding: 0 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  z-index: 5;
+}
+.product-detail-gallery::-webkit-scrollbar {
+  display: none;
+}
+
+.product-detail-thumbnail {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  object-fit: cover;
+  transition: all 0.3s;
+  opacity: 0.6;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.product-detail-thumbnail:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.product-detail-thumbnail.active {
+  border-color: var(--gold);
+  opacity: 1;
 }
 
 .product-detail-modal .modal-info-col {
