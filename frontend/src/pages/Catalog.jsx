@@ -92,7 +92,11 @@ export default function Catalog() {
   const isInWishlist = (productId) => wishlistIds.has(productId);
 
   const toggleWishlist = async (productId) => {
-    if (!isLoggedIn) { setShowPopup(true); return; }
+    if (!isLoggedIn) {
+      setSelectedProduct(null);
+      setShowPopup(true);
+      return;
+    }
     try {
       if (wishlistIds.has(productId)) {
         await api.delete(`/wishlist/${productId}`);
@@ -136,6 +140,7 @@ export default function Catalog() {
 
   const addToCart = (product, qty = 1) => {
     if (!isLoggedIn) {
+      setSelectedProduct(null);
       setShowPopup(true);
       return;
     }
