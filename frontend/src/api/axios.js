@@ -9,6 +9,11 @@ const api = axios.create({
 export const getImageUrl = (path) => {
   if (!path) return '';
 
+  // Si es una cadena Base64, la devolvemos directamente sin procesar
+  if (typeof path === 'string' && path.startsWith('data:')) {
+    return path;
+  }
+
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   
   // Log de diagnóstico visible para el usuario (siempre al inicio)

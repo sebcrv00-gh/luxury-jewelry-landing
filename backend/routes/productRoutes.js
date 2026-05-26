@@ -5,14 +5,8 @@ const path = require('path');
 const productController = require('../controllers/productController');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 
-// Configuración de Multer para imágenes de productos
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads')),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, Date.now() + '_producto' + ext);
-  }
-});
+// Configuración de Multer para imágenes de productos en memoria
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {

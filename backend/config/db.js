@@ -86,7 +86,7 @@ async function initDB() {
         rol VARCHAR(50) DEFAULT 'cliente',
         telefono VARCHAR(50) DEFAULT NULL,
         direccion VARCHAR(255) DEFAULT NULL,
-        foto VARCHAR(255) DEFAULT NULL
+        foto LONGTEXT DEFAULT NULL
       )
     `);
 
@@ -99,7 +99,7 @@ async function initDB() {
         precio DECIMAL(12,2) NOT NULL,
         stock INT DEFAULT 0,
         categoria VARCHAR(100),
-        imagen_url VARCHAR(255),
+        imagen_url LONGTEXT,
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -110,7 +110,7 @@ async function initDB() {
         producto_id INT(11) NOT NULL,
         color_nombre VARCHAR(100) NOT NULL,
         color_codigo VARCHAR(20) DEFAULT NULL,
-        imagen_url VARCHAR(255) DEFAULT NULL,
+        imagen_url LONGTEXT DEFAULT NULL,
         stock INT DEFAULT 0,
         orden INT DEFAULT 0,
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -265,6 +265,16 @@ async function initDB() {
         INDEX idx_password_reset_expires (expires_at)
       )
     `);
+
+    // Migración: Asegurar LONGTEXT para imágenes en tablas existentes
+    try {
+      await conn.query('ALTER TABLE usuarios MODIFY COLUMN foto LONGTEXT DEFAULT NULL');
+      await conn.query('ALTER TABLE productos MODIFY COLUMN imagen_url LONGTEXT DEFAULT NULL');
+      await conn.query('ALTER TABLE producto_variantes MODIFY COLUMN imagen_url LONGTEXT DEFAULT NULL');
+      console.log('✅ Migración de columnas de imágenes a LONGTEXT completada.');
+    } catch (err) {
+      console.warn('⚠️ No se pudieron alterar las columnas de imágenes a LONGTEXT:', err.message);
+    }
 
     try {
       const [legacyItems] = await conn.query(`

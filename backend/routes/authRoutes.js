@@ -5,14 +5,8 @@ const path = require('path');
 const authController = require('../controllers/authController');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 
-// Configuración de Multer para fotos de perfil
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads')),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, Date.now() + '_perfil' + ext);
-  }
-});
+// Configuración de Multer para fotos de perfil en memoria
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 router.post('/register', authController.register);

@@ -4,7 +4,11 @@ const hasValue = (value) => value !== undefined && value !== null && String(valu
 
 const getUploadedImagePath = (req, fieldName) => {
   const file = (req.files || []).find(entry => entry.fieldname === fieldName);
-  return file ? `uploads/${file.filename}` : null;
+  if (file && file.buffer) {
+    const base64Data = file.buffer.toString('base64');
+    return `data:${file.mimetype};base64,${base64Data}`;
+  }
+  return null;
 };
 
 const parseVariants = (req) => {

@@ -107,8 +107,9 @@ const authController = {
       const data = { nombre, email, telefono, direccion };
 
       // Si subieron foto
-      if (req.file) {
-        data.foto = 'uploads/' + req.file.filename;
+      if (req.file && req.file.buffer) {
+        const base64Data = req.file.buffer.toString('base64');
+        data.foto = `data:${req.file.mimetype};base64,${base64Data}`;
       }
 
       await User.update(req.session.userId, data);
