@@ -385,10 +385,10 @@ export default function Catalog() {
               : selectedProduct.id;
             return (
         <>
-          <div className="overlay" style={{ backdropFilter: 'blur(15px)', background: 'rgba(5, 5, 5, 0.85)', zIndex: 9999 }} onClick={() => setSelectedProduct(null)} />
+          <div className="overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backdropFilter: 'blur(15px)', background: 'rgba(5, 5, 5, 0.85)', zIndex: 9999 }} onClick={() => setSelectedProduct(null)} />
           <div className="product-detail-modal" style={{
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 10000,
-            width: '90%', maxWidth: '900px', background: 'linear-gradient(145deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98))',
+            width: '90%', maxWidth: '900px', maxHeight: '90vh', background: 'linear-gradient(145deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98))',
             borderRadius: '16px', border: '1px solid var(--border-gold)', boxShadow: '0 30px 80px rgba(0,0,0,0.8)',
             display: 'flex', overflow: 'hidden'
           }}>
@@ -423,7 +423,7 @@ export default function Catalog() {
                  </div>
                )}
             </div>
-            <div className="modal-info-col" style={{ flex: '1', padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div className="modal-info-col" style={{ flex: '1', padding: '40px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', overflowY: 'auto' }}>
                <h2 className="product-detail-title" style={{ fontFamily: 'var(--font-display)', fontSize: '2.4rem', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: '1.1' }}>{selectedProduct.nombre}</h2>
                {isVip ? (
                  <div className="product-detail-price-block" style={{ marginBottom: '24px' }}>
