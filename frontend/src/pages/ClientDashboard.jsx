@@ -67,6 +67,11 @@ export default function ClientDashboard() {
   // Ticket form
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [ticketForm, setTicketForm] = useState({ asunto: '', mensaje: '' });
+  const [selectedSupportTicketId, setSelectedSupportTicketId] = useState(null);
+  const [supportConversation, setSupportConversation] = useState(null);
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [supportReply, setSupportReply] = useState('');
+  const [supportMessage, setSupportMessage] = useState(null);
 
   // Returns form
   const [showReturnForm, setShowReturnForm] = useState(false);
@@ -97,6 +102,12 @@ export default function ClientDashboard() {
     setActiveSection(seg);
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (activeSection === 'soporte' && selectedSupportTicketId) {
+      loadTicketConversation(selectedSupportTicketId);
+    }
+  }, [activeSection, selectedSupportTicketId]);
+
   const loadOrders = async () => { try { const { data } = await api.get('/orders/mine/detailed'); setOrders(data); } catch (e) { console.error(e); } };
   const loadWishlist = async () => {
     try {
@@ -105,7 +116,30 @@ export default function ClientDashboard() {
     } catch (e) { console.error(e); }
   };
   const loadAddresses = async () => { try { const { data } = await api.get('/addresses'); setAddresses(data); } catch (e) { console.error(e); } };
-  const loadTickets = async () => { try { const { data } = await api.get('/tickets'); setTickets(data); } catch (e) { console.error(e); } };
+  const loadTickets = async () => {
+    try {
+      const { data } = await api.get('/tickets');
+      setTickets(data);
+      if (data.length > 0) {
+        setSelectedSupportTicketId((prev) => prev || data[0].id);
+      } else {
+        setSelectedSupportTicketId(null);
+        setSupportConversation(null);
+      }
+    } catch (e) { console.error(e); }
+  };
+  const loadTicketConversation = async (ticketId) => {
+    try {
+      setSupportLoading(true);
+      const { data } = await api.get(`/tickets/${ticketId}/messages`);
+      setSupportConversation(data);
+    } catch (e) {
+      console.error(e);
+      setSupportMessage({ type: 'error', text: 'No fue posible cargar la conversación.' });
+    } finally {
+      setSupportLoading(false);
+    }
+  };
 
   const removeWishlistItem = async (productId) => {
     await api.delete(`/wishlist/${productId}`);
@@ -127,7 +161,25 @@ export default function ClientDashboard() {
     await api.post('/tickets', ticketForm);
     setShowTicketForm(false);
     setTicketForm({ asunto: '', mensaje: '' });
+    setSupportMessage({ type: 'success', text: 'Ticket enviado correctamente. Ahora puedes darle seguimiento desde esta misma sección.' });
     loadTickets();
+  };
+
+  const submitSupportReply = async (e) => {
+    e.preventDefault();
+    if (!selectedSupportTicketId || !supportReply.trim()) return;
+
+    try {
+      const { data } = await api.post(`/tickets/${selectedSupportTicketId}/messages`, { mensaje: supportReply.trim() });
+      setSupportConversation(data.conversation);
+      setSupportReply('');
+      setSupportMessage({ type: 'success', text: 'Respuesta enviada correctamente.' });
+      setTickets((prev) => prev.map(ticket =>
+        ticket.id === selectedSupportTicketId ? { ...ticket, estado: 'abierto' } : ticket
+      ));
+    } catch (err) {
+      setSupportMessage({ type: 'error', text: err.response?.data?.error || 'No fue posible enviar la respuesta.' });
+    }
   };
 
   const handleProfileSave = async (e) => {
@@ -618,6 +670,11 @@ export default function ClientDashboard() {
               <div><h2 className="cd-title" style={{margin:0}}>Soporte y Mensajes</h2><p className="cd-subtitle" style={{margin:0}}>Comunícate con nuestro equipo de atención</p></div>
               <button className="cd-action-btn" onClick={() => setShowTicketForm(!showTicketForm)}><Plus size={16}/> Nuevo Ticket</button>
             </div>
+            {supportMessage && (
+              <div className="auth-alert" style={{ marginBottom: 20, ...(supportMessage.type === 'success' ? { background: 'rgba(78,205,196,0.08)', border: '1px solid rgba(78,205,196,0.2)', color: 'var(--success)' } : { background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.2)', color: '#e74c3c' }) }}>
+                <span>{supportMessage.type === 'success' ? '✓' : '⚠'}</span> {supportMessage.text}
+              </div>
+            )}
             {showTicketForm && (
               <form className="cd-card cd-form" onSubmit={submitTicket} style={{marginBottom:24}}>
                 <div><label>Asunto</label><input className="cd-input" required value={ticketForm.asunto} onChange={e => setTicketForm({...ticketForm, asunto: e.target.value})} placeholder="Ej: Devolución del pedido #42"/></div>
@@ -629,17 +686,91 @@ export default function ClientDashboard() {
               </form>
             )}
             {tickets.length === 0 && !showTicketForm ? <div className="cd-empty-state"><MessageCircle size={48}/><p>No tienes tickets abiertos</p></div> : (
-              <div className="cd-tickets-list">
-                {tickets.map(t => (
-                  <div className="cd-card cd-ticket-card" key={t.id}>
-                    <div className="cd-ticket-header">
-                      <span style={{fontWeight:600}}>#{t.id} — {t.asunto}</span>
-                      <span className="cd-badge" style={{background: t.estado === 'abierto' ? 'rgba(243,156,18,0.15)' : t.estado === 'resuelto' ? 'rgba(46,204,113,0.15)' : 'rgba(52,152,219,0.15)', color: t.estado === 'abierto' ? '#f39c12' : t.estado === 'resuelto' ? '#2ecc71' : '#3498db', border: `1px solid ${t.estado === 'abierto' ? 'rgba(243,156,18,0.3)' : t.estado === 'resuelto' ? 'rgba(46,204,113,0.3)' : 'rgba(52,152,219,0.3)'}`}}>{t.estado}</span>
+              <div style={{display:'grid',gridTemplateColumns:'minmax(280px, 360px) minmax(0, 1fr)',gap:24,alignItems:'start'}}>
+                <div className="cd-tickets-list">
+                  {tickets.map(t => (
+                    <div
+                      className="cd-card cd-ticket-card"
+                      key={t.id}
+                      onClick={() => { setSelectedSupportTicketId(t.id); setSupportMessage(null); }}
+                      style={{
+                        cursor:'pointer',
+                        border: t.id === selectedSupportTicketId ? '1px solid rgba(201,168,76,0.35)' : undefined,
+                        boxShadow: t.id === selectedSupportTicketId ? '0 0 0 1px rgba(201,168,76,0.15)' : undefined
+                      }}
+                    >
+                      <div className="cd-ticket-header">
+                        <span style={{fontWeight:600}}>#{t.id} — {t.asunto}</span>
+                        <span className="cd-badge" style={{background: t.estado === 'abierto' ? 'rgba(243,156,18,0.15)' : t.estado === 'resuelto' ? 'rgba(46,204,113,0.15)' : 'rgba(52,152,219,0.15)', color: t.estado === 'abierto' ? '#f39c12' : t.estado === 'resuelto' ? '#2ecc71' : '#3498db', border: `1px solid ${t.estado === 'abierto' ? 'rgba(243,156,18,0.3)' : t.estado === 'resuelto' ? 'rgba(46,204,113,0.3)' : 'rgba(52,152,219,0.3)'}`}}>{t.estado}</span>
+                      </div>
+                      <p style={{color:'var(--text-muted)',fontSize:'0.85rem',marginTop:8,lineHeight:1.6}}>{t.mensaje}</p>
+                      <span style={{color:'var(--text-muted)',fontSize:'0.72rem',marginTop:12,display:'block'}}>{new Date(t.creado_en).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })}</span>
                     </div>
-                    <p style={{color:'var(--text-muted)',fontSize:'0.85rem',marginTop:8,lineHeight:1.6}}>{t.mensaje}</p>
-                    <span style={{color:'var(--text-muted)',fontSize:'0.72rem',marginTop:12,display:'block'}}>{new Date(t.creado_en).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                <div className="cd-card">
+                  {!selectedSupportTicketId ? (
+                    <div className="cd-empty-state" style={{padding:'30px 0'}}><MessageCircle size={44}/><p>Selecciona un ticket para ver la conversación</p></div>
+                  ) : supportLoading ? (
+                    <div className="cd-empty-state" style={{padding:'30px 0'}}><MessageCircle size={44}/><p>Cargando conversación...</p></div>
+                  ) : (
+                    <>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,gap:16,flexWrap:'wrap'}}>
+                        <div>
+                          <h3 style={{margin:'0 0 6px 0'}}>#{supportConversation?.ticket?.id} — {supportConversation?.ticket?.asunto}</h3>
+                          <p style={{margin:0,color:'var(--text-muted)',fontSize:'0.82rem'}}>Historial completo con soporte de Luxury Jewelry</p>
+                        </div>
+                        <span className="cd-badge" style={{background: supportConversation?.ticket?.estado === 'abierto' ? 'rgba(243,156,18,0.15)' : supportConversation?.ticket?.estado === 'resuelto' ? 'rgba(46,204,113,0.15)' : 'rgba(52,152,219,0.15)', color: supportConversation?.ticket?.estado === 'abierto' ? '#f39c12' : supportConversation?.ticket?.estado === 'resuelto' ? '#2ecc71' : '#3498db'}}>
+                          {supportConversation?.ticket?.estado}
+                        </span>
+                      </div>
+
+                      <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:20}}>
+                        {(supportConversation?.messages || []).map(message => {
+                          const isAdminReply = message.author_type === 'admin';
+                          return (
+                            <div
+                              key={message.id}
+                              style={{
+                                alignSelf: isAdminReply ? 'flex-start' : 'flex-end',
+                                maxWidth:'78%',
+                                background: isAdminReply ? 'rgba(255,255,255,0.05)' : 'rgba(201,168,76,0.12)',
+                                border: `1px solid ${isAdminReply ? 'rgba(255,255,255,0.08)' : 'rgba(201,168,76,0.25)'}`,
+                                borderRadius:14,
+                                padding:'14px 16px'
+                              }}
+                            >
+                              <div style={{fontSize:'0.78rem',fontWeight:600,color:isAdminReply ? 'var(--text-secondary)' : 'var(--gold-light)',marginBottom:8}}>
+                                {isAdminReply ? 'Soporte Luxury Jewelry' : 'Tú'}
+                              </div>
+                              <div style={{whiteSpace:'pre-wrap',lineHeight:1.6,color:'var(--text-primary)',fontSize:'0.9rem'}}>
+                                {message.mensaje}
+                              </div>
+                              <div style={{marginTop:10,fontSize:'0.72rem',color:'var(--text-muted)'}}>
+                                {new Date(message.creado_en).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <form onSubmit={submitSupportReply}>
+                        <label style={{display:'block',marginBottom:8,color:'var(--text-secondary)',fontSize:'0.82rem'}}>Responder a soporte</label>
+                        <textarea
+                          className="cd-input cd-textarea"
+                          value={supportReply}
+                          onChange={e => setSupportReply(e.target.value)}
+                          placeholder="Escribe aquí tu respuesta o información adicional para el equipo de soporte..."
+                          rows={4}
+                        />
+                        <div style={{display:'flex',gap:12,marginTop:16}}>
+                          <button type="submit" className="cd-action-btn" disabled={!supportReply.trim()}><Send size={14}/> Enviar respuesta</button>
+                        </div>
+                      </form>
+                    </>
+                  )}
+                </div>
               </div>
             )}
           </div>

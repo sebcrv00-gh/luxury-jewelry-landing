@@ -220,6 +220,20 @@ async function initDB() {
     `);
 
     await conn.query(`
+      CREATE TABLE IF NOT EXISTS ticket_respuestas (
+        id INT(11) AUTO_INCREMENT PRIMARY KEY,
+        ticket_id INT(11) NOT NULL,
+        author_type ENUM('cliente', 'admin') NOT NULL,
+        author_id INT(11) DEFAULT NULL,
+        mensaje TEXT NOT NULL,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_ticket_respuestas_ticket (ticket_id),
+        FOREIGN KEY (ticket_id) REFERENCES tickets_soporte(id) ON DELETE CASCADE,
+        FOREIGN KEY (author_id) REFERENCES usuarios(id) ON DELETE SET NULL
+      )
+    `);
+
+    await conn.query(`
       CREATE TABLE IF NOT EXISTS resenas_producto (
         id INT(11) AUTO_INCREMENT PRIMARY KEY,
         usuario_id INT(11) NOT NULL,
