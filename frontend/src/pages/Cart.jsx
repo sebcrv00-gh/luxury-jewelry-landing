@@ -24,8 +24,15 @@ export default function Cart() {
 
   const changeQty = (index, delta) => {
     const updated = [...cart];
-    updated[index].cantidad += delta;
-    if (updated[index].cantidad <= 0) updated.splice(index, 1);
+    const item = updated[index];
+    const newQty = item.cantidad + delta;
+    
+    if (newQty <= 0) {
+      updated.splice(index, 1);
+    } else {
+      const maxStock = item.stock !== undefined ? item.stock : Infinity;
+      item.cantidad = Math.min(newQty, maxStock);
+    }
     save(updated);
   };
 
@@ -93,7 +100,13 @@ export default function Cart() {
                 <div className="cart-item-qty">
                   <button className="qty-btn" onClick={() => changeQty(i, -1)}>-</button>
                   <span style={{ fontWeight: 600 }}>{item.cantidad}</span>
-                  <button className="qty-btn" onClick={() => changeQty(i, 1)}>+</button>
+                  <button 
+                    className="qty-btn" 
+                    onClick={() => changeQty(i, 1)}
+                    disabled={item.stock !== undefined && item.cantidad >= item.stock}
+                    style={item.stock !== undefined && item.cantidad >= item.stock ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
+                    title={item.stock !== undefined && item.cantidad >= item.stock ? "Stock máximo alcanzado" : ""}
+                  >+</button>
                 </div>
                 <span className="cart-item-subtotal">${(item.precio * item.cantidad).toLocaleString('es-CO')}</span>
                 <button className="btn-danger" onClick={() => remove(i)} style={{ padding: '4px 12px' }}>X</button>

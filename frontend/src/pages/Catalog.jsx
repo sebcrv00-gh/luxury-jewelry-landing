@@ -152,7 +152,7 @@ export default function Catalog() {
     const cart = JSON.parse(localStorage.getItem(key) || '[]');
     const existing = cart.find(i => i.id === cartItemId);
     if (existing) {
-      existing.cantidad += qty;
+      existing.cantidad = Math.min(existing.cantidad + qty, activeStock);
     } else {
       cart.push({
         id: cartItemId,
@@ -161,7 +161,8 @@ export default function Catalog() {
         color: product.selectedVariant?.color_nombre || null,
         nombre: product.nombre,
         precio: finalPrice,
-        cantidad: qty,
+        cantidad: Math.min(qty, activeStock),
+        stock: activeStock,
       });
     }
     localStorage.setItem(key, JSON.stringify(cart));
