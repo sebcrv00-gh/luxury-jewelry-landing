@@ -193,14 +193,14 @@ export default function AuthModal() {
             </button>
             <div className="recovery-icon"><Mail size={28} /></div>
             <h3 className="recovery-title">Recuperar Contraseña</h3>
-            <p className="recovery-desc">Ingresa tu correo electrónico y te enviaremos un código temporal para restablecer el acceso.</p>
+            <p className="recovery-desc">Ingresa tu correo electrónico para crear una solicitud de soporte. Un administrador validará la cuenta y te compartirá un código temporal por un canal manual.</p>
           </div>
           <div className="auth-field">
             <label>Correo Electrónico</label>
             <input type="email" value={recoveryEmail} onChange={e => setRecoveryEmail(e.target.value)} placeholder="tu@email.com" required autoFocus />
           </div>
           <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? <span className="auth-spinner"></span> : <>Enviar Código</>}
+            {loading ? <span className="auth-spinner"></span> : <>Solicitar Recuperación</>}
           </button>
         </form>
       );
@@ -216,7 +216,7 @@ export default function AuthModal() {
             <div className="recovery-icon"><ShieldCheck size={28} /></div>
             <h3 className="recovery-title">Verificar Código</h3>
             <p className="recovery-desc">
-              Hemos enviado un código de 6 dígitos a <strong>{recoveryEmailHint || recoveryEmail}</strong>.
+              Cuando soporte confirme tu solicitud, te compartirá un código de 6 dígitos para <strong>{recoveryEmailHint || recoveryEmail}</strong>.
             </p>
           </div>
           <div className="auth-field">
@@ -232,6 +232,7 @@ export default function AuthModal() {
               className="recovery-code-input"
             />
           </div>
+          <p className="recovery-note">Si aún no recibiste el código, espera la validación manual del equipo de soporte y vuelve a intentar.</p>
           <button type="submit" className="auth-submit-btn" disabled={loading || recoveryCode.length < 6}>
             {loading ? <span className="auth-spinner"></span> : <>Verificar Código</>}
           </button>

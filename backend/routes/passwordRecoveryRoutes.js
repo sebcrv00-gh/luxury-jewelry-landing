@@ -1,8 +1,8 @@
 const express = require('express');
 const crypto = require('crypto');
 const User = require('../models/User');
+const Ticket = require('../models/Ticket');
 const PasswordResetCode = require('../models/PasswordResetCode');
-const { sendEmail } = require('../services/emailService');
 
 const router = express.Router();
 const CODE_TTL_MINUTES = Number(process.env.RECOVERY_CODE_TTL_MINUTES || 10);
@@ -19,27 +19,20 @@ function generateCode() {
   return crypto.randomInt(100000, 1000000).toString();
 }
 
-async function sendRecoveryCodeEmail({ email, name, code }) {
-  await sendEmail({
-    to: email,
-    subject: 'Codigo de recuperacion - Luxury Jewelry',
-    text: `Hola ${name}, tu codigo de recuperacion es ${code}. Expira en ${CODE_TTL_MINUTES} minutos.`,
-    html: `
-      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; background: #0a0a0a; border: 1px solid rgba(201,168,76,0.3); border-radius: 12px; overflow: hidden;">
-        <div style="background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(183,110,121,0.08)); padding: 30px; text-align: center; border-bottom: 1px solid rgba(201,168,76,0.2);">
-          <h1 style="color: #C9A84C; font-size: 1.6rem; margin: 0; letter-spacing: 3px;">LUXURY JEWELRY</h1>
-          <p style="color: #999; font-size: 0.85rem; margin-top: 6px;">Restablecimiento de contrasena</p>
-        </div>
-        <div style="padding: 30px; text-align: center;">
-          <p style="color: #ccc; font-size: 0.95rem; margin-bottom: 20px;">Hola <strong style="color: #E8D5A3;">${name}</strong>, usa este codigo para continuar con el cambio de tu contrasena:</p>
-          <div style="background: rgba(201,168,76,0.08); border: 2px solid rgba(201,168,76,0.3); border-radius: 10px; padding: 20px; margin: 0 auto; display: inline-block;">
-            <span style="font-size: 2.4rem; font-weight: 700; letter-spacing: 12px; color: #C9A84C;">${code}</span>
-          </div>
-          <p style="color: #888; font-size: 0.8rem; margin-top: 20px;">El codigo expira en <strong>${CODE_TTL_MINUTES} minutos</strong>.</p>
-          <p style="color: #666; font-size: 0.75rem; margin-top: 12px;">Si no solicitaste este cambio, ignora este correo.</p>
-        </div>
-      </div>
-    `
+async function createManualRecoveryTicket({ user, email, code }) {
+  return Ticket.create(user.id, {
+    asunto: 'Recuperacion de contrasena',
+    mensaje:
+      `SOLICITUD DE RECUPERACION MANUAL\n\n` +
+      `Cliente: ${user.nombre || 'Cliente'}\n` +
+      `Email: ${email}\n` +
+      `Codigo temporal: ${code}\n` +
+      `Vence en: ${CODE_TTL_MINUTES} minutos\n\n` +
+      `Accion requerida:\n` +
+      `1. Verificar identidad del cliente por un canal manual.\n` +
+      `2. Compartir este codigo solo despues de validar la solicitud.\n` +
+      `3. Marcar el ticket como resuelto cuando el cliente recupere el acceso.`,
+    orden_id: null
   });
 }
 
@@ -66,26 +59,23 @@ router.post('/request-code', async (req, res) => {
     const recoveryId = await PasswordResetCode.create({ email, codeHash, expiresAt });
 
     try {
-      await sendRecoveryCodeEmail({
-        email,
-        name: user.nombre || 'cliente',
-        code
-      });
-    } catch (mailError) {
+      await createManualRecoveryTicket({ user, email, code });
+    } catch (ticketError) {
       await PasswordResetCode.deleteById(recoveryId);
-      throw mailError;
+      throw ticketError;
     }
 
     await PasswordResetCode.cleanupExpired();
 
     return res.json({
       ok: true,
-      message: 'Te enviamos un codigo de recuperacion a tu correo.',
+      message:
+        'Solicitud registrada. Nuestro equipo de soporte revisara tu cuenta y te compartira el codigo de recuperacion por un canal manual.',
       emailHint: email.replace(/^(.{2}).+(@.+)$/, '$1***$2')
     });
   } catch (err) {
     console.error('Error en request-code:', err);
-    return res.status(500).json({ error: 'No fue posible enviar el codigo de recuperacion' });
+    return res.status(500).json({ error: 'No fue posible registrar la solicitud de recuperacion' });
   }
 });
 
