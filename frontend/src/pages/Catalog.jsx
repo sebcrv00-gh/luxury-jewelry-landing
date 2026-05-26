@@ -388,14 +388,15 @@ export default function Catalog() {
         <div 
           className="modal-overlay"
           style={{ 
-            position: 'fixed', top: 'var(--header-height)', left: 0, width: '100vw', height: 'calc(100vh - var(--header-height))', 
-            background: 'rgba(5, 5, 5, 0.85)', backdropFilter: 'blur(15px)', zIndex: 9999, 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+            position: 'fixed', inset: 0,
+            background: 'rgba(5, 5, 5, 0.95)', backdropFilter: 'blur(15px)', zIndex: 99999, 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+            paddingTop: 'calc(var(--header-height) + 20px)'
           }} 
           onClick={(e) => { if(e.target === e.currentTarget) setSelectedProduct(null) }}
         >
           <div className="product-detail-modal" style={{
-            width: '100%', maxWidth: '960px', maxHeight: 'calc(100vh - var(--header-height) - 40px)', height: 'auto',
+            width: '100%', maxWidth: '960px', maxHeight: '100%',
             background: 'linear-gradient(145deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98))',
             borderRadius: '16px', border: '1px solid var(--border-gold)', boxShadow: '0 30px 80px rgba(0,0,0,0.8)',
             display: 'flex', overflow: 'hidden', position: 'relative'
@@ -403,8 +404,8 @@ export default function Catalog() {
             <button className="product-detail-close" onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(10,10,10,0.5)', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', zIndex: 10, width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }} onMouseOver={e => {e.currentTarget.style.color='var(--rose-gold)'; e.currentTarget.style.background='rgba(30,30,30,0.8)'}} onMouseOut={e => {e.currentTarget.style.color='var(--text-muted)'; e.currentTarget.style.background='rgba(10,10,10,0.5)'}}>
               <X size={32} strokeWidth={1} />
             </button>
-            <div className="modal-img-col" style={{ flex: '1', position: 'relative', height: '100%', minHeight: '100%' }}>
-               <img src={activeImage} alt={selectedProduct.nombre} style={{ width: '100%', height: '100%', minHeight: '400px', objectFit: 'cover', filter: 'brightness(0.95)' }} />
+            <div className="modal-img-col" style={{ flex: '1', position: 'relative', display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+               <img src={activeImage} alt={selectedProduct.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.95)', flex: 1 }} />
                <div className="product-detail-category" style={{ position: 'absolute', top: '20px', left: '20px', background: 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: '1px solid var(--gold)', padding: '6px 16px', borderRadius: '4px', color: 'var(--gold)', letterSpacing: '2px', fontSize: '0.7rem', textTransform: 'uppercase' }}>
                   {selectedProduct.categoria}
                </div>
@@ -431,7 +432,7 @@ export default function Catalog() {
                  </div>
                )}
             </div>
-            <div className="modal-info-col" style={{ flex: '1', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', overflowY: 'auto', height: '100%', minHeight: 0 }}>
+            <div className="modal-info-col" style={{ flex: '1', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', overflowY: 'auto', minHeight: 0 }}>
                <h2 className="product-detail-title" style={{ marginTop: '0', fontFamily: 'var(--font-display)', fontSize: '2.2rem', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: '1.2' }}>{selectedProduct.nombre}</h2>
                {isVip ? (
                  <div className="product-detail-price-block" style={{ marginBottom: '24px' }}>
