@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock, Star, MessageSquare } from 'lucide-react';
@@ -383,7 +384,7 @@ export default function Catalog() {
             const cartSelectionId = activeVariant
               ? `db_${selectedProduct.dbProductId}__variant_${activeVariant.id}`
               : selectedProduct.id;
-            return (
+            return createPortal(
         <div 
           className="modal-overlay"
           style={{ 
@@ -558,7 +559,8 @@ export default function Catalog() {
                </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
             );
           })()
       )}
