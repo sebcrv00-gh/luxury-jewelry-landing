@@ -1386,7 +1386,18 @@ button {
 
 .product-detail-modal {
   max-height: min(920px, calc(100vh - 36px));
-  min-height: min(680px, calc(100vh - 36px));
+  animation: modalSlideIn 0.35s var(--ease-out-expo);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .product-detail-close {
@@ -1463,6 +1474,25 @@ button {
 .product-detail-modal .modal-info-col {
   min-width: 0;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 168, 76, 0.25) transparent;
+}
+
+.product-detail-modal .modal-info-col::-webkit-scrollbar {
+  width: 5px;
+}
+
+.product-detail-modal .modal-info-col::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.product-detail-modal .modal-info-col::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.2);
+  border-radius: 10px;
+}
+
+.product-detail-modal .modal-info-col::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 168, 76, 0.4);
 }
 
 .product-detail-title {

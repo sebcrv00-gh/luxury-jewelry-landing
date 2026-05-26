@@ -397,8 +397,7 @@ export default function Catalog() {
         >
           <div className="product-detail-modal" style={{
             width: '100%', maxWidth: '960px',
-            maxHeight: 'calc(100vh - var(--header-height) - 40px)',
-            minHeight: 'min(680px, calc(100vh - var(--header-height) - 40px))',
+            maxHeight: 'calc(100vh - var(--header-height) - 60px)',
             background: 'linear-gradient(145deg, rgba(20, 20, 20, 0.95), rgba(10, 10, 10, 0.98))',
             borderRadius: '16px', border: '1px solid var(--border-gold)', boxShadow: '0 30px 80px rgba(0,0,0,0.8)',
             display: 'flex', overflow: 'hidden', position: 'relative'
