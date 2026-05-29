@@ -108,6 +108,16 @@ export default function Catalog() {
     } catch (e) { console.error(e); }
   };
 
+  const handleVipCta = () => {
+    if (!isLoggedIn) {
+      openAuthModal('register');
+      return;
+    }
+
+    const catalogGrid = document.querySelector('.catalog-container');
+    catalogGrid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const allProducts = dbProducts.map(p => ({
     id: `db_${p.id}`,
     dbProductId: p.id,
@@ -235,12 +245,37 @@ export default function Catalog() {
           Descubre nuestra exclusiva selección
         </p>
         
-        {isVip && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(201,168,76,0.05))', border: '1px solid rgba(255,215,0,0.25)', padding: '12px 28px', borderRadius: '50px', marginBottom: '32px' }}>
-            <Crown size={18} style={{ color: '#FFD700' }}/>
-            <span style={{ color: '#FFD700', fontSize: '0.82rem', fontWeight: '600', letterSpacing: '2px', textTransform: 'uppercase' }}>Beneficio VIP — 10% de descuento aplicado</span>
+        <div className={`catalog-vip-banner ${isVip ? 'is-active' : ''}`}>
+          <div className="catalog-vip-badge">
+            <Crown size={18} />
+            <span>{isVip ? 'Membresia VIP activa' : 'Programa VIP Luxury'}</span>
           </div>
-        )}
+          <div className="catalog-vip-copy">
+            <h2>
+              {isVip
+                ? 'Tu acceso VIP ya esta desbloqueado.'
+                : 'Convierte tus compras en un privilegio permanente.'}
+            </h2>
+            <p>
+              {isVip
+                ? 'Disfruta tu 10% de descuento en cada pieza de la coleccion y sigue elevando tu experiencia Luxury Jewelry.'
+                : 'Nuestros clientes de mayor movimiento pueden acceder a categoria VIP y disfrutar un 10% de descuento en todos nuestros productos.'}
+            </p>
+          </div>
+          <div className="catalog-vip-actions">
+            <div className="catalog-vip-highlight">
+              <span className="catalog-vip-highlight-value">10%</span>
+              <span className="catalog-vip-highlight-label">beneficio exclusivo</span>
+            </div>
+            <button
+              type="button"
+              className="catalog-vip-cta"
+              onClick={handleVipCta}
+            >
+              {isVip ? 'Explorar coleccion VIP' : isLoggedIn ? 'Seguir comprando' : 'Crear cuenta'}
+            </button>
+          </div>
+        </div>
         
         <div className="search-box" style={{ margin: '0 auto 32px' }}>
           <input

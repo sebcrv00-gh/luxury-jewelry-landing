@@ -1048,6 +1048,137 @@ button {
 }
 
 /* ─── CATEGORY MENU ───────────────────── */
+.catalog-vip-banner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.9fr);
+  align-items: center;
+  gap: 28px;
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto 32px;
+  padding: 26px 30px;
+  border-radius: 28px;
+  border: 1px solid rgba(201, 168, 76, 0.22);
+  background:
+    radial-gradient(circle at top left, rgba(201, 168, 76, 0.18), transparent 38%),
+    linear-gradient(135deg, rgba(20, 18, 14, 0.96), rgba(10, 10, 10, 0.98));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+  overflow: hidden;
+}
+
+.catalog-vip-banner::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 27px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+}
+
+.catalog-vip-banner.is-active {
+  border-color: rgba(255, 215, 0, 0.34);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 215, 0, 0.12);
+}
+
+.catalog-vip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 168, 76, 0.22);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--gold-light);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.catalog-vip-copy {
+  text-align: left;
+}
+
+.catalog-vip-copy h2 {
+  margin: 0 0 12px;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.3vw, 2.2rem);
+  line-height: 1.1;
+}
+
+.catalog-vip-copy p {
+  max-width: 700px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.catalog-vip-actions {
+  display: grid;
+  justify-items: end;
+  gap: 16px;
+}
+
+.catalog-vip-highlight {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 170px;
+  min-height: 138px;
+  padding: 20px 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  background: linear-gradient(180deg, rgba(255, 215, 0, 0.1), rgba(255, 255, 255, 0.02));
+}
+
+.catalog-vip-highlight-value {
+  color: var(--gold-light);
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.catalog-vip-highlight-label {
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.catalog-vip-cta {
+  min-width: 220px;
+  padding: 14px 22px;
+  border: 1px solid rgba(201, 168, 76, 0.24);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: var(--bg-primary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-out-expo), box-shadow 0.3s var(--ease-out-expo), filter 0.3s ease;
+  box-shadow: 0 16px 32px rgba(201, 168, 76, 0.22);
+}
+
+.catalog-vip-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 34px rgba(201, 168, 76, 0.28);
+  filter: brightness(1.03);
+}
+
+.catalog-vip-cta:focus-visible {
+  outline: 2px solid rgba(255, 215, 0, 0.6);
+  outline-offset: 3px;
+}
+
 .category-menu {
   display: flex;
   justify-content: center;
@@ -2260,6 +2391,45 @@ footer p+p {
   .catalog-header h1 {
     font-size: 2rem !important;
     letter-spacing: 2px !important;
+  }
+
+  .catalog-vip-banner {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    width: calc(100% - 24px);
+    margin-bottom: 24px;
+    padding: 22px 18px;
+    border-radius: 24px;
+  }
+
+  .catalog-vip-badge {
+    margin-bottom: 12px;
+    font-size: 0.68rem;
+    letter-spacing: 1.4px;
+  }
+
+  .catalog-vip-copy h2 {
+    font-size: 1.45rem;
+  }
+
+  .catalog-vip-copy p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .catalog-vip-actions {
+    justify-items: stretch;
+  }
+
+  .catalog-vip-highlight {
+    width: 100%;
+    min-width: 0;
+    min-height: 112px;
+  }
+
+  .catalog-vip-cta {
+    width: 100%;
+    min-width: 0;
   }
 
   .category-menu {
