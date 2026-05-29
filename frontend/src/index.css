@@ -849,22 +849,30 @@ button {
 }
 
 .catalog-auth-prompt {
-  position: fixed;
-  right: 28px;
-  bottom: 28px;
-  z-index: 12000;
-  width: min(420px, calc(100vw - 32px));
-  padding: 22px 22px 20px;
-  border-radius: 18px;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 18px 18px 16px;
+  border-radius: 16px;
   border: 1px solid rgba(201, 168, 76, 0.18);
   background: linear-gradient(160deg, rgba(18, 18, 18, 0.96), rgba(10, 10, 10, 0.98));
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 24px rgba(201, 168, 76, 0.08);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.36), 0 0 24px rgba(201, 168, 76, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   animation: catalogAuthPromptIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.catalog-auth-prompt--card {
+  margin-top: 14px;
+  text-align: left;
+  align-items: stretch;
+}
+
+.catalog-auth-prompt--modal {
+  margin-top: 16px;
 }
 
 @keyframes catalogAuthPromptIn {
@@ -895,8 +903,8 @@ button {
 
 .catalog-auth-prompt-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   width: 32px;
   height: 32px;
   border-radius: 10px;
@@ -930,8 +938,9 @@ button {
 .catalog-auth-prompt-copy {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-right: 28px;
+  gap: 6px;
+  padding-right: 34px;
+  text-align: left;
 }
 
 .catalog-auth-prompt-kicker {
@@ -944,20 +953,21 @@ button {
 
 .catalog-auth-prompt-copy strong {
   color: var(--text-primary);
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   line-height: 1.35;
   font-weight: 600;
 }
 
 .catalog-auth-prompt-copy p {
   color: var(--text-secondary);
-  font-size: 0.88rem;
-  line-height: 1.65;
+  font-size: 0.84rem;
+  line-height: 1.6;
 }
 
 .catalog-auth-prompt-actions {
   display: flex;
   gap: 10px;
+  align-items: stretch;
 }
 
 .catalog-auth-prompt-actions .btn-primary,
@@ -3204,14 +3214,52 @@ footer p+p {
 
 /* ── Mini Summary (step 2) ── */
 .checkout-mini-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  gap: 8px;
   padding: 16px 20px;
   background: rgba(201, 168, 76, 0.05);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   margin-top: 8px;
+}
+
+.checkout-mini-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 0.84rem;
+}
+
+.checkout-mini-summary-label,
+.checkout-mini-summary-value {
+  color: var(--text-muted);
+}
+
+.checkout-mini-summary-value {
+  text-align: right;
+}
+
+.checkout-mini-summary-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  color: var(--gold-light);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.payment-method-name,
+.payment-method-desc {
+  display: block;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* ── Confirmation Box ── */
@@ -3880,7 +3928,7 @@ footer p+p {
 .auth-modal-form-side {
   flex: 1;
   background: linear-gradient(170deg, #141414, #0e0e0e);
-  padding: 40px 36px;
+  padding: 72px 36px 40px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -3898,13 +3946,13 @@ footer p+p {
 /* ─── Close Button ─── */
 .auth-modal-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 20px;
+  right: 20px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text-muted);
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -3942,7 +3990,7 @@ body:has(.auth-modal-overlay) {
   border-radius: 14px;
   padding: 4px;
   margin-bottom: 28px;
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .auth-tab {
@@ -4348,7 +4396,7 @@ body:has(.auth-modal-overlay) {
   }
 
   .auth-modal-form-side {
-    padding: 28px 24px;
+    padding: 64px 24px 28px;
   }
 
   .auth-tab-switcher {
@@ -4398,7 +4446,14 @@ body:has(.auth-modal-overlay) {
   }
 
   .auth-modal-form-side {
-    padding: 24px 20px 32px;
+    padding: 60px 20px 32px;
+  }
+
+  .auth-modal-close {
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
   }
 
   .auth-field input {
@@ -4581,11 +4636,7 @@ body:has(.auth-modal-overlay) {
   }
 
   .catalog-auth-prompt {
-    right: 16px;
-    left: 16px;
-    bottom: 16px;
-    width: auto;
-    padding: 20px 18px 18px;
+    padding: 16px 14px 14px;
   }
 
   .catalog-auth-prompt-actions {
@@ -4692,6 +4743,16 @@ body:has(.auth-modal-overlay) {
   
   .payment-card-form, .payment-nequi-form, .payment-cash-info {
     padding: 16px !important;
+  }
+
+  .checkout-mini-summary-row,
+  .checkout-mini-summary-total {
+    align-items: flex-start;
+  }
+
+  .checkout-mini-summary-value,
+  .checkout-mini-summary-total span:last-child {
+    text-align: left;
   }
   .card-expiry-cvv-grid {
     grid-template-columns: 1fr !important;

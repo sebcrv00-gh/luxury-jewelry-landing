@@ -27,6 +27,7 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [cardData, setCardData] = useState({ numero: '', titular: '', expiracion: '', cvv: '' });
   const [nequiData, setNequiData] = useState({ celular: '' });
+  const currentPaymentMethod = PAYMENT_METHODS.find(m => m.id === paymentMethod) || PAYMENT_METHODS[0];
 
   const cartKey = isLoggedIn ? `carrito_${user.id}` : null;
 
@@ -259,6 +260,7 @@ export default function Checkout() {
                     <button
                       type="button"
                       key={pm.id}
+                      className={`payment-method-card ${paymentMethod === pm.id ? 'is-active' : ''}`}
                       onClick={() => setPaymentMethod(pm.id)}
                       style={{
                         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
@@ -269,8 +271,8 @@ export default function Checkout() {
                       }}
                     >
                       <pm.icon size={28} style={{ color: paymentMethod === pm.id ? pm.color : 'var(--text-muted)', transition: 'color 0.3s' }}/>
-                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: paymentMethod === pm.id ? '#fff' : 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>{pm.label}</span>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center' }}>{pm.desc}</span>
+                      <span className="payment-method-name" style={{ fontSize: '0.82rem', fontWeight: 600, color: paymentMethod === pm.id ? '#fff' : 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>{pm.label}</span>
+                      <span className="payment-method-desc" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center' }}>{pm.desc}</span>
                       {paymentMethod === pm.id && (
                         <div style={{ position: 'absolute', top: '8px', right: '8px', width: '18px', height: '18px', borderRadius: '50%', background: pm.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <ShieldCheck size={11} style={{ color: '#fff' }}/>
@@ -344,19 +346,19 @@ export default function Checkout() {
 
               {/* Mini resumen */}
               <div className="checkout-mini-summary" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '5px' }}>
-                  <span>{cart.length} producto(s)</span>
-                  <span>${subtotal.toLocaleString('es-CO')}</span>
+                <div className="checkout-mini-summary-row">
+                  <span className="checkout-mini-summary-label">{cart.length} producto(s)</span>
+                  <span className="checkout-mini-summary-value">${subtotal.toLocaleString('es-CO')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '5px' }}>
-                  <span>Envío</span>
-                  <span>${shippingFee.toLocaleString('es-CO')}</span>
+                <div className="checkout-mini-summary-row">
+                  <span className="checkout-mini-summary-label">Envío</span>
+                  <span className="checkout-mini-summary-value">${shippingFee.toLocaleString('es-CO')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
-                  <span>Método</span>
-                  <span style={{ color: PAYMENT_METHODS.find(m => m.id === paymentMethod)?.color }}>{PAYMENT_METHODS.find(m => m.id === paymentMethod)?.label}</span>
+                <div className="checkout-mini-summary-row">
+                  <span className="checkout-mini-summary-label">Método</span>
+                  <span className="checkout-mini-summary-value" style={{ color: currentPaymentMethod.color }}>{currentPaymentMethod.label}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--gold-light)', fontSize: '1.1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}>
+                <div className="checkout-mini-summary-total">
                   <span>Total Final:</span>
                   <span>${total.toLocaleString('es-CO')}</span>
                 </div>

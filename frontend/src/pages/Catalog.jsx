@@ -45,7 +45,7 @@ export default function Catalog() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todas las colecciones');
   const [dbProducts, setDbProducts] = useState([]);
-  const [showPopup, setShowPopup] = useState(false);
+  const [authPromptTarget, setAuthPromptTarget] = useState(null);
   const [addedProduct, setAddedProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -91,10 +91,19 @@ export default function Catalog() {
 
   const isInWishlist = (productId) => wishlistIds.has(productId);
 
+  const closeAuthPrompt = () => setAuthPromptTarget(null);
+
+  const openAuthPrompt = (target) => setAuthPromptTarget(target);
+
+  const handleAuthPromptAction = (mode) => {
+    closeAuthPrompt();
+    openAuthModal(mode);
+  };
+
   const toggleWishlist = async (productId) => {
     if (!isLoggedIn) {
       setSelectedProduct(null);
-      setShowPopup(true);
+      openAuthPrompt({ type: 'card', productId });
       return;
     }
     try {
@@ -150,8 +159,10 @@ export default function Catalog() {
 
   const addToCart = (product, qty = 1) => {
     if (!isLoggedIn) {
-      setSelectedProduct(null);
-      setShowPopup(true);
+      openAuthPrompt({
+        type: selectedProduct ? 'modal' : 'card',
+        productId: product.dbProductId
+      });
       return;
     }
 
@@ -191,6 +202,43 @@ export default function Catalog() {
       || reviewSummaryMap[product.reviewRef]
       || { average_rating: 0, total_reviews: 0 };
   };
+
+  const renderAuthPrompt = (variant = 'card') => (
+    <div className={`catalog-auth-prompt catalog-auth-prompt--${variant}`} role="alert" aria-live="polite">
+      <button
+        type="button"
+        className="catalog-auth-prompt-close"
+        aria-label="Cerrar aviso"
+        onClick={closeAuthPrompt}
+      >
+        <X size={16} />
+      </button>
+      <div className="catalog-auth-prompt-icon">
+        <Lock size={18} />
+      </div>
+      <div className="catalog-auth-prompt-copy">
+        <span className="catalog-auth-prompt-kicker">Acceso requerido</span>
+        <strong>Inicia sesión o crea tu cuenta para usar el carrito.</strong>
+        <p>Activa una experiencia de compra completa y guarda tus piezas favoritas con seguridad.</p>
+      </div>
+      <div className="catalog-auth-prompt-actions">
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => handleAuthPromptAction('login')}
+        >
+          <span>Iniciar sesión</span>
+        </button>
+        <button
+          type="button"
+          className="btn-outline"
+          onClick={() => handleAuthPromptAction('register')}
+        >
+          Registrarme
+        </button>
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     if (!selectedProduct) {
@@ -370,6 +418,9 @@ export default function Catalog() {
                     >
                       {p.stock === 0 ? 'No disponible' : 'Ver Detalles'}
                     </button>
+                    {authPromptTarget?.type === 'card' && authPromptTarget.productId === p.dbProductId && (
+                      renderAuthPrompt('card')
+                    )}
                   </div>
                 </div>
               )})}
@@ -600,6 +651,9 @@ export default function Catalog() {
                       : 'AÑADIR AL CARRITO'
                   )}
                </button>
+               {authPromptTarget?.type === 'modal' && authPromptTarget.productId === selectedProduct.dbProductId && (
+                 renderAuthPrompt('modal')
+               )}
             </div>
           </div>
         </div>,
@@ -608,40 +662,6 @@ export default function Catalog() {
           })()
       )}
 
-      {showPopup && (
-        <div className="catalog-auth-prompt" role="alert" aria-live="polite">
-          <button
-            type="button"
-            className="catalog-auth-prompt-close"
-            aria-label="Cerrar aviso"
-            onClick={() => setShowPopup(false)}
-          >
-            <X size={16} />
-          </button>
-          <div className="catalog-auth-prompt-icon">
-            <Lock size={18} />
-          </div>
-          <div className="catalog-auth-prompt-copy">
-            <span className="catalog-auth-prompt-kicker">Acceso requerido</span>
-            <strong>Inicia sesión o crea tu cuenta para usar el carrito.</strong>
-            <p>Activa una experiencia de compra completa y guarda tus piezas favoritas con seguridad.</p>
-          </div>
-          <div className="catalog-auth-prompt-actions">
-            <button
-              className="btn-primary"
-              onClick={() => { setShowPopup(false); openAuthModal('login'); }}
-            >
-              <span>Iniciar Sesión</span>
-            </button>
-            <button
-              className="btn-outline"
-              onClick={() => { setShowPopup(false); openAuthModal('register'); }}
-            >
-              Registrarme
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }
