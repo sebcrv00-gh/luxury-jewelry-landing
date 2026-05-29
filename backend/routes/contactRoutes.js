@@ -11,7 +11,7 @@ router.post('/', isAuthenticated, async (req, res) => {
   const categoryLabel = safeCategory === 'reporte' ? 'Reporte del sitio' : 'Comentario del sitio';
 
   try {
-    // 1. Guardar en Base de Datos (Sistema de Respaldo Infalible)
+    // Guardar siempre el mensaje en base de datos, aunque falle el correo.
     await Ticket.create(userId, {
       asunto: `${categoryLabel} de ${name}`,
       mensaje: `TIPO: ${categoryLabel}\n\nMENSAJE CORE:\n${message}\n\n--- INFO ADICIONAL ---\nEmail: ${email}\nTeléfono: ${phone || 'No registrado'}`,
@@ -37,10 +37,10 @@ router.post('/', isAuthenticated, async (req, res) => {
           </div>
         `
       }).catch(() => {
-        console.warn('Aviso: no se pudo enviar la notificacion con Resend, pero el mensaje ya esta guardado en la base de datos.');
+        console.warn('Aviso: no se pudo enviar la notificacion por SMTP, pero el mensaje ya esta guardado en la base de datos.');
       });
     } else {
-      console.warn('Aviso: Resend no esta configurado. El mensaje quedo guardado en la base de datos.');
+      console.warn('Aviso: SMTP no esta configurado. El mensaje quedo guardado en la base de datos.');
     }
 
     res.status(200).json({ success: true, message: 'Mensaje recibido y guardado en tu panel.' });

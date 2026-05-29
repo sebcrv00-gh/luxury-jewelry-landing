@@ -1,8 +1,8 @@
 const express = require('express');
 const crypto = require('crypto');
 const User = require('../models/User');
-const Ticket = require('../models/Ticket');
 const PasswordResetCode = require('../models/PasswordResetCode');
+const { sendEmail } = require('../services/emailService');
 
 const router = express.Router();
 const CODE_TTL_MINUTES = Number(process.env.RECOVERY_CODE_TTL_MINUTES || 10);
@@ -19,20 +19,45 @@ function generateCode() {
   return crypto.randomInt(100000, 1000000).toString();
 }
 
-async function createManualRecoveryTicket({ user, email, code }) {
-  return Ticket.create(user.id, {
-    asunto: 'Recuperacion de contrasena',
-    mensaje:
-      `SOLICITUD DE RECUPERACION MANUAL\n\n` +
-      `Cliente: ${user.nombre || 'Cliente'}\n` +
-      `Email: ${email}\n` +
-      `Codigo temporal: ${code}\n` +
-      `Vence en: ${CODE_TTL_MINUTES} minutos\n\n` +
-      `Accion requerida:\n` +
-      `1. Verificar identidad del cliente por un canal manual.\n` +
-      `2. Compartir este codigo solo despues de validar la solicitud.\n` +
-      `3. Marcar el ticket como resuelto cuando el cliente recupere el acceso.`,
-    orden_id: null
+function maskEmail(email) {
+  return email.replace(/^(.{2}).+(@.+)$/, '$1***$2');
+}
+
+async function sendRecoveryCodeEmail({ user, email, code }) {
+  const customerName = user.nombre || 'Cliente';
+  const subject = 'Codigo de recuperacion - Luxury Jewelry';
+  const text =
+    `Hola ${customerName},\n\n` +
+    `Recibimos una solicitud para restablecer tu contrasena en Luxury Jewelry.\n\n` +
+    `Tu codigo de recuperacion es: ${code}\n` +
+    `Este codigo vence en ${CODE_TTL_MINUTES} minutos.\n\n` +
+    `Si no solicitaste este cambio, puedes ignorar este correo.\n`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; padding: 24px; color: #1a1a1a; background: #f8f5ee;">
+      <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e6d8b1; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 24px 28px; background: #111111; color: #fdf8eb;">
+          <p style="margin: 0; letter-spacing: 0.18em; font-size: 12px; color: #c9a84c;">LUXURY JEWELRY</p>
+          <h1 style="margin: 12px 0 0; font-size: 24px; color: #fdf8eb;">Recuperacion de contrasena</h1>
+        </div>
+        <div style="padding: 28px;">
+          <p style="margin: 0 0 12px;">Hola <strong>${customerName}</strong>,</p>
+          <p style="margin: 0 0 18px; line-height: 1.6;">Recibimos una solicitud para restablecer la contrasena de tu cuenta.</p>
+          <div style="margin: 24px 0; padding: 20px; text-align: center; background: #fdfaf3; border: 1px solid #e6d8b1; border-radius: 14px;">
+            <p style="margin: 0 0 10px; font-size: 12px; letter-spacing: 0.16em; color: #8e6f1b;">CODIGO DE VERIFICACION</p>
+            <p style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: 0.3em; color: #111111;">${code}</p>
+          </div>
+          <p style="margin: 0 0 12px; line-height: 1.6;">Este codigo vence en <strong>${CODE_TTL_MINUTES} minutos</strong>.</p>
+          <p style="margin: 0; line-height: 1.6; color: #5c5c5c;">Si no solicitaste este cambio, puedes ignorar este correo y tu contrasena seguira siendo la misma.</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: email,
+    subject,
+    text,
+    html
   });
 }
 
@@ -59,10 +84,10 @@ router.post('/request-code', async (req, res) => {
     const recoveryId = await PasswordResetCode.create({ email, codeHash, expiresAt });
 
     try {
-      await createManualRecoveryTicket({ user, email, code });
-    } catch (ticketError) {
+      await sendRecoveryCodeEmail({ user, email, code });
+    } catch (emailError) {
       await PasswordResetCode.deleteById(recoveryId);
-      throw ticketError;
+      throw emailError;
     }
 
     await PasswordResetCode.cleanupExpired();
@@ -70,12 +95,12 @@ router.post('/request-code', async (req, res) => {
     return res.json({
       ok: true,
       message:
-        'Solicitud registrada. Nuestro equipo de soporte revisara tu cuenta y te compartira el codigo de recuperacion por un canal manual.',
-      emailHint: email.replace(/^(.{2}).+(@.+)$/, '$1***$2')
+        'Si el correo existe en nuestra base de datos, recibiras un codigo de recuperacion en los proximos minutos.',
+      emailHint: maskEmail(email)
     });
   } catch (err) {
     console.error('Error en request-code:', err);
-    return res.status(500).json({ error: 'No fue posible registrar la solicitud de recuperacion' });
+    return res.status(500).json({ error: 'No fue posible enviar el codigo de recuperacion' });
   }
 });
 

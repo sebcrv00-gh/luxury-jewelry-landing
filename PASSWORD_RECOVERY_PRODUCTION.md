@@ -1,274 +1,360 @@
-# Plan De Recuperacion De Contrasena Sin SMTP
+# Guia Brevo SMTP Con Render Y Clever Cloud
 
 ## Objetivo
 
-Definir una estrategia de recuperacion de contrasena que funcione en `Render` sin usar credenciales de `SMTP`, sin dominio propio y priorizando opciones gratuitas.
+Dejar documentado el paso a paso para configurar un envio de correos mas serio usando:
+
+- `Render` para la aplicacion
+- `Clever Cloud` para MySQL
+- `Brevo` como proveedor `SMTP`
+
+Esta guia no aplica cambios al codigo por si sola. Sirve para configurar el entorno y dejar listo el proyecto para recuperacion de contrasena, contacto y notificaciones por email.
+
+## Arquitectura Final
+
+La arquitectura queda asi:
+
+- `Render`: ejecuta backend y frontend
+- `Clever Cloud`: guarda usuarios, pedidos, codigos de recuperacion y demas datos
+- `Brevo`: envia correos transaccionales por `SMTP`
 
 Importante:
 
-- Este documento describe un plan.
-- No aplica cambios al codigo.
-- La meta es elegir una ruta viable antes de implementar.
+- `Render` no entrega credenciales `SMTP`
+- `Clever Cloud` no entrega correo
+- las credenciales `SMTP` salen de `Brevo`
 
-## Contexto Del Problema
+## Antes De Empezar
 
-Hoy no se quieren usar credenciales de `SMTP` porque no existen credenciales disponibles para eso.
+Necesitas tener listo esto:
 
-Ademas, se busca una solucion que:
+- cuenta activa en `Brevo`
+- acceso a `Render`
+- acceso a `Clever Cloud`
+- acceso al correo que vas a usar como remitente
 
-- funcione en nube
-- no dependa de un dominio propio
-- sea gratis o lo mas cercana posible a costo cero
-- no obligue a montar `Docker`
+Si no tienes dominio propio, puedes empezar verificando un correo puntual como remitente.
 
-## Conclusion Tecnica Principal
+## Paso 1. Entrar A Brevo
 
-Si se quiere recuperacion de contrasena por correo en produccion, no hace falta `SMTP`, pero si hace falta algun servicio externo que envie emails.
+1. inicia sesion en `Brevo`
+2. en el menu izquierdo busca `Transactional`
+3. entra a esa seccion
 
-Eso significa:
+Todo lo relacionado con `SMTP`, remitentes y envio transaccional se configura ahi.
 
-- no es obligatorio usar `Gmail SMTP`
-- si es obligatorio usar algun proveedor de envio por `API HTTP` o servicio similar
+## Paso 2. Crear El Remitente
 
-La mejor estrategia es:
+Dentro de `Transactional`, busca algo como:
 
-1. mantener `Render` como backend
-2. mantener la base de datos para guardar codigos o tokens
-3. reemplazar el envio `SMTP` por una `Email API`
+- `Settings`
+- `Senders`
+- `Senders & Domains`
+- `Senders, domains & dedicated IP`
 
-## Opcion Recomendada
+Luego:
 
-### Render + Base De Datos + Email API Gratuita
+1. entra a `Senders`
+2. haz clic en `Add a sender` o `Create sender`
 
-La ruta recomendada es:
+Llena los campos asi:
 
-- `frontend`: formulario "Olvide mi contrasena"
-- `backend en Render`: genera el codigo o token
-- `base de datos`: guarda el hash del codigo, expiracion, estado e intentos
-- `proveedor de email`: envia el correo por `API`, no por `SMTP`
+- `Sender name`: `Luxury Jewelry`
+- `Sender email`: tu correo real
+- `Reply-to email`: el mismo correo, por ahora
 
-Ventajas:
+Ejemplo:
 
-- evita dependencias de `SMTP`
-- funciona mejor en nube
-- no requiere `Docker`
-- no obliga a cambiar toda la arquitectura del proyecto
+- `Sender name`: `Luxury Jewelry`
+- `Sender email`: `fcervera84@gmail.com`
+- `Reply-to email`: `fcervera84@gmail.com`
 
-## Que Tipo De Recuperacion Conviene
+Guarda el remitente.
 
-Hay dos formas validas:
+## Paso 3. Verificar El Remitente
 
-### Opcion A: Codigo De 6 Digitos
+Brevo enviara un correo de verificacion al remitente que agregaste.
 
-Flujo:
+Haz esto:
 
-1. el usuario escribe su correo
-2. el backend genera un codigo de 6 digitos
-3. se guarda solo el `hash` del codigo
-4. el sistema envia el codigo por email
-5. el usuario valida el codigo
-6. el usuario define la nueva contrasena
+1. abre tu bandeja de entrada
+2. busca el correo de `Brevo`
+3. haz clic en el enlace de verificacion
+4. vuelve a `Brevo`
+5. confirma que el remitente quede como `verified`
 
-Ventajas:
+No sigas al paso `SMTP` hasta que el remitente quede verificado.
 
-- facil de entender para el usuario
-- encaja bien con el flujo actual del proyecto
-- facil de conectar al modal actual
+## Paso 4. Obtener Credenciales SMTP
 
-### Opcion B: Enlace De Recuperacion
+Ahora vuelve a `Brevo` y entra a:
 
-Flujo:
+- `Transactional`
+- `SMTP & API`
+- pestaña `SMTP`
 
-1. el usuario escribe su correo
-2. el backend genera un token seguro
-3. el sistema envia un enlace temporal
-4. el usuario abre el enlace
-5. el usuario escribe la nueva contrasena
+Ahi debes encontrar:
 
-Ventajas:
+- `SMTP host`
+- `SMTP port`
+- `SMTP login`
+- `SMTP key` o `SMTP password`
 
-- experiencia mas moderna
-- menos pasos visuales
+Valores esperados:
 
-Desventaja:
+- `SMTP_HOST=smtp-relay.brevo.com`
+- `SMTP_PORT=587`
 
-- requiere manejar mejor URLs publicas y validacion de token
+Y ademas debes copiar los datos que Brevo te muestre:
 
-## Recomendacion De Flujo
+- `SMTP_USER`
+- `SMTP_PASS`
 
-Para este proyecto conviene mas el flujo por `codigo`, porque:
+Importante:
 
-- ya se adapta bien al modal actual
-- evita depender tanto de enlaces externos
-- es mas simple de controlar
-- facilita una migracion sin rehacer toda la interfaz
+- `SMTP_PASS` no es la contrasena normal de tu cuenta `Brevo`
+- debes usar solamente la clave `SMTP` generada o mostrada en esa seccion
 
-## Requisitos Minimos Del Sistema
+## Paso 5. Configurar Render
 
-La recuperacion deberia incluir:
+Entra a `Render` y abre el servicio del backend.
 
-- codigo o token temporal
-- expiracion corta, por ejemplo `10` a `15` minutos
-- invalidacion de codigos anteriores al generar uno nuevo
-- limite de intentos por correo
-- limite de solicitudes por IP o por usuario
-- contrasena nueva solo despues de verificacion exitosa
-- invalidacion despues de uso
+Luego:
 
-## Seguridad Minima Recomendada
+1. entra a `Environment`
+2. agrega las variables de entorno
+3. guarda los cambios
 
-Nunca se debe guardar el codigo plano en base de datos.
+Usa este formato:
 
-Se recomienda:
+```env
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=TU_LOGIN_SMTP_DE_BREVO
+SMTP_PASS=TU_CLAVE_SMTP_DE_BREVO
+SMTP_FROM=Luxury Jewelry <TU_CORREO_VERIFICADO>
+ADMIN_CONTACT_EMAIL=fcervera84@gmail.com
+RECOVERY_CODE_TTL_MINUTES=15
+```
 
-- guardar solo `hash` del codigo
-- registrar `expires_at`
-- registrar `used_at`
-- limpiar codigos vencidos
-- limitar solicitudes repetidas
-- devolver respuestas genericas para no revelar si el email existe o no
+Si tu backend necesita conocer la URL publica del frontend, agrega tambien:
 
-Ejemplo de respuesta segura:
+```env
+APP_URL=https://tu-frontend.onrender.com
+```
 
-- "Si el correo existe en el sistema, te enviaremos instrucciones de recuperacion."
+## Paso 6. Que Va En Cada Variable
 
-## Variables De Entorno Esperadas
+### SMTP_HOST
 
-Si se usa un proveedor por API, el backend deberia trabajar con variables como estas:
+Usa:
 
-- `EMAIL_API_KEY`
-- `EMAIL_FROM`
-- `APP_URL`
-- `RECOVERY_CODE_TTL_MINUTES`
+```env
+SMTP_HOST=smtp-relay.brevo.com
+```
 
-Segun el proveedor elegido, el nombre exacto puede cambiar.
+### SMTP_PORT
 
-## Escenarios Posibles
+Usa:
 
-### Escenario 1: Un Proveedor Gratis Permite Remitente Sin Dominio
+```env
+SMTP_PORT=587
+```
 
-Este es el mejor caso.
+### SMTP_USER
 
-Plan:
+Pega el login `SMTP` que aparece en `Brevo`.
 
-- verificar un remitente basico
-- usar su `API key`
-- enviar codigos desde `Render`
-- mantener el flujo completo por email
+Ejemplo:
 
-Resultado:
+```env
+SMTP_USER=8f2abc001@smtp-brevo.com
+```
 
-- recuperacion real por correo
-- sin `SMTP`
-- sin dominio propio
-- con costo `0` mientras alcance el plan gratis
+El valor exacto puede cambiar segun la cuenta.
 
-### Escenario 2: El Proveedor Gratis Permite Solo Pruebas O Emails Limitados
+### SMTP_PASS
 
-En este caso el sistema sirve para desarrollo o pruebas controladas, pero no para todos los clientes.
+Pega la clave `SMTP` generada por `Brevo`.
 
-Plan:
+Ejemplo:
 
-- usar el proveedor solo para testing
-- dejar lista la integracion
-- mas adelante cambiar a un proveedor que permita envio publico
+```env
+SMTP_PASS=xxxxxxxxxxxxxxxx
+```
 
-Resultado:
+### SMTP_FROM
 
-- la arquitectura queda correcta
-- pero el alcance de correos queda limitado
+Debe usar exactamente el correo remitente verificado en `Brevo`.
 
-### Escenario 3: Ningun Proveedor Gratis Permite Envio Real Sin Dominio
+Ejemplo:
 
-Si pasa esto, no existe una solucion seria de recuperacion por correo completamente independiente de terceros.
+```env
+SMTP_FROM=Luxury Jewelry <fcervera84@gmail.com>
+```
 
-En ese caso hay dos salidas:
+### ADMIN_CONTACT_EMAIL
 
-- aceptar un proveedor con restricciones gratuitas
-- o cambiar el concepto de recuperacion por una via manual o administrativa
+Es el correo donde quieres recibir mensajes administrativos o copias si el sistema lo usa.
 
-## Alternativas Gratuitas Si No Se Puede Enviar Email Publico
+Ejemplo:
 
-Si definitivamente no se puede usar correo real gratis sin dominio, las alternativas son estas:
+```env
+ADMIN_CONTACT_EMAIL=fcervera84@gmail.com
+```
 
-### Alternativa 1: Recuperacion Manual Por Soporte
+### RECOVERY_CODE_TTL_MINUTES
 
-Flujo:
+Controla la vigencia del codigo de recuperacion.
 
-- el usuario solicita ayuda
-- el admin verifica identidad
-- el admin fuerza reinicio o genera codigo manual
+Ejemplo:
 
-Ventaja:
+```env
+RECOVERY_CODE_TTL_MINUTES=15
+```
 
-- costo cero
+## Paso 7. Clever Cloud No Se Cambia
 
-Desventaja:
+El uso de `Brevo` no modifica nada en la base de datos.
 
-- no es automatica
-- no escala bien
+Tus variables de `Clever Cloud` se quedan igual:
 
-### Alternativa 2: Codigo Mostrado Solo En Entorno De Pruebas
+```env
+DB_HOST=...
+DB_PORT=...
+DB_USER=...
+DB_PASS=...
+DB_NAME=...
+```
 
-Flujo:
+`Clever Cloud` sigue manejando:
 
-- el sistema genera el codigo
-- lo muestra solo en logs o panel interno
+- usuarios
+- pedidos
+- tickets
+- codigos de recuperacion
+- historial del sistema
 
-Ventaja:
+`Brevo` solo envia correos.
 
-- gratis
-- util para testing
+## Paso 8. Flujo Completo Esperado
 
-Desventaja:
+Con todo configurado, el flujo correcto deberia ser:
 
-- no sirve para produccion real
+1. el usuario solicita recuperacion de contrasena
+2. el backend en `Render` genera el codigo o token
+3. el backend guarda el hash del codigo en MySQL de `Clever Cloud`
+4. el backend envia el correo usando `Brevo SMTP`
+5. el usuario recibe el email
+6. el usuario valida el codigo y cambia la contrasena
 
-### Alternativa 3: Recuperacion Solo Para Usuarios Ya Autenticados
+## Paso 9. Ejemplo De Variables Finales En Render
 
-Flujo:
+Si el remitente verificado es `fcervera84@gmail.com`, podria quedar asi:
 
-- desde perfil, el usuario autenticado cambia su contrasena
+```env
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=TU_LOGIN_SMTP_DE_BREVO
+SMTP_PASS=TU_PASSWORD_SMTP_DE_BREVO
+SMTP_FROM=Luxury Jewelry <fcervera84@gmail.com>
+ADMIN_CONTACT_EMAIL=fcervera84@gmail.com
+RECOVERY_CODE_TTL_MINUTES=15
+APP_URL=https://tu-frontend.onrender.com
+```
 
-Ventaja:
+## Paso 10. Desplegar En Render
 
-- gratis
-- no requiere email
+Despues de guardar las variables:
 
-Desventaja:
+1. guarda la configuracion en `Render`
+2. haz `redeploy` del servicio
+3. espera a que el despliegue termine
+4. prueba el flujo de correo
 
-- no resuelve un verdadero "olvide mi contrasena"
+Pruebas recomendadas:
 
-## Lo Que No Hace Falta
+- recuperar contrasena
+- formulario de contacto
+- cualquier envio automatico que tenga el sistema
 
-Para esta solucion no hace falta:
+## Paso 11. Errores Comunes
 
-- `SMTP`
-- `Docker`
-- rehacer toda la app
-- dominio propio, si el proveedor elegido no lo exige
+### Error 1. Usar La Contrasena Normal De Brevo
 
-## Plan De Implementacion Futuro
+Problema:
 
-Cuando se decida aplicar este plan, el orden recomendado seria:
+- se usa la contrasena de login de la cuenta `Brevo`
 
-1. elegir proveedor de email por `API`
-2. confirmar si permite uso sin dominio
-3. definir si se usara `codigo` o `link`
-4. dejar la tabla de recuperacion en MySQL
-5. integrar el envio desde `Render`
-6. validar expiracion, reintentos y bloqueo por abuso
-7. probar el flujo completo en nube
+Solucion:
 
-## Recomendacion Final
+- usar solo la `SMTP key` o `SMTP password`
 
-La mejor decision para este proyecto es:
+### Error 2. El Remitente No Esta Verificado
 
-- usar `Render`
-- usar base de datos para codigos
-- usar una `Email API` gratuita en lugar de `SMTP`
-- mantener recuperacion por `codigo`
+Problema:
 
-Si el proveedor gratuito deja enviar sin dominio, esa es la ruta ideal.
+- `SMTP_FROM` usa un correo que no esta aprobado en `Brevo`
 
-Si no lo permite, el sistema todavia puede mantenerse listo y luego cambiar solo el proveedor, sin rehacer el flujo completo.
+Solucion:
+
+- verificar el remitente antes de probar
+
+### Error 3. SMTP_FROM No Coincide
+
+Problema:
+
+- el correo de `SMTP_FROM` no coincide con el remitente verificado
+
+Solucion:
+
+- usar exactamente el mismo correo aprobado
+
+### Error 4. No Hacer Redeploy
+
+Problema:
+
+- las variables se guardan en `Render`, pero la app sigue corriendo con la configuracion vieja
+
+Solucion:
+
+- redeploy despues de guardar variables
+
+### Error 5. Confundir Correo Con Base De Datos
+
+Problema:
+
+- si falla el correo, se piensa que el problema es de `Clever Cloud`
+
+Solucion:
+
+- recordar que `Brevo` y `Clever Cloud` cumplen funciones distintas
+
+## Paso 12. Recomendacion Tecnica
+
+Para este proyecto, la ruta mas seria y ordenada es:
+
+- `Render` para ejecutar la aplicacion
+- `Clever Cloud` para la persistencia MySQL
+- `Brevo SMTP` para correos
+
+Eso te deja una arquitectura clara:
+
+- app en nube
+- base de datos en nube
+- correo transaccional serio
+
+## Resumen Final
+
+La configuracion correcta es esta:
+
+1. crear o entrar a `Brevo`
+2. ir a `Transactional`
+3. crear remitente
+4. verificar remitente
+5. ir a `SMTP & API`
+6. copiar `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
+7. pegarlos en `Render`
+8. no cambiar nada de `Clever Cloud`
+9. hacer `redeploy`
+10. probar recuperacion de contrasena y correos del sistema

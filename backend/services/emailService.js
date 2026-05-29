@@ -1,9 +1,9 @@
-const https = require('https');
+const nodemailer = require('nodemailer');
 
-const RESEND_API_URL = 'https://api.resend.com/emails';
+let transporter;
 
 function getDefaultFrom() {
-  return process.env.RESEND_FROM_EMAIL || '';
+  return process.env.SMTP_FROM || '';
 }
 
 function getAdminContactEmail() {
@@ -11,75 +11,66 @@ function getAdminContactEmail() {
 }
 
 function isEmailConfigured() {
-  return Boolean(process.env.RESEND_API_KEY && getDefaultFrom());
+  return Boolean(
+    process.env.SMTP_HOST &&
+      process.env.SMTP_PORT &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS &&
+      getDefaultFrom()
+  );
 }
 
-function sendResendRequest(payload) {
-  return new Promise((resolve, reject) => {
-    const request = https.request(
-      RESEND_API_URL,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      },
-      (response) => {
-        let data = '';
+function getSmtpPort() {
+  return Number(process.env.SMTP_PORT || 587);
+}
 
-        response.on('data', (chunk) => {
-          data += chunk;
-        });
+function useSecureConnection() {
+  if (typeof process.env.SMTP_SECURE === 'string' && process.env.SMTP_SECURE.trim() !== '') {
+    return process.env.SMTP_SECURE === 'true';
+  }
 
-        response.on('end', () => {
-          const parsed = data ? JSON.parse(data) : {};
+  return getSmtpPort() === 465;
+}
 
-          if (response.statusCode >= 200 && response.statusCode < 300) {
-            resolve(parsed);
-            return;
-          }
+function getTransporter() {
+  if (!isEmailConfigured()) {
+    throw new Error('Las variables SMTP requeridas no estan configuradas');
+  }
 
-          reject(
-            new Error(
-              parsed.message ||
-                parsed.error ||
-                `Resend respondio con estado ${response.statusCode}`
-            )
-          );
-        });
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: getSmtpPort(),
+      secure: useSecureConnection(),
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
       }
-    );
+    });
+  }
 
-    request.on('error', reject);
-    request.write(JSON.stringify(payload));
-    request.end();
-  });
+  return transporter;
 }
 
 async function sendEmail({ to, subject, html, text, replyTo, from }) {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error('RESEND_API_KEY no esta configurada');
-  }
-
   const sender = from || getDefaultFrom();
   if (!sender) {
-    throw new Error('RESEND_FROM_EMAIL no esta configurado');
+    throw new Error('SMTP_FROM no esta configurado');
   }
 
   const payload = {
     from: sender,
-    to: Array.isArray(to) ? to : [to],
+    to: Array.isArray(to) ? to.join(', ') : to,
     subject,
     html,
     text
   };
 
   if (replyTo) {
-    payload.reply_to = Array.isArray(replyTo) ? replyTo : [replyTo];
+    payload.replyTo = Array.isArray(replyTo) ? replyTo.join(', ') : replyTo;
   }
 
-  return sendResendRequest(payload);
+  return getTransporter().sendMail(payload);
 }
 
 module.exports = {
