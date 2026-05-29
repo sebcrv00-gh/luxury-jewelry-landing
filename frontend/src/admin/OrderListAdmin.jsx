@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, PackageOpen, AlertCircle, Receipt, Clock3, CircleDollarSign, Truck } from 'lucide-react';
+import { RefreshCw, PackageOpen, AlertCircle, Receipt, Clock3, CircleDollarSign, Truck, FileDown } from 'lucide-react';
 import api from '../api/axios';
+import { downloadInvoicePdf } from '../utils/invoicePdf';
 
 const ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
 
@@ -9,6 +10,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
   const [statusFeedback, setStatusFeedback] = useState('');
 
   const fetchOrders = async () => {
@@ -40,6 +42,29 @@ export default function OrderListAdmin({ refreshTrigger }) {
       setStatusFeedback(err.response?.data?.error || 'No fue posible actualizar el estado del pedido.');
     } finally {
       setUpdatingOrderId(null);
+    }
+  };
+
+  const downloadOrderInvoice = async (order) => {
+    setDownloadingInvoiceId(order.id);
+    setStatusFeedback('');
+    try {
+      const { data } = await api.get(`/orders/${order.id}`);
+      downloadInvoicePdf({
+        order: {
+          ...data,
+          usuario_nombre: order.usuario_nombre,
+          usuario_email: order.usuario_email
+        },
+        customerName: order.usuario_nombre,
+        customerEmail: order.usuario_email,
+        paymentLabel: 'Pago coordinado',
+        generatedBy: 'Panel administrativo'
+      });
+    } catch (err) {
+      setStatusFeedback('No fue posible generar la factura del pedido.');
+    } finally {
+      setDownloadingInvoiceId(null);
     }
   };
 
@@ -156,13 +181,14 @@ export default function OrderListAdmin({ refreshTrigger }) {
                 <th>Total (COP)</th>
                 <th>Estado</th>
                 <th>Gestión</th>
+                <th>Factura</th>
                 <th style={{ textAlign: 'center' }}>Fecha</th>
               </tr>
             </thead>
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '80px 0' }}>
+                  <td colSpan="8" style={{ textAlign: 'center', padding: '80px 0' }}>
                     <PackageOpen size={48} className="text-muted" style={{ margin: '0 auto 16px', opacity: 0.5 }} />
                     <h4 className="text-gold-light" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Sin Pedidos Registrados</h4>
                   </td>
@@ -214,6 +240,26 @@ export default function OrderListAdmin({ refreshTrigger }) {
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={() => downloadOrderInvoice(order)}
+                        disabled={downloadingInvoiceId === order.id}
+                        style={{
+                          padding: '10px 14px',
+                          fontSize: '0.7rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          whiteSpace: 'nowrap',
+                          opacity: downloadingInvoiceId === order.id ? 0.7 : 1
+                        }}
+                      >
+                        <FileDown size={14} />
+                        {downloadingInvoiceId === order.id ? 'Generando...' : 'PDF'}
+                      </button>
                     </td>
                     <td style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                       {new Date(order.creado_en).toLocaleDateString('es-CO')}

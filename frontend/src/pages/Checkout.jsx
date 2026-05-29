@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
-import { CreditCard, Landmark, Smartphone, Banknote, ShieldCheck, Lock } from 'lucide-react';
+import { CreditCard, Landmark, Smartphone, Banknote, ShieldCheck, Lock, FileDown } from 'lucide-react';
+import { downloadInvoicePdf } from '../utils/invoicePdf';
 
 const PAYMENT_METHODS = [
   { id: 'efectivo', label: 'Efectivo', desc: 'Pago contra entrega', icon: Banknote, color: '#2ecc71' },
@@ -28,6 +29,37 @@ export default function Checkout() {
   const [cardData, setCardData] = useState({ numero: '', titular: '', expiracion: '', cvv: '' });
   const [nequiData, setNequiData] = useState({ celular: '' });
   const currentPaymentMethod = PAYMENT_METHODS.find(m => m.id === paymentMethod) || PAYMENT_METHODS[0];
+  const handleDownloadInvoice = () => {
+    if (!orderResult) return;
+
+    downloadInvoicePdf({
+      order: {
+        id: orderResult.orderId,
+        creado_en: new Date().toISOString(),
+        total: orderResult.total,
+        costo_envio: shippingFee,
+        nombre_envio: shipping.nombre,
+        telefono_envio: shipping.telefono,
+        direccion_envio: shipping.direccion,
+        ciudad_envio: shipping.ciudad,
+        notas: shipping.notas,
+        estado: 'pendiente',
+        metodo_pago: orderResult.metodo_pago,
+        usuario_nombre: user?.nombre,
+        usuario_email: user?.email,
+        items: cart.map((item) => ({
+          producto_nombre: item.color ? `${item.nombre} - ${item.color}` : item.nombre,
+          producto_precio: item.precio,
+          cantidad: item.cantidad,
+          subtotal: item.precio * item.cantidad
+        }))
+      },
+      customerName: user?.nombre || shipping.nombre,
+      customerEmail: user?.email,
+      paymentLabel: currentPaymentMethod.label,
+      generatedBy: user?.nombre || 'Cliente'
+    });
+  };
 
   const cartKey = isLoggedIn ? `carrito_${user.id}` : null;
 
@@ -137,6 +169,9 @@ export default function Checkout() {
           </p>
 
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="btn-outline" onClick={handleDownloadInvoice} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <FileDown size={16} /> Imprimir factura en PDF
+            </button>
             <Link to="/catalogo"><button className="btn-primary"><span>Seguir Comprando</span></button></Link>
             <Link to="/mi-cuenta/pedidos"><button className="btn-outline">Mis Órdenes</button></Link>
           </div>

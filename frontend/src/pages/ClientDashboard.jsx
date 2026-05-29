@@ -5,10 +5,11 @@ import api, { getImageUrl } from '../api/axios';
 import {
   LayoutDashboard, ShoppingBag, Truck, CreditCard, MapPin, RotateCcw,
   Heart, FileText, UserCog, MessageCircle, LogOut, Crown, Package,
-  ChevronRight, Clock, CheckCircle, AlertCircle, Plus, Trash2, Star, Send, Eye, X, Minus,
+  ChevronRight, Clock, CheckCircle, AlertCircle, Plus, Trash2, Star, Send, Eye, X, Minus, FileDown,
   Gem, Phone
 } from 'lucide-react';
 import './client-dashboard.css';
+import { downloadInvoicePdf } from '../utils/invoicePdf';
 
 const SECTIONS = [
   { id: 'panel', icon: LayoutDashboard, label: 'Mi Panel' },
@@ -139,6 +140,18 @@ export default function ClientDashboard() {
     } finally {
       setSupportLoading(false);
     }
+  };
+
+  const handleInvoiceDownload = (order) => {
+    if (!order) return;
+
+    downloadInvoicePdf({
+      order,
+      customerName: user?.nombre || order.nombre_envio,
+      customerEmail: user?.email,
+      paymentLabel: 'Pago coordinado',
+      generatedBy: user?.nombre || 'Cliente'
+    });
   };
 
   const removeWishlistItem = async (productId) => {
@@ -283,7 +296,12 @@ export default function ClientDashboard() {
               <div className="cd-card">
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
                   <h3>Pedido #{selectedOrder.id}</h3>
-                  <button className="cd-link-btn" onClick={() => setSelectedOrder(null)}><X size={16}/> Cerrar</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <button className="cd-action-btn small" onClick={() => handleInvoiceDownload(selectedOrder)}>
+                      <FileDown size={14}/> Imprimir factura en PDF
+                    </button>
+                    <button className="cd-link-btn" onClick={() => setSelectedOrder(null)}><X size={16}/> Cerrar</button>
+                  </div>
                 </div>
                 <div className="cd-order-meta">
                   <span>📅 {new Date(selectedOrder.creado_en).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' })}</span>
@@ -546,7 +564,14 @@ export default function ClientDashboard() {
                         <td>{new Date(o.creado_en).toLocaleDateString('es-CO')}</td>
                         <td>${Number(o.total).toLocaleString('es-CO')}</td>
                         <td><span className="cd-badge" style={{background:'rgba(46,204,113,0.15)',color:'#2ecc71'}}>Pagada</span></td>
-                        <td><button className="cd-link-btn" onClick={() => { setSelectedOrder(o); goTo('pedidos'); }}><Eye size={14}/> Ver detalle</button></td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <button className="cd-link-btn" onClick={() => { setSelectedOrder(o); goTo('pedidos'); }}><Eye size={14}/> Ver detalle</button>
+                            <button className="cd-action-btn small" onClick={() => handleInvoiceDownload(o)}>
+                              <FileDown size={14}/> PDF
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -330,31 +330,30 @@ export default function AdminDashboard() {
                   <span className="admin-surface-kicker">Centro de Operaciones</span>
                   <div className="admin-hero-layout">
                     <div className="admin-hero-copy">
-                      <h2>Coordina la operación comercial y el servicio desde una consola ejecutiva unificada.</h2>
+                      <h2>Controla catálogo, pedidos y servicio desde una vista ejecutiva.</h2>
                       <p>
-                        El sistema integra inventario, pedidos, clientes y soporte en una experiencia
-                        administrativa diseñada para control continuo, trazabilidad y decisiones más precisas.
+                        Una lectura central para supervisar la operación diaria, mantener trazabilidad y actuar con criterio en tiempo real.
                       </p>
                     </div>
                     <div className="admin-hero-highlights">
                       <div className="admin-hero-highlight">
-                        <strong>Control central</strong>
-                        <span>Gestión coordinada del catálogo y la operación diaria.</span>
+                        <strong>Operación</strong>
+                        <span>Inventario y flujo comercial en una sola capa visual.</span>
                       </div>
                       <div className="admin-hero-highlight">
-                        <strong>Visión operativa</strong>
-                        <span>Seguimiento claro de clientes, órdenes y solicitudes activas.</span>
+                        <strong>Seguimiento</strong>
+                        <span>Clientes, órdenes y soporte con lectura inmediata.</span>
                       </div>
                       <div className="admin-hero-highlight">
-                        <strong>Respuesta ágil</strong>
-                        <span>Herramientas preparadas para actuar con rapidez y consistencia.</span>
+                        <strong>Decisión</strong>
+                        <span>Indicadores preparados para responder con consistencia.</span>
                       </div>
                     </div>
                   </div>
                   <div className="admin-hero-pills">
                     <span className="admin-mini-pill"><Database size={14} /> Datos centralizados</span>
-                    <span className="admin-mini-pill"><Layers size={14} /> Catálogo consolidado</span>
-                    <span className="admin-mini-pill"><Crown size={14} /> Operación premium</span>
+                    <span className="admin-mini-pill"><Layers size={14} /> Flujo consolidado</span>
+                    <span className="admin-mini-pill"><Crown size={14} /> Consola premium</span>
                   </div>
                 </section>
 
