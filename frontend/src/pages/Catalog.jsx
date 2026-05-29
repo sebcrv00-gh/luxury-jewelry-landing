@@ -248,31 +248,31 @@ export default function Catalog() {
         <div className={`catalog-vip-banner ${isVip ? 'is-active' : ''}`}>
           <div className="catalog-vip-badge">
             <Crown size={18} />
-            <span>{isVip ? 'Membresia VIP activa' : 'Programa VIP Luxury'}</span>
+            <span>{isVip ? 'VIP activo' : 'Programa VIP'}</span>
           </div>
           <div className="catalog-vip-copy">
             <h2>
               {isVip
-                ? 'Tu acceso VIP ya esta desbloqueado.'
-                : 'Convierte tus compras en un privilegio permanente.'}
+                ? 'Tu beneficio VIP ya esta activo.'
+                : 'Compra mas y accede a categoria VIP con 10% de descuento.'}
             </h2>
             <p>
               {isVip
-                ? 'Disfruta tu 10% de descuento en cada pieza de la coleccion y sigue elevando tu experiencia Luxury Jewelry.'
-                : 'Nuestros clientes de mayor movimiento pueden acceder a categoria VIP y disfrutar un 10% de descuento en todos nuestros productos.'}
+                ? 'Tu descuento exclusivo ya se aplica automaticamente en toda la coleccion.'
+                : 'Una forma elegante de premiar a quienes mas confian en Luxury Jewelry.'}
             </p>
           </div>
           <div className="catalog-vip-actions">
             <div className="catalog-vip-highlight">
               <span className="catalog-vip-highlight-value">10%</span>
-              <span className="catalog-vip-highlight-label">beneficio exclusivo</span>
+              <span className="catalog-vip-highlight-label">descuento VIP</span>
             </div>
             <button
               type="button"
               className="catalog-vip-cta"
               onClick={handleVipCta}
             >
-              {isVip ? 'Explorar coleccion VIP' : isLoggedIn ? 'Seguir comprando' : 'Crear cuenta'}
+              {isVip ? 'Ver coleccion' : isLoggedIn ? 'Comprar ahora' : 'Registrarme'}
             </button>
           </div>
         </div>
