@@ -21,6 +21,12 @@ const buildInvoiceFilename = (orderId) => {
   return `factura-lj-${formatted}.pdf`;
 };
 
+const capitalize = (value) => {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
 const normalizeItems = (order) => {
   return (order.items || []).map((item) => {
     const quantity = Number(item.cantidad || 0);
@@ -55,6 +61,28 @@ const drawInfoBlock = (doc, options) => {
 
   rows.forEach((row, index) => {
     doc.text(row, x + 14, y + 38 + index * 16);
+  });
+};
+
+const drawHeaderMeta = (doc, options) => {
+  const { x, y, width, rows } = options;
+
+  doc.setDrawColor(201, 168, 76);
+  doc.setFillColor(17, 17, 17);
+  doc.roundedRect(x, y, width, 82, 12, 12, 'FD');
+
+  rows.forEach((row, index) => {
+    const rowY = y + 18 + index * 24;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(201, 168, 76);
+    doc.text(row.label, x + 14, rowY);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(255, 248, 235);
+    doc.text(doc.splitTextToSize(row.value, width - 28), x + 14, rowY + 13);
   });
 };
 
@@ -102,18 +130,16 @@ export const downloadInvoicePdf = ({
   doc.setFontSize(10);
   doc.text('Documento generado para control de compra, despacho y respaldo interno.', margin + 22, 136);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(201, 168, 76);
-  doc.text('Factura', pageWidth - margin - 130, 66);
-  doc.text('Fecha', pageWidth - margin - 130, 92);
-  doc.text('Estado', pageWidth - margin - 130, 118);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(255, 248, 235);
-  doc.text(`#${String(orderId || '').padStart(5, '0')}`, pageWidth - margin - 54, 66, { align: 'right' });
-  doc.text(formatDate(order.creado_en || order.createdAt), pageWidth - margin - 54, 92, { align: 'right' });
-  doc.text(status.charAt(0).toUpperCase() + status.slice(1), pageWidth - margin - 54, 118, { align: 'right' });
+  drawHeaderMeta(doc, {
+    x: pageWidth - margin - 170,
+    y: 50,
+    width: 148,
+    rows: [
+      { label: 'Factura', value: `#${String(orderId || '').padStart(5, '0')}` },
+      { label: 'Fecha', value: formatDate(order.creado_en || order.createdAt) },
+      { label: 'Estado', value: capitalize(status) }
+    ]
+  });
 
   drawInfoBlock(doc, {
     x: margin,
