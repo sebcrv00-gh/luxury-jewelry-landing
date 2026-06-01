@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { CreditCard, Landmark, Smartphone, Banknote, ShieldCheck, Lock, FileDown } from 'lucide-react';
 import { downloadInvoicePdf } from '../utils/invoicePdf';
+import { POST_LOGIN_REDIRECT_KEY, readCart, clearCart } from '../utils/cartStorage';
 
 const PAYMENT_METHODS = [
   { id: 'efectivo', label: 'Efectivo', desc: 'Pago contra entrega', icon: Banknote, color: '#2ecc71' },
@@ -12,7 +13,7 @@ const PAYMENT_METHODS = [
 ];
 
 export default function Checkout() {
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
   const [step, setStep] = useState(1);
@@ -61,15 +62,13 @@ export default function Checkout() {
     });
   };
 
-  const cartKey = isLoggedIn ? `carrito_${user.id}` : null;
+  const cartUserId = isLoggedIn ? user?.id : null;
 
   useEffect(() => {
-    if (!isLoggedIn) { navigate('/login'); return; }
-    if (cartKey) {
-      const saved = JSON.parse(localStorage.getItem(cartKey) || '[]');
-      if (saved.length === 0) { navigate('/carrito'); return; }
-      setCart(saved.map(i => ({ ...i, cantidad: i.cantidad || 1 })));
-    }
+    const saved = readCart(cartUserId);
+    if (saved.length === 0) { navigate('/carrito'); return; }
+    setCart(saved);
+
     if (user) {
       setShipping(prev => ({
         ...prev,
@@ -78,7 +77,7 @@ export default function Checkout() {
         direccion: user.direccion || ''
       }));
     }
-  }, [isLoggedIn, cartKey, navigate, user]);
+  }, [cartUserId, navigate, user]);
 
   const subtotal = cart.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
   const shippingFee = 15000;
@@ -119,7 +118,7 @@ export default function Checkout() {
         metodo_pago: paymentMethod
       });
       setOrderResult({ ...res.data, metodo_pago: paymentMethod });
-      if (cartKey) localStorage.removeItem(cartKey);
+      clearCart(cartUserId);
       setStep(3);
     } catch (err) {
       setError(err.response?.data?.error || 'Error al procesar la orden');
@@ -128,7 +127,44 @@ export default function Checkout() {
     }
   };
 
-  if (!isLoggedIn) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="checkout-page">
+        <div className="checkout-box" style={{ textAlign: 'center' }}>
+          <div className="confirmation-icon" style={{ marginBottom: '20px' }}>
+            <Lock size={24} />
+          </div>
+          <h2>Acceso Requerido Para Pagar</h2>
+          <p className="text-muted" style={{ margin: '18px auto 30px', maxWidth: '520px', lineHeight: 1.7 }}>
+            Tu cotizacion ya esta lista en el carrito. Para continuar con el pago, confirma tu cuenta iniciando sesion o registrandote.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              className="btn-primary"
+              onClick={() => {
+                localStorage.setItem(POST_LOGIN_REDIRECT_KEY, '/checkout');
+                openAuthModal('login');
+              }}
+            >
+              <span>Iniciar sesion</span>
+            </button>
+            <button
+              className="btn-outline"
+              onClick={() => {
+                localStorage.setItem(POST_LOGIN_REDIRECT_KEY, '/checkout');
+                openAuthModal('register');
+              }}
+            >
+              Crear cuenta
+            </button>
+            <button className="btn-outline" onClick={() => navigate('/carrito')}>
+              Volver al carrito
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ── Paso 3: Confirmación ──
   if (step === 3 && orderResult) {

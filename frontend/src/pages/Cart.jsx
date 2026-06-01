@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AlertCircle, X } from 'lucide-react';
+import { POST_LOGIN_REDIRECT_KEY, readCart, writeCart } from '../utils/cartStorage';
 
 export default function Cart() {
   const { user, isLoggedIn, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
 
-  const cartKey = isLoggedIn ? `carrito_${user.id}` : null;
+  const cartUserId = isLoggedIn ? user?.id : null;
 
   useEffect(() => {
-    if (cartKey) {
-      const saved = JSON.parse(localStorage.getItem(cartKey) || '[]');
-      setCart(saved.map(i => ({ ...i, cantidad: i.cantidad || 1 })));
-    }
-  }, [cartKey]);
+    setCart(readCart(cartUserId));
+  }, [cartUserId]);
 
   const save = (newCart) => {
     setCart(newCart);
-    if (cartKey) localStorage.setItem(cartKey, JSON.stringify(newCart));
+    writeCart(cartUserId, newCart);
   };
 
   const changeQty = (index, delta) => {
@@ -55,29 +53,24 @@ export default function Cart() {
   const shippingFee = 15000;
   const total = subtotal + shippingFee;
 
-  if (!isLoggedIn) {
-    return (
-      <div className="cart-container">
-        <div className="cart-box" style={{ textAlign: 'center' }}>
-          <h3>Acceso Restringido</h3>
-          <p style={{ color: 'var(--text-muted)', margin: '20px 0' }}>
-            Debes iniciar sesión para ver tu carrito de compras.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', marginTop: '32px' }}>
-            <button className="btn-primary" onClick={() => openAuthModal('login')} style={{ width: '100%', maxWidth: '280px' }}><span>Iniciar Sesión</span></button>
-            <button className="btn-outline" onClick={() => openAuthModal('register')} style={{ width: '100%', maxWidth: '280px' }}>Crear Cuenta</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleProceedToCheckout = () => {
+    if (!isLoggedIn) {
+      localStorage.setItem(POST_LOGIN_REDIRECT_KEY, '/checkout');
+      openAuthModal('login');
+      return;
+    }
+
+    navigate('/checkout');
+  };
 
   return (
     <div className="cart-container">
       <div className="cart-box">
         <h3>Tu Carrito de Compras</h3>
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '35px' }}>
-          Revisa tus productos exclusivos antes de finalizar la compra
+          {isLoggedIn
+            ? 'Revisa tus productos exclusivos antes de finalizar la compra'
+            : 'Cotiza tus productos favoritos como visitante y autentificate solo al momento de pagar'}
         </p>
 
         {cart.length === 0 ? (
@@ -130,8 +123,15 @@ export default function Cart() {
 
             <div className="cart-actions">
               <button className="btn-danger" onClick={requestClearCart} style={{ borderRadius: '50px', padding: '12px 24px' }}>Vaciar carrito</button>
-              <button className="btn-primary" onClick={() => navigate('/checkout')} style={{ borderRadius: '50px' }}><span>Proceder al Pago</span></button>
+              <button className="btn-primary" onClick={handleProceedToCheckout} style={{ borderRadius: '50px' }}>
+                <span>{isLoggedIn ? 'Proceder al Pago' : 'Inicia sesion para pagar'}</span>
+              </button>
             </div>
+            {!isLoggedIn && (
+              <div style={{ marginTop: '18px', padding: '16px 18px', borderRadius: '14px', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)', color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6 }}>
+                Puedes usar este carrito como cotizacion. Cuando decidas continuar al pago, te pediremos iniciar sesion o crear tu cuenta.
+              </div>
+            )}
           </>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import { mergeGuestCartIntoUserCart, POST_LOGIN_REDIRECT_KEY } from '../utils/cartStorage';
 
 const AuthContext = createContext(null);
 
@@ -32,6 +33,14 @@ export function AuthProvider({ children }) {
   const login = async (email, clave, skipAnimation = false) => {
     const res = await api.post('/auth/login', { email, clave });
     setUser(res.data.user);
+    mergeGuestCartIntoUserCart(res.data.user.id);
+
+    const pendingRedirect = localStorage.getItem(POST_LOGIN_REDIRECT_KEY);
+    if (pendingRedirect) {
+      localStorage.removeItem(POST_LOGIN_REDIRECT_KEY);
+      navigate(pendingRedirect);
+    }
+
     if (!skipAnimation) {
       triggerWelcome(res.data.user.nombre);
     }

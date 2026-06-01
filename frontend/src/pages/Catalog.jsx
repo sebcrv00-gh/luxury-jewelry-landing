@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock, Star, MessageSquare } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
+import { readCart, writeCart } from '../utils/cartStorage';
 
 const CATEGORIES = ['Todas las colecciones', 'Relojes', 'Pulseras', 'Collares', 'Aretes', 'Anillos', 'Otros'];
 
@@ -158,14 +159,6 @@ export default function Catalog() {
   const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const addToCart = (product, qty = 1) => {
-    if (!isLoggedIn) {
-      openAuthPrompt({
-        type: selectedProduct ? 'modal' : 'card',
-        productId: product.dbProductId
-      });
-      return;
-    }
-
     const activeStock = product.selectedVariant ? product.selectedVariant.stock : product.stock;
     if (activeStock === 0) return;
 
@@ -174,8 +167,7 @@ export default function Catalog() {
       ? `db_${product.dbProductId}__variant_${product.selectedVariant.id}`
       : product.id;
 
-    const key = `carrito_${user.id}`;
-    const cart = JSON.parse(localStorage.getItem(key) || '[]');
+    const cart = readCart(user?.id);
     const existing = cart.find(i => i.id === cartItemId);
     if (existing) {
       existing.cantidad = Math.min(existing.cantidad + qty, activeStock);
@@ -191,7 +183,7 @@ export default function Catalog() {
         stock: activeStock,
       });
     }
-    localStorage.setItem(key, JSON.stringify(cart));
+    writeCart(user?.id, cart);
     setAddedProduct({ id: cartItemId });
     setTimeout(() => setAddedProduct(null), 3500);
   };
@@ -218,8 +210,8 @@ export default function Catalog() {
       </div>
       <div className="catalog-auth-prompt-copy">
         <span className="catalog-auth-prompt-kicker">Acceso requerido</span>
-        <strong>Inicia sesión o crea tu cuenta para usar el carrito.</strong>
-        <p>Activa una experiencia de compra completa y guarda tus piezas favoritas con seguridad.</p>
+        <strong>Inicia sesion o crea tu cuenta para guardar favoritos.</strong>
+        <p>Tu carrito ya puede funcionar como cotizacion, pero la cuenta sigue siendo necesaria para wishlist y una experiencia personalizada.</p>
       </div>
       <div className="catalog-auth-prompt-actions">
         <button
