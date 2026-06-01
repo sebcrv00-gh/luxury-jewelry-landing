@@ -1250,27 +1250,29 @@ button {
 .catalog-spotlight-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
+  align-items: center;
 }
 
 .catalog-spotlight-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 56px;
-  padding: 12px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(201, 168, 76, 0.16);
-  background: linear-gradient(145deg, rgba(17, 17, 17, 0.96), rgba(10, 10, 10, 0.98));
+  gap: 7px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 168, 76, 0.14);
+  background: linear-gradient(145deg, rgba(15, 15, 15, 0.96), rgba(10, 10, 10, 0.98));
   color: var(--text-secondary);
-  font-size: 0.7rem;
+  font-size: 0.64rem;
   font-weight: 600;
-  letter-spacing: 0.9px;
+  letter-spacing: 0.75px;
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.3s var(--ease-out-expo), border-color 0.3s var(--ease-out-expo), box-shadow 0.3s var(--ease-out-expo), color 0.3s var(--ease-out-expo);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+  white-space: nowrap;
 }
 
 .catalog-spotlight-btn:hover {
@@ -1280,37 +1282,37 @@ button {
 
 .catalog-spotlight-btn svg {
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .catalog-spotlight-btn--featured {
-  border-color: rgba(201, 168, 76, 0.22);
+  border-color: rgba(201, 168, 76, 0.18);
   background:
-    radial-gradient(circle at top left, rgba(201, 168, 76, 0.12), transparent 45%),
-    linear-gradient(145deg, rgba(20, 18, 14, 0.96), rgba(10, 10, 10, 0.98));
+    radial-gradient(circle at top left, rgba(201, 168, 76, 0.08), transparent 42%),
+    linear-gradient(145deg, rgba(18, 17, 14, 0.96), rgba(10, 10, 10, 0.98));
 }
 
 .catalog-spotlight-btn--new {
-  border-color: rgba(211, 228, 255, 0.14);
+  border-color: rgba(211, 228, 255, 0.12);
   background:
-    radial-gradient(circle at top right, rgba(112, 146, 255, 0.12), transparent 42%),
-    linear-gradient(145deg, rgba(14, 16, 24, 0.96), rgba(10, 10, 10, 0.98));
+    radial-gradient(circle at top right, rgba(112, 146, 255, 0.08), transparent 40%),
+    linear-gradient(145deg, rgba(14, 15, 22, 0.96), rgba(10, 10, 10, 0.98));
 }
 
 .catalog-spotlight-btn.active {
   color: var(--text-primary);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
 }
 
 .catalog-spotlight-btn--featured.active {
-  border-color: rgba(201, 168, 76, 0.52);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(201, 168, 76, 0.12);
+  border-color: rgba(201, 168, 76, 0.42);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(201, 168, 76, 0.08);
 }
 
 .catalog-spotlight-btn--new.active {
-  border-color: rgba(132, 162, 255, 0.48);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(132, 162, 255, 0.1);
+  border-color: rgba(132, 162, 255, 0.38);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(132, 162, 255, 0.08);
 }
 
 .catalog-filter-meta {
