@@ -17,12 +17,20 @@ envVarGroups:
         value: ""
       - key: SMTP_PORT
         value: "587"
+      - key: SMTP_SECURE
+        value: ""
       - key: SMTP_USER
         value: ""
       - key: SMTP_PASS
         value: ""
       - key: SMTP_FROM
         value: ""
+      - key: SMTP_CONNECTION_TIMEOUT_MS
+        value: "10000"
+      - key: SMTP_GREETING_TIMEOUT_MS
+        value: "10000"
+      - key: SMTP_SOCKET_TIMEOUT_MS
+        value: "15000"
       - key: ADMIN_CONTACT_EMAIL
         value: ""
       - key: FRONTEND_URL

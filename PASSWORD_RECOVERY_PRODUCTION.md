@@ -130,9 +130,13 @@ Usa este formato:
 ```env
 SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
+SMTP_SECURE=
 SMTP_USER=TU_LOGIN_SMTP_DE_BREVO
 SMTP_PASS=TU_CLAVE_SMTP_DE_BREVO
 SMTP_FROM=Luxury Jewelry <TU_CORREO_VERIFICADO>
+SMTP_CONNECTION_TIMEOUT_MS=10000
+SMTP_GREETING_TIMEOUT_MS=10000
+SMTP_SOCKET_TIMEOUT_MS=15000
 ADMIN_CONTACT_EMAIL=fcervera84@gmail.com
 RECOVERY_CODE_TTL_MINUTES=15
 ```
@@ -159,6 +163,19 @@ Usa:
 
 ```env
 SMTP_PORT=587
+```
+
+Si `587` sigue fallando por timeout, prueba con:
+
+```env
+SMTP_PORT=2525
+```
+
+Y si necesitas SSL/TLS directo:
+
+```env
+SMTP_PORT=465
+SMTP_SECURE=true
 ```
 
 ### SMTP_USER
@@ -191,6 +208,36 @@ Ejemplo:
 
 ```env
 SMTP_FROM=Luxury Jewelry <fcervera84@gmail.com>
+```
+
+### SMTP_CONNECTION_TIMEOUT_MS
+
+Controla cuanto espera la app antes de cortar la conexion inicial con `Brevo`.
+
+Ejemplo:
+
+```env
+SMTP_CONNECTION_TIMEOUT_MS=10000
+```
+
+### SMTP_GREETING_TIMEOUT_MS
+
+Controla cuanto espera la app por el saludo inicial del servidor SMTP.
+
+Ejemplo:
+
+```env
+SMTP_GREETING_TIMEOUT_MS=10000
+```
+
+### SMTP_SOCKET_TIMEOUT_MS
+
+Controla cuanto tiempo puede quedar abierta la conexion antes de abortar.
+
+Ejemplo:
+
+```env
+SMTP_SOCKET_TIMEOUT_MS=15000
 ```
 
 ### ADMIN_CONTACT_EMAIL

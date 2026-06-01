@@ -193,7 +193,7 @@ export default function AuthModal() {
             </button>
             <div className="recovery-icon"><Mail size={28} /></div>
             <h3 className="recovery-title">Recuperar Contraseña</h3>
-            <p className="recovery-desc">Ingresa tu correo electrónico para crear una solicitud de soporte. Un administrador validará la cuenta y te compartirá un código temporal por un canal manual.</p>
+            <p className="recovery-desc">Ingresa tu correo electronico y te enviaremos un codigo de 6 digitos a tu bandeja de entrada para recuperar el acceso a tu cuenta.</p>
           </div>
           <div className="auth-field">
             <label>Correo Electrónico</label>
@@ -216,7 +216,7 @@ export default function AuthModal() {
             <div className="recovery-icon"><ShieldCheck size={28} /></div>
             <h3 className="recovery-title">Verificar Código</h3>
             <p className="recovery-desc">
-              Cuando soporte confirme tu solicitud, te compartirá un código de 6 dígitos para <strong>{recoveryEmailHint || recoveryEmail}</strong>.
+              Ingresa el codigo de 6 digitos enviado a <strong>{recoveryEmailHint || recoveryEmail}</strong>. Si no lo ves, revisa spam o correo no deseado.
             </p>
           </div>
           <div className="auth-field">
@@ -232,7 +232,7 @@ export default function AuthModal() {
               className="recovery-code-input"
             />
           </div>
-          <p className="recovery-note">Si aún no recibiste el código, espera la validación manual del equipo de soporte y vuelve a intentar.</p>
+          <p className="recovery-note">El codigo vence en pocos minutos. Si Brevo no responde o el correo no llega, vuelve a solicitar uno nuevo.</p>
           <button type="submit" className="auth-submit-btn" disabled={loading || recoveryCode.length < 6}>
             {loading ? <span className="auth-spinner"></span> : <>Verificar Código</>}
           </button>

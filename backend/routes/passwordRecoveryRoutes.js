@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const User = require('../models/User');
 const PasswordResetCode = require('../models/PasswordResetCode');
-const { sendEmail } = require('../services/emailService');
+const { getEmailDeliveryErrorMessage, sendEmail } = require('../services/emailService');
 
 const router = express.Router();
 const CODE_TTL_MINUTES = Number(process.env.RECOVERY_CODE_TTL_MINUTES || 10);
@@ -87,7 +87,11 @@ router.post('/request-code', async (req, res) => {
       await sendRecoveryCodeEmail({ user, email, code });
     } catch (emailError) {
       await PasswordResetCode.deleteById(recoveryId);
-      throw emailError;
+      const friendlyError = new Error(getEmailDeliveryErrorMessage(emailError));
+      friendlyError.statusCode =
+        emailError.code === 'ETIMEDOUT' || emailError.command === 'CONN' ? 503 : 500;
+      friendlyError.cause = emailError;
+      throw friendlyError;
     }
 
     await PasswordResetCode.cleanupExpired();
@@ -100,7 +104,9 @@ router.post('/request-code', async (req, res) => {
     });
   } catch (err) {
     console.error('Error en request-code:', err);
-    return res.status(500).json({ error: 'No fue posible enviar el codigo de recuperacion' });
+    return res
+      .status(err.statusCode || 500)
+      .json({ error: err.message || 'No fue posible enviar el codigo de recuperacion' });
   }
 });
 

@@ -38,6 +38,10 @@ Comportamiento actual:
 - si `SMTP_PORT=587`, usa `secure: false`
 - si `SMTP_PORT=465`, usa `secure: true`
 - tambien soporta `SMTP_SECURE=true` si se quiere forzar
+- ahora tambien corta mas rapido con:
+  - `SMTP_CONNECTION_TIMEOUT_MS`
+  - `SMTP_GREETING_TIMEOUT_MS`
+  - `SMTP_SOCKET_TIMEOUT_MS`
 
 ### 2. Recuperacion de contrasena
 
@@ -146,9 +150,13 @@ DB_NAME=...
 SESSION_SECRET=...
 SMTP_HOST=smtp-relay.brevo.com
 SMTP_PORT=587
+SMTP_SECURE=
 SMTP_USER=TU_LOGIN_SMTP_DE_BREVO
 SMTP_PASS=TU_CLAVE_SMTP_DE_BREVO_ROTADA
 SMTP_FROM=Luxury Jewelry <TU_CORREO_VERIFICADO_EN_BREVO>
+SMTP_CONNECTION_TIMEOUT_MS=10000
+SMTP_GREETING_TIMEOUT_MS=10000
+SMTP_SOCKET_TIMEOUT_MS=15000
 ADMIN_CONTACT_EMAIL=TU_CORREO
 FRONTEND_URL=https://luxury-jewelry-frontend.onrender.com
 RECOVERY_CODE_TTL_MINUTES=10
@@ -218,10 +226,9 @@ No fue posible enviar el codigo de recuperacion
 
 Todavia seria bueno hacer estos cambios despues:
 
-1. actualizar el texto del modal frontend, porque aun habla de soporte manual
-2. hacer que el timeout del correo falle mas rapido
-3. mostrar un error mas claro al usuario cuando Brevo no responde
-4. opcionalmente probar conexion SMTP con `transporter.verify()`
+1. opcionalmente probar conexion SMTP con `transporter.verify()`
+2. ajustar el puerto en Render entre `587`, `2525` y `465` segun el resultado real
+3. eliminar `RESEND_API_KEY` y `RESEND_FROM_EMAIL` por limpieza si siguen visibles
 
 ## Mensaje Corto Para Retomar Rapido
 
