@@ -111,13 +111,16 @@ export default function FloatingContact() {
     setSending(true);
 
     try {
-      await api.post('/contact', { ...formData, category: siteCategory }, { timeout: 10000 });
-      setStatus({ type: 'success', text: 'Tu mensaje fue enviado correctamente. Nuestro equipo lo revisará pronto.' });
+      const { data } = await api.post('/contact', { ...formData, category: siteCategory }, { timeout: 10000 });
+      setStatus({
+        type: 'success',
+        text: data.message || 'Tu mensaje fue enviado correctamente. Nuestro equipo lo revisara pronto.'
+      });
       setFormData({ name: user?.nombre || '', email: user?.email || '', phone: '', message: '' });
       setTimeout(() => setStatus(null), 5000);
     } catch (err) {
       console.error('Error enviando contacto:', err);
-      setStatus({ type: 'error', text: 'Hubo un error al enviar el mensaje.' });
+      setStatus({ type: 'error', text: err.response?.data?.error || 'Hubo un error al enviar el mensaje.' });
     } finally {
       setSending(false);
     }
