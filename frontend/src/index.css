@@ -1195,27 +1195,27 @@ button {
   width: min(980px, calc(100% - 40px));
   margin: 0 auto 16px;
   display: grid;
-  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(210px, 270px) minmax(0, 1fr);
+  gap: 12px;
   align-items: stretch;
 }
 
 .catalog-filter-select-wrap {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px 18px;
-  border-radius: 20px;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(145deg, rgba(17, 17, 17, 0.96), rgba(10, 10, 10, 0.98));
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
 }
 
 .catalog-filter-select-label {
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 1.8px;
+  letter-spacing: 1.6px;
   text-transform: uppercase;
   text-align: left;
 }
@@ -1223,14 +1223,14 @@ button {
 .catalog-filter-select {
   width: 100%;
   appearance: none;
-  padding: 14px 18px;
-  border-radius: 14px;
+  padding: 11px 14px;
+  border-radius: 12px;
   border: 1px solid rgba(201, 168, 76, 0.2);
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
     var(--bg-card);
   color: var(--text-primary);
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   font-family: var(--font-body);
   outline: none;
   transition: border-color 0.3s var(--ease-out-expo), box-shadow 0.3s var(--ease-out-expo), transform 0.3s var(--ease-out-expo);
@@ -1250,36 +1250,38 @@ button {
 .catalog-spotlight-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
 .catalog-spotlight-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 78px;
-  padding: 18px 22px;
-  border-radius: 20px;
+  gap: 8px;
+  min-height: 56px;
+  padding: 12px 16px;
+  border-radius: 16px;
   border: 1px solid rgba(201, 168, 76, 0.16);
   background: linear-gradient(145deg, rgba(17, 17, 17, 0.96), rgba(10, 10, 10, 0.98));
   color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 1.2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.9px;
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.3s var(--ease-out-expo), border-color 0.3s var(--ease-out-expo), box-shadow 0.3s var(--ease-out-expo), color 0.3s var(--ease-out-expo);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
 .catalog-spotlight-btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   color: var(--text-primary);
 }
 
 .catalog-spotlight-btn svg {
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
 }
 
 .catalog-spotlight-btn--featured {
@@ -2546,8 +2548,8 @@ footer p+p {
   }
 
   .catalog-filter-select-wrap {
-    padding: 14px;
-    border-radius: 18px;
+    padding: 12px;
+    border-radius: 16px;
   }
 
   .catalog-spotlight-actions {
@@ -2555,10 +2557,10 @@ footer p+p {
   }
 
   .catalog-spotlight-btn {
-    min-height: 64px;
-    padding: 14px 16px;
-    font-size: 0.72rem;
-    letter-spacing: 1px;
+    min-height: 50px;
+    padding: 10px 14px;
+    font-size: 0.66rem;
+    letter-spacing: 0.8px;
   }
 
   .catalog-filter-meta {
