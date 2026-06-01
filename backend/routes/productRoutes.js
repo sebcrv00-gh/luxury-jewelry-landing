@@ -18,6 +18,7 @@ const upload = multer({
 });
 
 router.get('/', productController.getAll);
+router.get('/highlights', productController.getHighlights);
 router.get('/admin/all', isAuthenticated, isAdmin, productController.getAllAdmin);
 router.get('/:id', productController.getById);
 router.post('/', isAuthenticated, isAdmin, upload.any(), productController.create);

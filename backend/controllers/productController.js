@@ -49,6 +49,17 @@ const productController = {
     }
   },
 
+  // GET /api/products/highlights
+  async getHighlights(req, res) {
+    try {
+      const products = await Product.getHighlights(req.query.limit);
+      return res.json(products);
+    } catch (err) {
+      console.error('Error al obtener productos destacados:', err);
+      return res.status(500).json({ error: 'Error al cargar los productos destacados' });
+    }
+  },
+
   // GET /api/products/admin/all  (incluye stock 0)
   async getAllAdmin(req, res) {
     try {

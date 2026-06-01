@@ -2,11 +2,16 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock, Star, MessageSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock, Star, MessageSquare, Sparkles, Clock3 } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
 import { readCart, writeCart } from '../utils/cartStorage';
 
-const CATEGORIES = ['Todas las colecciones', 'Relojes', 'Pulseras', 'Collares', 'Aretes', 'Anillos', 'Otros'];
+const DEFAULT_CATEGORY = 'Todas las categorias';
+const SHOWCASE_FILTERS = {
+  all: 'all',
+  featured: 'featured',
+  newest: 'newest'
+};
 
 const getCategoryFromName = (name) => {
   const n = name.toLowerCase();
@@ -16,6 +21,11 @@ const getCategoryFromName = (name) => {
   if (n.includes('arete') || n.includes('candonga') || n.includes('topo')) return 'Aretes';
   if (n.includes('anillo') || n.includes('sortija') || n.includes('argolla') || n.includes('compromiso')) return 'Anillos';
   return 'Otros';
+};
+
+const normalizeCategory = (category, name) => {
+  const normalized = String(category || '').trim();
+  return normalized || getCategoryFromName(name);
 };
 
 const buildProductReviewRef = (name) => {
@@ -44,8 +54,10 @@ export default function Catalog() {
   const { isLoggedIn, user, openAuthModal } = useAuth();
   const carouselRef = useRef(null);
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Todas las colecciones');
+  const [activeCategory, setActiveCategory] = useState(DEFAULT_CATEGORY);
+  const [activeShowcase, setActiveShowcase] = useState(SHOWCASE_FILTERS.all);
   const [dbProducts, setDbProducts] = useState([]);
+  const [highlightedProductIds, setHighlightedProductIds] = useState([]);
   const [authPromptTarget, setAuthPromptTarget] = useState(null);
   const [addedProduct, setAddedProduct] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -65,10 +77,17 @@ export default function Catalog() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, activeCategory]);
+  }, [search, activeCategory, activeShowcase]);
 
   useEffect(() => {
     api.get('/products').then(r => setDbProducts(r.data)).catch(() => { });
+    api.get('/products/highlights', { params: { limit: 12 } })
+      .then(({ data }) => {
+        setHighlightedProductIds(Array.isArray(data) ? data.map(product => Number(product.id)) : []);
+      })
+      .catch(() => {
+        setHighlightedProductIds([]);
+      });
     api.get('/reviews/summary')
       .then(({ data }) => {
         const mapped = {};
@@ -134,11 +153,12 @@ export default function Catalog() {
     nombre: p.nombre,
     descripcion: p.descripcion || 'Sin descripcion personalizada para esta pieza.',
     precio: Number(p.precio),
+    creadoEn: p.creado_en,
     img: p.imagen_url
       ? getImageUrl(p.imagen_url)
       : (p.variantes?.[0]?.imagen_url ? getImageUrl(p.variantes[0].imagen_url) : '/images/Logo_Luxury_Joyeria-removebg-preview.png'),
     stock: p.stock,
-    categoria: getCategoryFromName(p.nombre),
+    categoria: normalizeCategory(p.categoria, p.nombre),
     reviewRef: buildProductReviewRef(p.nombre),
     variantes: Array.isArray(p.variantes)
       ? p.variantes.map(variant => ({
@@ -149,10 +169,35 @@ export default function Catalog() {
       : []
   }));
 
+  const categoryOptions = [DEFAULT_CATEGORY, ...Array.from(new Set(allProducts.map(product => product.categoria))).sort((a, b) => a.localeCompare(b))];
+  const newestProductIds = allProducts
+    .slice()
+    .sort((a, b) => new Date(b.creadoEn || 0).getTime() - new Date(a.creadoEn || 0).getTime())
+    .slice(0, 12)
+    .map(product => product.dbProductId);
+  const featuredRankMap = new Map(highlightedProductIds.map((id, index) => [id, index]));
+
   const filtered = allProducts.filter(p => {
     const matchSearch = p.nombre.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = activeCategory === 'Todas las colecciones' || p.categoria === activeCategory;
-    return matchSearch && matchCategory;
+    const matchCategory = activeCategory === DEFAULT_CATEGORY || p.categoria === activeCategory;
+    const matchShowcase =
+      activeShowcase === SHOWCASE_FILTERS.all
+        ? true
+        : activeShowcase === SHOWCASE_FILTERS.featured
+          ? featuredRankMap.has(p.dbProductId)
+          : newestProductIds.includes(p.dbProductId);
+    return matchSearch && matchCategory && matchShowcase;
+  }).sort((a, b) => {
+    if (activeShowcase === SHOWCASE_FILTERS.featured) {
+      return (featuredRankMap.get(a.dbProductId) ?? Number.MAX_SAFE_INTEGER)
+        - (featuredRankMap.get(b.dbProductId) ?? Number.MAX_SAFE_INTEGER);
+    }
+
+    if (activeShowcase === SHOWCASE_FILTERS.newest) {
+      return new Date(b.creadoEn || 0).getTime() - new Date(a.creadoEn || 0).getTime();
+    }
+
+    return 0;
   });
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -326,17 +371,52 @@ export default function Catalog() {
           />
         </div>
 
-        <nav className="category-menu">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
-              onClick={() => setActiveCategory(cat)}
+        <div className="catalog-filter-toolbar">
+          <div className="catalog-filter-select-wrap">
+            <label className="catalog-filter-select-label" htmlFor="catalog-category-filter">
+              Categorias
+            </label>
+            <select
+              id="catalog-category-filter"
+              className="catalog-filter-select"
+              value={activeCategory}
+              onChange={(e) => setActiveCategory(e.target.value)}
             >
-              {cat}
+              {categoryOptions.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="catalog-spotlight-actions" role="group" aria-label="Filtros destacados del catalogo">
+            <button
+              type="button"
+              className={`catalog-spotlight-btn catalog-spotlight-btn--featured ${activeShowcase === SHOWCASE_FILTERS.featured ? 'active' : ''}`}
+              onClick={() => setActiveShowcase((current) => current === SHOWCASE_FILTERS.featured ? SHOWCASE_FILTERS.all : SHOWCASE_FILTERS.featured)}
+            >
+              <Sparkles size={16} />
+              <span>Productos mas destacados</span>
             </button>
-          ))}
-        </nav>
+            <button
+              type="button"
+              className={`catalog-spotlight-btn catalog-spotlight-btn--new ${activeShowcase === SHOWCASE_FILTERS.newest ? 'active' : ''}`}
+              onClick={() => setActiveShowcase((current) => current === SHOWCASE_FILTERS.newest ? SHOWCASE_FILTERS.all : SHOWCASE_FILTERS.newest)}
+            >
+              <Clock3 size={16} />
+              <span>Productos nuevos</span>
+            </button>
+          </div>
+        </div>
+
+        <p className="catalog-filter-meta">
+          {activeShowcase === SHOWCASE_FILTERS.featured
+            ? 'Mostrando las piezas con mayor volumen de compra registrado.'
+            : activeShowcase === SHOWCASE_FILTERS.newest
+              ? 'Mostrando las ultimas piezas incorporadas al catalogo.'
+              : 'Explora el catalogo completo y filtra por categoria o por nombre.'}
+        </p>
       </div>
 
       {/* Toast removed in favor of in-card validation */}
@@ -344,8 +424,8 @@ export default function Catalog() {
       <div className="catalog-container">
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '100px 20px', color: 'var(--text-muted)' }}>
-            <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)', color: 'var(--gold)', marginBottom: '16px' }}>No hay piezas en esta colección</h3>
-            <p>Intenta con otra búsqueda u otra categoría.</p>
+            <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)', color: 'var(--gold)', marginBottom: '16px' }}>No encontramos piezas para este filtro</h3>
+            <p>Prueba con otra categoria, otra busqueda o cambia entre destacados y nuevos.</p>
           </div>
         ) : (
           <>

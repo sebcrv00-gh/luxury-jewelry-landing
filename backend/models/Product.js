@@ -89,6 +89,31 @@ const Product = {
     return this.attachVariants(rows);
   },
 
+  async getHighlights(limit = 8) {
+    const safeLimit = Math.max(1, Number(limit || 8));
+    const [rows] = await pool.query(
+      `SELECT
+         p.id,
+         p.sku,
+         p.nombre,
+         p.descripcion,
+         p.precio,
+         p.stock,
+         p.categoria,
+         p.imagen_url,
+         p.creado_en,
+         COALESCE(SUM(oi.cantidad), 0) AS total_vendido
+       FROM productos p
+       LEFT JOIN orden_items oi ON oi.producto_id = p.id
+       WHERE p.stock > 0
+       GROUP BY p.id, p.sku, p.nombre, p.descripcion, p.precio, p.stock, p.categoria, p.imagen_url, p.creado_en
+       ORDER BY total_vendido DESC, p.creado_en DESC
+       LIMIT ?`,
+      [safeLimit]
+    );
+    return this.attachVariants(rows);
+  },
+
   // Incluye productos con stock 0 para la vista de administrador
   async getAllAdmin() {
     const [rows] = await pool.query(
