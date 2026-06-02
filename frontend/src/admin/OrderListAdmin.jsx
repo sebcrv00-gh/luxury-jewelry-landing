@@ -1,24 +1,26 @@
-import { useState, useEffect } from 'react';
-import { RefreshCw, PackageOpen, AlertCircle, Receipt, Clock3, CircleDollarSign, Truck, FileDown, FileSpreadsheet } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { RefreshCw, PackageOpen, AlertCircle, Receipt, Clock3, CircleDollarSign, Truck, FileDown, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import api from '../api/axios';
 import { downloadInvoicePdf } from '../utils/invoicePdf';
 import { exportSalesReportToExcel } from '../utils/adminExcelExport';
 
 const ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
 const REPORT_PERIODS = [
-  { key: 'daily', label: 'Diario' },
-  { key: 'weekly', label: 'Semanal' },
-  { key: 'monthly', label: 'Mensual' },
-  { key: 'all', label: 'Completo' }
+  { key: 'daily', label: 'Diario', description: 'Ventas registradas hoy' },
+  { key: 'weekly', label: 'Semanal', description: 'Ultimos 7 dias de facturacion' },
+  { key: 'monthly', label: 'Mensual', description: 'Mes actual consolidado' },
+  { key: 'all', label: 'Completo', description: 'Historial integral de ventas' }
 ];
 
 export default function OrderListAdmin({ refreshTrigger }) {
+  const exportMenuRef = useRef(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
   const [exportingPeriod, setExportingPeriod] = useState('');
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState('');
 
   const fetchOrders = async () => {
@@ -36,6 +38,17 @@ export default function OrderListAdmin({ refreshTrigger }) {
   useEffect(() => {
     fetchOrders();
   }, [refreshTrigger]);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setIsExportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, []);
 
   const updateOrderStatus = async (orderId, nextStatus) => {
     setUpdatingOrderId(orderId);
@@ -79,6 +92,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
   const exportSalesReport = async (periodKey) => {
     setExportingPeriod(periodKey);
     setStatusFeedback('');
+    setIsExportMenuOpen(false);
     try {
       const { data } = await api.get('/orders/admin/detailed');
       exportSalesReportToExcel(Array.isArray(data) ? data : [], periodKey);
@@ -117,6 +131,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
   const latestOrderDate = orders[0]?.creado_en
     ? new Date(orders[0].creado_en).toLocaleDateString('es-CO')
     : 'Sin registros';
+  const activeExportLabel = REPORT_PERIODS.find((period) => period.key === exportingPeriod)?.label || 'Periodo';
 
   const getStatusClass = (status) => {
     if (status === 'entregado') return 'success';
@@ -133,26 +148,42 @@ export default function OrderListAdmin({ refreshTrigger }) {
           <p>Consolida órdenes, monitorea estados de atención y detecta carga operativa desde un panel orientado a seguimiento comercial.</p>
         </div>
         <div className="admin-inline-actions" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {REPORT_PERIODS.map((period) => (
+          <div className={`admin-action-dropdown ${isExportMenuOpen ? 'open' : ''}`} ref={exportMenuRef}>
             <button
-              key={period.key}
               type="button"
-              className="btn-outline"
-              onClick={() => exportSalesReport(period.key)}
+              className={`admin-action-trigger ${isExportMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsExportMenuOpen((current) => !current)}
               disabled={Boolean(exportingPeriod)}
-              style={{
-                padding: '10px 14px',
-                fontSize: '0.7rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                opacity: exportingPeriod && exportingPeriod !== period.key ? 0.7 : 1
-              }}
             >
               <FileSpreadsheet size={14} />
-              {exportingPeriod === period.key ? 'Exportando...' : `${period.label} XLSX`}
+              <span>{exportingPeriod ? `Exportando ${activeExportLabel.toLowerCase()}...` : 'Exportar reportes XLSX'}</span>
+              <ChevronDown size={14} />
             </button>
-          ))}
+            <div className="admin-action-menu" role="menu" aria-label="Opciones de exportacion Excel">
+              <div className="admin-action-menu-head">
+                <strong>Selecciona un periodo</strong>
+                <span>Genera un reporte premium en Excel con resumen, facturas e items.</span>
+              </div>
+              <div className="admin-action-menu-list">
+                {REPORT_PERIODS.map((period) => (
+                  <button
+                    key={period.key}
+                    type="button"
+                    className="admin-action-option"
+                    onClick={() => exportSalesReport(period.key)}
+                    disabled={Boolean(exportingPeriod)}
+                    role="menuitem"
+                  >
+                    <div>
+                      <strong>{period.label} XLSX</strong>
+                      <span>{period.description}</span>
+                    </div>
+                    <FileSpreadsheet size={14} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           <button onClick={fetchOrders} className="btn-outline" style={{ padding: '10px 18px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <RefreshCw size={14} className={loading ? 'spinning' : ''} />
             {loading ? 'Sincronizando...' : 'Actualizar pedidos'}

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ChevronLeft, ChevronRight, X, Minus, Plus, Crown, Heart, CheckCircle, Lock, Star, MessageSquare, Sparkles, Clock3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, X, Minus, Plus, Crown, Heart, CheckCircle, Lock, Star, MessageSquare, Sparkles, Clock3 } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
 import { readCart, writeCart } from '../utils/cartStorage';
 
@@ -53,9 +53,11 @@ const RatingStars = ({ rating, size = 14 }) => (
 export default function Catalog() {
   const { isLoggedIn, user, openAuthModal } = useAuth();
   const carouselRef = useRef(null);
+  const categoryMenuRef = useRef(null);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(DEFAULT_CATEGORY);
   const [activeShowcase, setActiveShowcase] = useState(SHOWCASE_FILTERS.all);
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [dbProducts, setDbProducts] = useState([]);
   const [highlightedProductIds, setHighlightedProductIds] = useState([]);
   const [authPromptTarget, setAuthPromptTarget] = useState(null);
@@ -78,6 +80,17 @@ export default function Catalog() {
   useEffect(() => {
     setCurrentPage(1);
   }, [search, activeCategory, activeShowcase]);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (categoryMenuRef.current && !categoryMenuRef.current.contains(event.target)) {
+        setIsCategoryMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, []);
 
   useEffect(() => {
     api.get('/products').then(r => setDbProducts(r.data)).catch(() => { });
@@ -170,6 +183,10 @@ export default function Catalog() {
   }));
 
   const categoryOptions = [DEFAULT_CATEGORY, ...Array.from(new Set(allProducts.map(product => product.categoria))).sort((a, b) => a.localeCompare(b))];
+  const categoryCountMap = allProducts.reduce((accumulator, product) => {
+    accumulator[product.categoria] = (accumulator[product.categoria] || 0) + 1;
+    return accumulator;
+  }, { [DEFAULT_CATEGORY]: allProducts.length });
   const newestProductIds = allProducts
     .slice()
     .sort((a, b) => new Date(b.creadoEn || 0).getTime() - new Date(a.creadoEn || 0).getTime())
@@ -371,22 +388,42 @@ export default function Catalog() {
         </div>
 
         <div className="catalog-filter-toolbar">
-          <div className="catalog-filter-select-wrap">
-            <label className="catalog-filter-select-label" htmlFor="catalog-category-filter">
+          <div className={`catalog-filter-select-wrap ${isCategoryMenuOpen ? 'open' : ''}`} ref={categoryMenuRef}>
+            <label className="catalog-filter-select-label" htmlFor="catalog-category-trigger">
               Categorias
             </label>
-            <select
-              id="catalog-category-filter"
-              className="catalog-filter-select"
-              value={activeCategory}
-              onChange={(e) => setActiveCategory(e.target.value)}
+            <button
+              id="catalog-category-trigger"
+              type="button"
+              className={`catalog-filter-trigger ${isCategoryMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsCategoryMenuOpen((current) => !current)}
+              aria-haspopup="listbox"
+              aria-expanded={isCategoryMenuOpen}
             >
+              <span className="catalog-filter-trigger-copy">
+                <strong>{activeCategory}</strong>
+                <small>{categoryCountMap[activeCategory] || 0} piezas disponibles</small>
+              </span>
+              <ChevronDown size={16} />
+            </button>
+            <div className="catalog-filter-dropdown" role="listbox" aria-label="Categorias del catalogo">
               {categoryOptions.map(cat => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
+                <button
+                  key={cat}
+                  type="button"
+                  className={`catalog-filter-option ${activeCategory === cat ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveCategory(cat);
+                    setIsCategoryMenuOpen(false);
+                  }}
+                  role="option"
+                  aria-selected={activeCategory === cat}
+                >
+                  <span>{cat}</span>
+                  <small>{categoryCountMap[cat] || 0}</small>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           <div className="catalog-spotlight-actions" role="group" aria-label="Filtros destacados del catalogo">
