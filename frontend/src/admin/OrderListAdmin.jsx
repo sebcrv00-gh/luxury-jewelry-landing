@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, PackageOpen, AlertCircle, Receipt, Clock3, CircleDollarSign, Truck, FileDown } from 'lucide-react';
+import { RefreshCw, PackageOpen, AlertCircle, Receipt, Clock3, CircleDollarSign, Truck, FileDown, FileSpreadsheet } from 'lucide-react';
 import api from '../api/axios';
 import { downloadInvoicePdf } from '../utils/invoicePdf';
+import { exportSalesReportToExcel } from '../utils/adminExcelExport';
 
 const ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
+const REPORT_PERIODS = [
+  { key: 'daily', label: 'Diario' },
+  { key: 'weekly', label: 'Semanal' },
+  { key: 'monthly', label: 'Mensual' },
+  { key: 'all', label: 'Completo' }
+];
 
 export default function OrderListAdmin({ refreshTrigger }) {
   const [orders, setOrders] = useState([]);
@@ -11,6 +18,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
   const [error, setError] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
+  const [exportingPeriod, setExportingPeriod] = useState('');
   const [statusFeedback, setStatusFeedback] = useState('');
 
   const fetchOrders = async () => {
@@ -68,6 +76,21 @@ export default function OrderListAdmin({ refreshTrigger }) {
     }
   };
 
+  const exportSalesReport = async (periodKey) => {
+    setExportingPeriod(periodKey);
+    setStatusFeedback('');
+    try {
+      const { data } = await api.get('/orders/admin/detailed');
+      exportSalesReportToExcel(Array.isArray(data) ? data : [], periodKey);
+      const periodLabel = REPORT_PERIODS.find((period) => period.key === periodKey)?.label || 'Reporte';
+      setStatusFeedback(`Reporte ${periodLabel.toLowerCase()} exportado correctamente en formato Excel.`);
+    } catch (err) {
+      setStatusFeedback(err.response?.data?.error || 'No fue posible exportar el reporte de ventas.');
+    } finally {
+      setExportingPeriod('');
+    }
+  };
+
   if (loading && orders.length === 0) {
     return (
       <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px 0' }}>
@@ -109,10 +132,32 @@ export default function OrderListAdmin({ refreshTrigger }) {
           <h2>Gestión Operativa de Pedidos</h2>
           <p>Consolida órdenes, monitorea estados de atención y detecta carga operativa desde un panel orientado a seguimiento comercial.</p>
         </div>
-        <button onClick={fetchOrders} className="btn-outline" style={{ padding: '10px 18px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <RefreshCw size={14} className={loading ? 'spinning' : ''} />
-          {loading ? 'Sincronizando...' : 'Actualizar pedidos'}
-        </button>
+        <div className="admin-inline-actions" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {REPORT_PERIODS.map((period) => (
+            <button
+              key={period.key}
+              type="button"
+              className="btn-outline"
+              onClick={() => exportSalesReport(period.key)}
+              disabled={Boolean(exportingPeriod)}
+              style={{
+                padding: '10px 14px',
+                fontSize: '0.7rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                opacity: exportingPeriod && exportingPeriod !== period.key ? 0.7 : 1
+              }}
+            >
+              <FileSpreadsheet size={14} />
+              {exportingPeriod === period.key ? 'Exportando...' : `${period.label} XLSX`}
+            </button>
+          ))}
+          <button onClick={fetchOrders} className="btn-outline" style={{ padding: '10px 18px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <RefreshCw size={14} className={loading ? 'spinning' : ''} />
+            {loading ? 'Sincronizando...' : 'Actualizar pedidos'}
+          </button>
+        </div>
       </div>
 
       <div className="admin-summary-grid">
@@ -155,7 +200,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
           <div className="table-header-flex">
             <div>
               <h3 className="text-gold-light" style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.35rem' }}>Registro consolidado</h3>
-              <p className="admin-muted-note">Vista transversal de clientes, estado logístico y volumen monetario por pedido.</p>
+              <p className="admin-muted-note">Vista transversal de clientes, estado logístico, facturas y volumen monetario por pedido.</p>
             </div>
             <div className="admin-inline-actions">
               <span className="admin-badge-pill pending">{pendingOrders} pendientes</span>

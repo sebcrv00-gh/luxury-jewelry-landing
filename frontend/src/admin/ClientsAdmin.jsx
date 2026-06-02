@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Mail, Phone, User, Shield, Crown, ShoppingBag, XCircle, Users, Star, UserRoundCheck } from 'lucide-react';
+import { Mail, Phone, User, Shield, Crown, ShoppingBag, XCircle, Users, Star, UserRoundCheck, FileSpreadsheet } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
+import { exportClientsToExcel } from '../utils/adminExcelExport';
 
 export default function ClientsAdmin() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [vipConfirm, setVipConfirm] = useState(null);
   const [revokeConfirm, setRevokeConfirm] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -40,6 +42,18 @@ export default function ClientsAdmin() {
       fetchClients();
     } catch (err) {
       console.error('Error al revocar VIP:', err);
+    }
+  };
+
+  const handleExportClients = async () => {
+    setExporting(true);
+    try {
+      const sourceData = clients.length > 0 ? clients : (await api.get('/auth/users')).data;
+      exportClientsToExcel(Array.isArray(sourceData) ? sourceData : []);
+    } catch (err) {
+      console.error('Error al exportar clientes:', err);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -87,6 +101,16 @@ export default function ClientsAdmin() {
           <h2>CRM y Segmentación de Clientes</h2>
           <p>Centraliza perfiles, comportamiento de compra y clasificación comercial para operar con mayor criterio y personalización.</p>
         </div>
+        <button
+          type="button"
+          className="btn-outline"
+          onClick={handleExportClients}
+          disabled={exporting}
+          style={{ padding: '10px 16px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+        >
+          <FileSpreadsheet size={14} />
+          {exporting ? 'Exportando...' : 'Exportar clientes XLSX'}
+        </button>
       </div>
 
       <div className="admin-summary-grid">
@@ -135,7 +159,7 @@ export default function ClientsAdmin() {
             <div className="table-header-flex">
               <div>
                 <h3 className="text-gold-light" style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.35rem' }}>Directorio comercial</h3>
-                <p className="admin-muted-note">Consulta contacto, nivel de membresía y actividad de compra en una sola vista.</p>
+                <p className="admin-muted-note">Consulta contacto, nivel de membresía, actividad de compra y exporta la base actual de clientes.</p>
               </div>
               <div className="admin-inline-actions">
                 <span className="admin-badge-pill success"><Star size={12} /> {vipClients} VIP</span>

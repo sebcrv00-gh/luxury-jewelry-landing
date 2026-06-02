@@ -109,7 +109,47 @@ const Order = {
   async getAll() {
     const [orders] = await pool.query('SELECT o.*, u.nombre as usuario_nombre, u.email as usuario_email FROM ordenes o JOIN usuarios u ON o.usuario_id = u.id ORDER BY o.creado_en DESC');
     return orders;
-   },
+  },
+
+  async getAllDetailed() {
+    const [orders] = await pool.query(
+      `SELECT
+         o.*,
+         u.nombre AS usuario_nombre,
+         u.email AS usuario_email,
+         u.telefono AS usuario_telefono,
+         u.direccion AS usuario_direccion
+       FROM ordenes o
+       JOIN usuarios u ON o.usuario_id = u.id
+       ORDER BY o.creado_en DESC`
+    );
+
+    if (orders.length === 0) {
+      return [];
+    }
+
+    const orderIds = orders.map((order) => order.id);
+    const [items] = await pool.query(
+      `SELECT *
+       FROM orden_items
+       WHERE orden_id IN (?)
+       ORDER BY orden_id DESC, id ASC`,
+      [orderIds]
+    );
+
+    const itemsByOrderId = new Map();
+    items.forEach((item) => {
+      if (!itemsByOrderId.has(item.orden_id)) {
+        itemsByOrderId.set(item.orden_id, []);
+      }
+      itemsByOrderId.get(item.orden_id).push(item);
+    });
+
+    return orders.map((order) => ({
+      ...order,
+      items: itemsByOrderId.get(order.id) || []
+    }));
+  },
 
   async updateStatus(orderId, estado) {
     const [result] = await pool.query(

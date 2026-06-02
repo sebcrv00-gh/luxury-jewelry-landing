@@ -73,6 +73,17 @@ const orderController = {
     }
   },
 
+  // GET /api/orders/admin/detailed — Todas las órdenes con items (admin)
+  async getAllDetailed(req, res) {
+    try {
+      const orders = await Order.getAllDetailed();
+      return res.json(orders);
+    } catch (err) {
+      console.error('Error al obtener el reporte detallado de órdenes:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+  },
+
   // PUT /api/orders/:id/status — Actualizar estado de orden (admin)
   async updateStatus(req, res) {
     try {
