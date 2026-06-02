@@ -4,12 +4,12 @@ const User = {
   async findAll() {
     const [rows] = await pool.query(`
       SELECT 
-        u.id, u.nombre, u.email, u.rol, u.telefono, u.direccion, u.foto,
+        u.id, u.nombre, u.email, u.rol, u.telefono, u.direccion, u.foto, u.creado_en,
         COUNT(o.id) as total_pedidos
       FROM usuarios u 
       LEFT JOIN ordenes o ON u.id = o.usuario_id 
       GROUP BY u.id 
-      ORDER BY u.id DESC
+      ORDER BY u.creado_en DESC, u.id DESC
     `);
     return rows;
   },

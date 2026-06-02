@@ -696,6 +696,93 @@
   flex-wrap: wrap;
 }
 
+.admin-clients-toolbar {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.admin-clients-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(201, 168, 76, 0.14);
+  background: linear-gradient(145deg, rgba(19, 19, 19, 0.92), rgba(10, 10, 10, 0.98));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+}
+
+.admin-clients-search svg {
+  color: var(--gold-light);
+  flex-shrink: 0;
+}
+
+.admin-clients-search input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-family: var(--font-body);
+}
+
+.admin-clients-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.admin-clients-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-clients-select {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(201, 168, 76, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-clients-select span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gold-light);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.admin-clients-select select {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  appearance: none;
+}
+
+.admin-clients-select option {
+  background: #101010;
+  color: var(--text-primary);
+}
+
+.admin-clients-toolbar-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .admin-action-dropdown {
   position: relative;
 }
@@ -1189,6 +1276,14 @@
 
   .admin-table-card .table-wrapper {
     padding: 18px !important;
+  }
+
+  .admin-clients-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-clients-toolbar-meta {
+    align-items: stretch;
   }
 
   .admin-stats-grid {

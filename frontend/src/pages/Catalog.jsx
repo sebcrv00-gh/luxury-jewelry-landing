@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, ChevronDown, X, Minus, Plus, Crown, Heart, C
 import api, { getImageUrl } from '../api/axios';
 import { readCart, writeCart } from '../utils/cartStorage';
 
-const DEFAULT_CATEGORY = 'Todas las categorias';
+const DEFAULT_CATEGORY = 'Todos';
 const SHOWCASE_FILTERS = {
   all: 'all',
   featured: 'featured',
@@ -187,6 +187,13 @@ export default function Catalog() {
     accumulator[product.categoria] = (accumulator[product.categoria] || 0) + 1;
     return accumulator;
   }, { [DEFAULT_CATEGORY]: allProducts.length });
+
+  useEffect(() => {
+    if (!categoryOptions.includes(activeCategory)) {
+      setActiveCategory(DEFAULT_CATEGORY);
+    }
+  }, [activeCategory, categoryOptions]);
+
   const newestProductIds = allProducts
     .slice()
     .sort((a, b) => new Date(b.creadoEn || 0).getTime() - new Date(a.creadoEn || 0).getTime())
@@ -195,7 +202,12 @@ export default function Catalog() {
   const featuredRankMap = new Map(highlightedProductIds.map((id, index) => [id, index]));
 
   const filtered = allProducts.filter(p => {
-    const matchSearch = p.nombre.toLowerCase().includes(search.toLowerCase());
+    const searchTerm = search.trim().toLowerCase();
+    const matchSearch = searchTerm
+      ? [p.nombre, p.descripcion, p.categoria]
+          .filter(Boolean)
+          .some(value => String(value).toLowerCase().includes(searchTerm))
+      : true;
     const matchCategory = activeCategory === DEFAULT_CATEGORY || p.categoria === activeCategory;
     const matchShowcase =
       activeShowcase === SHOWCASE_FILTERS.all
@@ -397,40 +409,40 @@ export default function Catalog() {
           </div>
         </div>
         
-        <div className="search-box" style={{ margin: '0 auto 32px' }}>
-          <input
-            type="text"
-            placeholder="Buscar por nombre, marca o modelo..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
+        <div className="catalog-premium-toolbar">
+          <div className="catalog-search-hero">
+            <div className="search-box catalog-search-box">
+              <input
+                type="text"
+                placeholder="Buscar piezas, categorias o descripciones..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
 
-        <div className="catalog-filter-toolbar">
-          <div className={`catalog-filter-select-wrap ${isCategoryMenuOpen ? 'open' : ''}`} ref={categoryMenuRef}>
-            <label className="catalog-filter-select-label" htmlFor="catalog-category-trigger">
-              Categorias
-            </label>
+          <div className={`catalog-category-shell ${isCategoryMenuOpen ? 'open' : ''}`} ref={categoryMenuRef}>
             <button
               id="catalog-category-trigger"
               type="button"
-              className={`catalog-filter-trigger ${isCategoryMenuOpen ? 'active' : ''}`}
+              className={`catalog-category-trigger ${isCategoryMenuOpen ? 'active' : ''}`}
               onClick={() => setIsCategoryMenuOpen((current) => !current)}
               aria-haspopup="listbox"
               aria-expanded={isCategoryMenuOpen}
             >
-              <span className="catalog-filter-trigger-copy">
-                <strong>{activeCategory}</strong>
-                <small>{categoryCountMap[activeCategory] || 0} piezas disponibles</small>
+              <span className="catalog-category-trigger-copy">
+                <strong>Categorias</strong>
+                <small>{activeCategory} · {categoryCountMap[activeCategory] || 0} piezas</small>
               </span>
               <ChevronDown size={16} />
             </button>
-            <div className="catalog-filter-dropdown" role="listbox" aria-label="Categorias del catalogo">
+
+            <div className="catalog-category-rail" role="listbox" aria-label="Categorias del catalogo">
               {categoryOptions.map(cat => (
                 <button
                   key={cat}
                   type="button"
-                  className={`catalog-filter-option ${activeCategory === cat ? 'active' : ''}`}
+                  className={`catalog-category-chip ${activeCategory === cat ? 'active' : ''}`}
                   onClick={() => {
                     setActiveCategory(cat);
                     setIsCategoryMenuOpen(false);

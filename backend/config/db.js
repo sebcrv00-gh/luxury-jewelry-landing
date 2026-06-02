@@ -86,9 +86,19 @@ async function initDB() {
         rol VARCHAR(50) DEFAULT 'cliente',
         telefono VARCHAR(50) DEFAULT NULL,
         direccion VARCHAR(255) DEFAULT NULL,
-        foto LONGTEXT DEFAULT NULL
+        foto LONGTEXT DEFAULT NULL,
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    try {
+      const [createdAtColumn] = await conn.query("SHOW COLUMNS FROM usuarios LIKE 'creado_en'");
+      if (createdAtColumn.length === 0) {
+        await conn.query('ALTER TABLE usuarios ADD COLUMN creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER foto');
+      }
+    } catch (err) {
+      console.warn('⚠️ No se pudo verificar/agregar la columna creado_en en usuarios:', err.message);
+    }
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS productos (

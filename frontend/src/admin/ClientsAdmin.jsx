@@ -1,7 +1,40 @@
-import { useState, useEffect } from 'react';
-import { Mail, Phone, User, Shield, Crown, ShoppingBag, XCircle, Users, Star, UserRoundCheck, FileSpreadsheet } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Mail, Phone, User, Shield, Crown, ShoppingBag, XCircle, Users, Star, UserRoundCheck, FileSpreadsheet, Search, ArrowUpAZ, CalendarRange, SlidersHorizontal } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
 import { exportClientsToExcel } from '../utils/adminExcelExport';
+
+const SORT_OPTIONS = [
+  { value: 'registration-desc', label: 'Registro reciente' },
+  { value: 'registration-asc', label: 'Registro antiguo' },
+  { value: 'alphabetical-asc', label: 'A-Z' },
+  { value: 'alphabetical-desc', label: 'Z-A' },
+  { value: 'orders-desc', label: 'Mas compras' },
+  { value: 'vip-first', label: 'VIP primero' }
+];
+
+const ROLE_OPTIONS = [
+  { value: 'all', label: 'Todos los niveles' },
+  { value: 'cliente', label: 'Clientes base' },
+  { value: 'vip', label: 'Clientes VIP' },
+  { value: 'admin', label: 'Administradores' }
+];
+
+const ACTIVITY_OPTIONS = [
+  { value: 'all', label: 'Toda la actividad' },
+  { value: 'buyers', label: 'Con compras' },
+  { value: 'inactive', label: 'Sin compras' }
+];
+
+const getSafeDate = (value) => {
+  const parsed = new Date(value || 0);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const formatClientDate = (value, options = {}) => {
+  const parsed = getSafeDate(value);
+  if (!parsed) return 'Sin registro';
+  return parsed.toLocaleDateString('es-CO', options);
+};
 
 export default function ClientsAdmin() {
   const [clients, setClients] = useState([]);
@@ -9,12 +42,17 @@ export default function ClientsAdmin() {
   const [vipConfirm, setVipConfirm] = useState(null);
   const [revokeConfirm, setRevokeConfirm] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('registration-desc');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [activityFilter, setActivityFilter] = useState('all');
 
   useEffect(() => {
     fetchClients();
   }, []);
 
   const fetchClients = async () => {
+    setLoading(true);
     try {
       const { data } = await api.get('/auth/users');
       setClients(data);
@@ -24,6 +62,54 @@ export default function ClientsAdmin() {
       setLoading(false);
     }
   };
+
+  const filteredClients = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return clients
+      .filter((client) => {
+        const matchesSearch = normalizedSearch
+          ? [client.nombre, client.email, client.telefono, client.direccion]
+              .filter(Boolean)
+              .some((value) => String(value).toLowerCase().includes(normalizedSearch))
+          : true;
+
+        const matchesRole = roleFilter === 'all' ? true : client.rol === roleFilter;
+        const totalOrders = Number(client.total_pedidos || 0);
+        const matchesActivity =
+          activityFilter === 'all'
+            ? true
+            : activityFilter === 'buyers'
+              ? totalOrders > 0
+              : totalOrders === 0;
+
+        return matchesSearch && matchesRole && matchesActivity;
+      })
+      .slice()
+      .sort((a, b) => {
+        const aName = String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' });
+        const aDate = getSafeDate(a.creado_en)?.getTime() || 0;
+        const bDate = getSafeDate(b.creado_en)?.getTime() || 0;
+        const aOrders = Number(a.total_pedidos || 0);
+        const bOrders = Number(b.total_pedidos || 0);
+
+        switch (sortBy) {
+          case 'registration-asc':
+            return aDate - bDate || aName;
+          case 'alphabetical-asc':
+            return aName || bDate - aDate;
+          case 'alphabetical-desc':
+            return -aName || bDate - aDate;
+          case 'orders-desc':
+            return bOrders - aOrders || bDate - aDate || aName;
+          case 'vip-first':
+            return (b.rol === 'vip') - (a.rol === 'vip') || bOrders - aOrders || bDate - aDate || aName;
+          case 'registration-desc':
+          default:
+            return bDate - aDate || aName;
+        }
+      });
+  }, [activityFilter, clients, roleFilter, search, sortBy]);
 
   const handleMakeVip = async (client) => {
     try {
@@ -93,6 +179,9 @@ export default function ClientsAdmin() {
   const vipClients = clients.filter(client => client.rol === 'vip').length;
   const adminUsers = clients.filter(client => client.rol === 'admin').length;
   const activeBuyers = clients.filter(client => Number(client.total_pedidos) > 0).length;
+  const filteredVipClients = filteredClients.filter(client => client.rol === 'vip').length;
+  const filteredBuyers = filteredClients.filter(client => Number(client.total_pedidos) > 0).length;
+  const hasActiveFilters = Boolean(search.trim()) || roleFilter !== 'all' || activityFilter !== 'all' || sortBy !== 'registration-desc';
 
   return (
     <div className="admin-section-shell">
@@ -159,11 +248,71 @@ export default function ClientsAdmin() {
             <div className="table-header-flex">
               <div>
                 <h3 className="text-gold-light" style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.35rem' }}>Directorio comercial</h3>
-                <p className="admin-muted-note">Consulta contacto, nivel de membresía, actividad de compra y exporta la base actual de clientes.</p>
+                <p className="admin-muted-note">Consulta contacto, fecha de registro, nivel de membresía y comportamiento de compra con filtros dinámicos.</p>
               </div>
               <div className="admin-inline-actions">
-                <span className="admin-badge-pill success"><Star size={12} /> {vipClients} VIP</span>
-                <span className="admin-badge-pill info">{activeBuyers} compradores</span>
+                <span className="admin-badge-pill success"><Star size={12} /> {filteredVipClients} VIP visibles</span>
+                <span className="admin-badge-pill info">{filteredBuyers} compradores visibles</span>
+              </div>
+            </div>
+
+            <div className="admin-clients-toolbar">
+              <label className="admin-clients-search">
+                <Search size={16} />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Buscar por nombre, correo, telefono o direccion..."
+                />
+              </label>
+
+              <div className="admin-clients-filter-grid">
+                <label className="admin-clients-select">
+                  <span><ArrowUpAZ size={14} /> Ordenar por</span>
+                  <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                    {SORT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="admin-clients-select">
+                  <span><SlidersHorizontal size={14} /> Nivel</span>
+                  <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)}>
+                    {ROLE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="admin-clients-select">
+                  <span><CalendarRange size={14} /> Actividad</span>
+                  <select value={activityFilter} onChange={(event) => setActivityFilter(event.target.value)}>
+                    {ACTIVITY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="admin-clients-toolbar-meta">
+                <span className="admin-badge-pill pending">{filteredClients.length} registros visibles</span>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => {
+                      setSearch('');
+                      setSortBy('registration-desc');
+                      setRoleFilter('all');
+                      setActivityFilter('all');
+                    }}
+                    style={{ padding: '10px 16px', fontSize: '0.68rem' }}
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
               </div>
             </div>
 
@@ -172,13 +321,14 @@ export default function ClientsAdmin() {
                 <tr>
                   <th>Cliente</th>
                   <th>Contacto</th>
+                  <th>Registro</th>
                   <th>Compras</th>
                   <th>Nivel</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {clients.map(client => (
+                {filteredClients.map(client => (
                   <tr key={client.id}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -202,6 +352,18 @@ export default function ClientsAdmin() {
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontStyle: 'italic' }}><Phone size={14}/> Sin registrar</div>
                         )}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                          {formatClientDate(client.creado_en, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                          {getSafeDate(client.creado_en)
+                            ? `${getSafeDate(client.creado_en).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`
+                            : 'Sin hora'}
+                        </span>
                       </div>
                     </td>
                     <td>
@@ -247,9 +409,9 @@ export default function ClientsAdmin() {
               </tbody>
             </table>
             
-            {clients.length === 0 && (
+            {filteredClients.length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
-                No hay clientes registrados en la base de datos.
+                No hay clientes que coincidan con los filtros actuales.
               </div>
             )}
           </div>
