@@ -193,8 +193,6 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
           };
         });
         formData.append('variantes', JSON.stringify(payloadVariantes));
-      } else if (editProduct.variantes && editProduct.variantes.length > 0) {
-        formData.append('variantes', "[]");
       }
 
       await api.put(`/products/${editProduct.id}`, formData, {

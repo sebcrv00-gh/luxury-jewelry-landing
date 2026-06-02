@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
 
 const hasValue = (value) => value !== undefined && value !== null && String(value).trim() !== '';
+const isTruthyFlag = (value) => ['true', '1', 'yes', 'on'].includes(String(value || '').trim().toLowerCase());
 
 const getUploadedImagePath = (req, fieldName) => {
   const file = (req.files || []).find(entry => entry.fieldname === fieldName);
@@ -140,6 +141,7 @@ const productController = {
       );
       const data = {};
       const variantes = parseVariants(req, currentVariantMap);
+      const clearVariantes = isTruthyFlag(req.body.clearVariantes);
       if (nombre !== undefined) data.nombre = nombre;
       if (descripcion !== undefined) data.descripcion = descripcion;
       if (precio !== undefined) data.precio = precio;
@@ -149,7 +151,11 @@ const productController = {
         if (variantes.some(variant => !variant.imagen_url)) {
           return res.status(400).json({ error: 'Cada variante debe incluir una imagen identificable' });
         }
-        data.variantes = variantes;
+        if (variantes.length === 0 && (currentProduct.variantes || []).length > 0 && !clearVariantes) {
+          data.variantes = currentProduct.variantes;
+        } else {
+          data.variantes = variantes;
+        }
       }
       const imagen_url = getUploadedImagePath(req, 'imagen');
       if (imagen_url) data.imagen_url = imagen_url;
