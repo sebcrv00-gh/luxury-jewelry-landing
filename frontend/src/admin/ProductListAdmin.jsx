@@ -38,6 +38,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
   const [editImagePreview, setEditImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
   const [editMsg, setEditMsg] = useState('');
+  const [saveState, setSaveState] = useState('idle');
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -88,11 +89,13 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
 
   const assignMainEditImage = (file) => {
     if (!file) return;
+    setSaveState('idle');
     setEditImage(file);
     setEditImagePreview(URL.createObjectURL(file));
   };
 
   const updateEditVariant = (key, field, value) => {
+    setSaveState('idle');
     setEditForm(prev => ({
       ...prev,
       variantes: (prev.variantes || []).map(variant => (
@@ -103,6 +106,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
 
   const assignEditVariantImage = (key, file) => {
     if (!file) return;
+    setSaveState('idle');
     setEditForm(prev => ({
       ...prev,
       variantes: (prev.variantes || []).map(variant => (
@@ -132,6 +136,12 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
     setEditImage(null);
     setEditImagePreview(p.imagen_url ? getImageUrl(p.imagen_url) : '');
     setEditMsg('');
+    setSaveState('idle');
+  };
+
+  const updateEditField = (field, value) => {
+    setSaveState('idle');
+    setEditForm(prev => ({ ...prev, [field]: value }));
   };
 
   // ── Guardar edición ──
@@ -146,12 +156,14 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
       );
       if (invalidVariant) {
         setEditMsg('Cada variante debe tener imagen y stock valido.');
+        setSaveState('error');
         return;
       }
     }
 
     setSaving(true);
     setEditMsg('');
+    setSaveState('saving');
     try {
       const formData = new FormData();
       formData.append('nombre', editForm.nombre);
@@ -175,7 +187,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
           return {
             id: variant.id,
             stock: Number(variant.stock || 0),
-            existingImageUrl: variant.existingImageUrl,
+            keepExistingImage: Boolean(!variant.imagen && variant.existingImageUrl),
             imageField,
             orden: index
           };
@@ -189,10 +201,11 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setEditMsg('✦ Joya actualizada correctamente en la bóveda.');
+      setSaveState('success');
       fetchProducts();
-      setTimeout(() => setEditProduct(null), 1500);
     } catch (err) {
       setEditMsg(err.response?.data?.error || 'Error al actualizar');
+      setSaveState('error');
     } finally {
       setSaving(false);
     }
@@ -316,6 +329,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                           setTimeout(() => {
                             const variantsSection = document.querySelector('.admin-edit-variants-panel');
                             if (variantsSection) variantsSection.scrollIntoView({ behavior: 'smooth' });
+                            setSaveState('idle');
                             setEditForm(prev => ({ ...prev, variantes: [...(prev.variantes || []), mapVariantToForm()] }));
                           }, 100);
                         }} title="Agregar variante rapida" style={{ color: 'var(--gold)' }}>
@@ -354,11 +368,11 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
               <div className="admin-edit-product-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '24px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Denominación</label>
-                  <input type="text" value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} required />
+                  <input type="text" value={editForm.nombre} onChange={e => updateEditField('nombre', e.target.value)} required />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Familia</label>
-                  <select value={editForm.categoria} onChange={e => setEditForm({ ...editForm, categoria: e.target.value })} required>
+                  <select value={editForm.categoria} onChange={e => updateEditField('categoria', e.target.value)} required>
                     <option value="Anillos">Anillos de Lujo</option>
                     <option value="Collares">Collares y Gargantillas</option>
                     <option value="Pulseras">Pulseras Gold</option>
@@ -370,20 +384,20 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
 
               <div className="form-group" style={{ marginBottom: '24px' }}>
                 <label>Especificaciones Técnicas</label>
-                <textarea rows="3" value={editForm.descripcion} onChange={e => setEditForm({ ...editForm, descripcion: e.target.value })} />
+                <textarea rows="3" value={editForm.descripcion} onChange={e => updateEditField('descripcion', e.target.value)} />
               </div>
 
               <div className="admin-edit-product-grid admin-edit-product-grid--compact" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '24px', marginBottom: '32px' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Valor (COP)</label>
-                  <input type="number" step="0.01" value={editForm.precio} onChange={e => setEditForm({ ...editForm, precio: e.target.value })} required />
+                  <input type="number" step="0.01" value={editForm.precio} onChange={e => updateEditField('precio', e.target.value)} required />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>Unidades Disponibles</label>
                   <input
                     type="number"
                     value={(editForm.variantes || []).length > 0 ? (editForm.variantes || []).reduce((sum, variant) => sum + Number(variant.stock || 0), 0) : editForm.stock}
-                    onChange={e => setEditForm({ ...editForm, stock: e.target.value })}
+                    onChange={e => updateEditField('stock', e.target.value)}
                     required
                     disabled={(editForm.variantes || []).length > 0}
                   />
@@ -443,7 +457,10 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                   <button
                     type="button"
                     className="btn-outline"
-                    onClick={() => setEditForm(prev => ({ ...prev, variantes: [...(prev.variantes || []), mapVariantToForm()] }))}
+                    onClick={() => {
+                      setSaveState('idle');
+                      setEditForm(prev => ({ ...prev, variantes: [...(prev.variantes || []), mapVariantToForm()] }));
+                    }}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                   >
                     <Plus size={16} />
@@ -466,7 +483,10 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                           <button
                             type="button"
                             className="action-btn delete"
-                            onClick={() => setEditForm(prev => ({ ...prev, variantes: (prev.variantes || []).filter(item => item.key !== variant.key) }))}
+                            onClick={() => {
+                              setSaveState('idle');
+                              setEditForm(prev => ({ ...prev, variantes: (prev.variantes || []).filter(item => item.key !== variant.key) }));
+                            }}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -534,8 +554,25 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                 <button type="button" className="btn-outline" onClick={() => setEditProduct(null)}>
                   Descartar
                 </button>
-                <button type="submit" className="btn-primary" disabled={saving}>
-                  {saving ? 'Registrando...' : 'Confirmar Cambios'}
+                <button
+                  type="submit"
+                  className={saveState === 'success' ? 'btn-success' : 'btn-primary'}
+                  disabled={saving}
+                  style={saveState === 'error'
+                    ? {
+                        background: 'rgba(231, 76, 60, 0.12)',
+                        border: '1px solid rgba(231, 76, 60, 0.28)',
+                        color: '#ffb3ab'
+                      }
+                    : undefined}
+                >
+                  {saving
+                    ? 'Guardando...'
+                    : saveState === 'success'
+                      ? 'Guardado exitosamente'
+                      : saveState === 'error'
+                        ? 'Error al guardar'
+                        : 'Guardar cambios'}
                 </button>
               </div>
             </form>

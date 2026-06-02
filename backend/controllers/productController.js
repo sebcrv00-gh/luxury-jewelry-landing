@@ -16,7 +16,7 @@ const buildInternalVariantName = (index, providedName) => {
   return normalized || `Variante ${index + 1}`;
 };
 
-const parseVariants = (req) => {
+const parseVariants = (req, currentVariantMap = new Map()) => {
   if (!hasValue(req.body.variantes)) return [];
 
   let rawVariants = req.body.variantes;
@@ -29,13 +29,19 @@ const parseVariants = (req) => {
   return rawVariants
     .map((variant, index) => {
       const imageField = variant.imageField || `variante_imagen_${index}`;
+      const currentVariant = variant.id ? currentVariantMap.get(Number(variant.id)) : null;
       return {
         color_nombre: buildInternalVariantName(index, variant.color_nombre || variant.colorNombre),
         color_codigo: hasValue(variant.color_codigo || variant.colorCodigo)
           ? String(variant.color_codigo || variant.colorCodigo).trim()
           : null,
         stock: Number(variant.stock || 0),
-        imagen_url: getUploadedImagePath(req, imageField) || variant.existingImageUrl || variant.imagen_url || null,
+        imagen_url:
+          getUploadedImagePath(req, imageField)
+          || (variant.keepExistingImage ? currentVariant?.imagen_url : null)
+          || variant.existingImageUrl
+          || variant.imagen_url
+          || null,
         orden: Number(variant.orden ?? index)
       };
     })
@@ -126,8 +132,14 @@ const productController = {
   async update(req, res) {
     try {
       const { nombre, descripcion, precio, stock, categoria } = req.body;
+      const currentProduct = await Product.getById(req.params.id);
+      if (!currentProduct) return res.status(404).json({ error: 'Producto no encontrado' });
+
+      const currentVariantMap = new Map(
+        (currentProduct.variantes || []).map((variant) => [Number(variant.id), variant])
+      );
       const data = {};
-      const variantes = parseVariants(req);
+      const variantes = parseVariants(req, currentVariantMap);
       if (nombre !== undefined) data.nombre = nombre;
       if (descripcion !== undefined) data.descripcion = descripcion;
       if (precio !== undefined) data.precio = precio;
