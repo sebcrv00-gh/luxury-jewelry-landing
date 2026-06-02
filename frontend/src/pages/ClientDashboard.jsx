@@ -5,7 +5,7 @@ import api, { getImageUrl } from '../api/axios';
 import {
   LayoutDashboard, ShoppingBag, Truck, CreditCard, MapPin, RotateCcw,
   Heart, FileText, UserCog, MessageCircle, LogOut, Crown, Package,
-  ChevronRight, Clock, CheckCircle, AlertCircle, Plus, Trash2, Star, Send, Eye, X, Minus, FileDown,
+  ChevronLeft, ChevronRight, Clock, CheckCircle, AlertCircle, Plus, Trash2, Star, Send, Eye, X, Minus, FileDown,
   Gem, Phone
 } from 'lucide-react';
 import './client-dashboard.css';
@@ -73,6 +73,7 @@ export default function ClientDashboard() {
   const [supportLoading, setSupportLoading] = useState(false);
   const [supportReply, setSupportReply] = useState('');
   const [supportMessage, setSupportMessage] = useState(null);
+  const [wishlistPage, setWishlistPage] = useState(1);
 
   // Returns form
   const [showReturnForm, setShowReturnForm] = useState(false);
@@ -108,6 +109,10 @@ export default function ClientDashboard() {
       loadTicketConversation(selectedSupportTicketId);
     }
   }, [activeSection, selectedSupportTicketId]);
+
+  useEffect(() => {
+    setWishlistPage(1);
+  }, [wishlist.length, activeSection]);
 
   const loadOrders = async () => { try { const { data } = await api.get('/orders/mine/detailed'); setOrders(data); } catch (e) { console.error(e); } };
   const loadWishlist = async () => {
@@ -219,6 +224,9 @@ export default function ClientDashboard() {
 
   const recentOrders = orders.slice(0, 5);
   const statusInfo = (s) => STATUS_MAP[s] || STATUS_MAP.pendiente;
+  const wishlistItemsPerPage = 8;
+  const wishlistTotalPages = Math.max(1, Math.ceil(wishlist.length / wishlistItemsPerPage));
+  const visibleWishlist = wishlist.slice((wishlistPage - 1) * wishlistItemsPerPage, wishlistPage * wishlistItemsPerPage);
 
   return (
     <div className="cd-layout">
@@ -397,24 +405,56 @@ export default function ClientDashboard() {
             <h2 className="cd-title">Lista de Deseos</h2>
             <p className="cd-subtitle">Piezas exclusivas que has guardado</p>
             {wishlist.length === 0 ? <div className="cd-empty-state"><Heart size={48}/><p>Tu lista de deseos está vacía</p><button className="cd-action-btn" onClick={() => navigate('/catalogo')}>Explorar Catálogo</button></div> : (
-              <div className="cd-wish-grid">
-                {wishlist.map(item => (
-                  <div className="cd-wish-card" key={item.id}>
-                    <div className="cd-wish-img">
-                      {item.imagen_url ? <img src={getImageUrl(item.imagen_url)} alt={item.nombre}/> : <div className="cd-wish-placeholder"><Heart size={32}/></div>}
+              <>
+                <div className="cd-wish-grid">
+                  {visibleWishlist.map(item => (
+                    <div className="cd-wish-card" key={item.id}>
+                      <div className="cd-wish-img">
+                        {item.imagen_url ? <img src={getImageUrl(item.imagen_url)} alt={item.nombre}/> : <div className="cd-wish-placeholder"><Heart size={32}/></div>}
+                      </div>
+                      <div className="cd-wish-info">
+                        <h4>{item.nombre}</h4>
+                        <p className="cd-wish-price">${Number(item.precio).toLocaleString('es-CO')}</p>
+                        <span className="cd-wish-stock">{item.stock > 0 ? `${item.stock} en stock` : 'Agotado'}</span>
+                      </div>
+                      <div className="cd-wish-actions">
+                        <button className="cd-action-btn small" onClick={() => navigate('/catalogo')}>Ver en tienda</button>
+                        <button className="cd-remove-btn" onClick={() => removeWishlistItem(item.producto_id)}><Trash2 size={14}/></button>
+                      </div>
                     </div>
-                    <div className="cd-wish-info">
-                      <h4>{item.nombre}</h4>
-                      <p className="cd-wish-price">${Number(item.precio).toLocaleString('es-CO')}</p>
-                      <span className="cd-wish-stock">{item.stock > 0 ? `${item.stock} en stock` : 'Agotado'}</span>
-                    </div>
-                    <div className="cd-wish-actions">
-                      <button className="cd-action-btn small" onClick={() => navigate('/catalogo')}>Ver en tienda</button>
-                      <button className="cd-remove-btn" onClick={() => removeWishlistItem(item.producto_id)}><Trash2 size={14}/></button>
-                    </div>
+                  ))}
+                </div>
+
+                {wishlistTotalPages > 1 && (
+                  <div className="pagination-container" style={{ marginTop: '32px', marginBottom: '12px' }}>
+                    <button
+                      className="pagination-btn"
+                      disabled={wishlistPage === 1}
+                      onClick={() => setWishlistPage((prev) => Math.max(1, prev - 1))}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+
+                    {Array.from({ length: wishlistTotalPages }, (_, index) => index + 1).map((page) => (
+                      <button
+                        key={page}
+                        className={`pagination-btn ${wishlistPage === page ? 'active' : ''}`}
+                        onClick={() => setWishlistPage(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    <button
+                      className="pagination-btn"
+                      disabled={wishlistPage === wishlistTotalPages}
+                      onClick={() => setWishlistPage((prev) => Math.min(wishlistTotalPages, prev + 1))}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         )}
