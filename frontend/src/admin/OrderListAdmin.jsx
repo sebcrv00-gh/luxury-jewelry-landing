@@ -6,10 +6,10 @@ import { exportSalesReportToExcel } from '../utils/adminExcelExport';
 
 const ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
 const REPORT_PERIODS = [
-  { key: 'daily', label: 'Diario', description: 'Ventas registradas hoy' },
-  { key: 'weekly', label: 'Semanal', description: 'Ultimos 7 dias de facturacion' },
-  { key: 'monthly', label: 'Mensual', description: 'Mes actual consolidado' },
-  { key: 'all', label: 'Completo', description: 'Historial integral de ventas' }
+  { key: 'daily', label: 'Diario', description: 'Base operativa completa del dia' },
+  { key: 'weekly', label: 'Semanal', description: 'Base completa de los ultimos 7 dias' },
+  { key: 'monthly', label: 'Mensual', description: 'Base completa del mes actual' },
+  { key: 'all', label: 'Completo', description: 'Base historica integral de ventas' }
 ];
 
 export default function OrderListAdmin({ refreshTrigger }) {
@@ -96,8 +96,8 @@ export default function OrderListAdmin({ refreshTrigger }) {
     try {
       const { data } = await api.get('/orders/admin/detailed');
       exportSalesReportToExcel(Array.isArray(data) ? data : [], periodKey);
-      const periodLabel = REPORT_PERIODS.find((period) => period.key === periodKey)?.label || 'Reporte';
-      setStatusFeedback(`Reporte ${periodLabel.toLowerCase()} exportado correctamente en formato Excel.`);
+      const periodLabel = REPORT_PERIODS.find((period) => period.key === periodKey)?.label || 'Base';
+      setStatusFeedback(`Base operativa ${periodLabel.toLowerCase()} exportada correctamente en formato Excel.`);
     } catch (err) {
       setStatusFeedback(err.response?.data?.error || 'No fue posible exportar el reporte de ventas.');
     } finally {
@@ -156,13 +156,13 @@ export default function OrderListAdmin({ refreshTrigger }) {
               disabled={Boolean(exportingPeriod)}
             >
               <FileSpreadsheet size={14} />
-              <span>{exportingPeriod ? `Exportando ${activeExportLabel.toLowerCase()}...` : 'Exportar reportes XLSX'}</span>
+              <span>{exportingPeriod ? `Exportando ${activeExportLabel.toLowerCase()}...` : 'Exportar base de datos XLSX'}</span>
               <ChevronDown size={14} />
             </button>
             <div className="admin-action-menu" role="menu" aria-label="Opciones de exportacion Excel">
               <div className="admin-action-menu-head">
-                <strong>Selecciona un periodo</strong>
-                <span>Genera un reporte premium en Excel con resumen, facturas e items.</span>
+                <strong>Selecciona una base operativa</strong>
+                <span>Descarga ordenes, facturas, items y clientes relacionados en hojas separadas de Excel.</span>
               </div>
               <div className="admin-action-menu-list">
                 {REPORT_PERIODS.map((period) => (

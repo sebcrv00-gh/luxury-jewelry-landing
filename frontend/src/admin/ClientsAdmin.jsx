@@ -109,7 +109,7 @@ export default function ClientsAdmin() {
           style={{ padding: '10px 16px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
         >
           <FileSpreadsheet size={14} />
-          {exporting ? 'Exportando...' : 'Exportar clientes XLSX'}
+          {exporting ? 'Exportando...' : 'Exportar base clientes XLSX'}
         </button>
       </div>
 
