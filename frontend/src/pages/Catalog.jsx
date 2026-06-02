@@ -335,6 +335,25 @@ export default function Catalog() {
     return () => { ignore = true; };
   }, [selectedProduct]);
 
+  useEffect(() => {
+    if (!selectedProduct || !carouselRef.current) {
+      return;
+    }
+
+    const activeThumb = carouselRef.current.querySelector('.product-detail-thumbnail.active');
+    if (activeThumb) {
+      activeThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [selectedProduct, selectedVariant]);
+
+  const scrollGallery = (direction) => {
+    if (!carouselRef.current) return;
+    carouselRef.current.scrollBy({
+      left: direction * 180,
+      behavior: 'smooth'
+    });
+  };
+
   return (
     <>
       {/* ── MENÚ DE CATEGORÍAS ── */}
@@ -633,16 +652,34 @@ export default function Catalog() {
                   {selectedProduct.categoria}
                </div>
                {galleryImages.length > 1 && (
-                 <div className="product-detail-gallery">
-                   {galleryImages.map((image) => (
-                     <img
-                       key={image.key}
-                       src={image.src}
-                       alt={image.alt}
-                       className={`product-detail-thumbnail ${image.isActive ? 'active' : ''}`}
-                       onClick={image.onClick}
-                     />
-                   ))}
+                 <div className="product-detail-gallery-shell">
+                   <button
+                     type="button"
+                     className="product-detail-gallery-arrow product-detail-gallery-arrow--prev"
+                     onClick={() => scrollGallery(-1)}
+                     aria-label="Ver imagenes anteriores"
+                   >
+                     <ChevronLeft size={16} />
+                   </button>
+                   <div className="product-detail-gallery" ref={carouselRef}>
+                     {galleryImages.map((image) => (
+                       <img
+                         key={image.key}
+                         src={image.src}
+                         alt={image.alt}
+                         className={`product-detail-thumbnail ${image.isActive ? 'active' : ''}`}
+                         onClick={image.onClick}
+                       />
+                     ))}
+                   </div>
+                   <button
+                     type="button"
+                     className="product-detail-gallery-arrow product-detail-gallery-arrow--next"
+                     onClick={() => scrollGallery(1)}
+                     aria-label="Ver imagenes siguientes"
+                   >
+                     <ChevronRight size={16} />
+                   </button>
                  </div>
                )}
             </div>
