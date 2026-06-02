@@ -1063,9 +1063,9 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 18px;
+  gap: 10px;
   width: min(980px, calc(100% - 40px));
-  margin: 0 auto 8px;
+  margin: 0 auto 9px;
   padding: 15px 18px;
   border-radius: 20px;
   border: 1px solid rgba(201, 168, 76, 0.16);
