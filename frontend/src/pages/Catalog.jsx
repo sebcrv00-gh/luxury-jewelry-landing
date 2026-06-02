@@ -369,30 +369,32 @@ export default function Catalog() {
   return (
     <>
       {/* ── MENÚ DE CATEGORÍAS ── */}
-      <div className="catalog-header" style={{ paddingTop: 'calc(var(--header-height) + 50px)', textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.8rem', color: 'var(--gold-light)', letterSpacing: '4px', marginBottom: '12px', textTransform: 'uppercase' }}>
+      <div className="catalog-header catalog-header-shell" style={{ paddingTop: 'calc(var(--header-height) + 34px)', textAlign: 'center' }}>
+        <h1 className="catalog-header-title" style={{ fontFamily: 'var(--font-display)', fontSize: '2.8rem', color: 'var(--gold-light)', letterSpacing: '4px', marginBottom: '10px', textTransform: 'uppercase' }}>
           Colecciones
         </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '40px' }}>
+        <p className="catalog-header-subtitle" style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '24px' }}>
           Descubre nuestra exclusiva selección
         </p>
         
         <div className={`catalog-vip-banner ${isVip ? 'is-active' : ''}`}>
-          <div className="catalog-vip-badge">
-            <Crown size={18} />
-            <span>{isVip ? 'VIP activo' : 'Programa VIP'}</span>
-          </div>
-          <div className="catalog-vip-copy">
-            <h2>
-              {isVip
-                ? 'Tu beneficio VIP ya esta activo.'
-                : 'Compra mas y accede a categoria VIP con 10% de descuento.'}
-            </h2>
-            <p>
-              {isVip
-                ? 'Tu descuento exclusivo ya se aplica automaticamente en toda la coleccion.'
-                : 'Una forma elegante de premiar a quienes mas confian en Luxury Jewelry.'}
-            </p>
+          <div className="catalog-vip-main">
+            <div className="catalog-vip-badge">
+              <Crown size={18} />
+              <span>{isVip ? 'VIP activo' : 'Programa VIP'}</span>
+            </div>
+            <div className="catalog-vip-copy">
+              <h2>
+                {isVip
+                  ? 'Tu beneficio VIP ya esta activo.'
+                  : 'Compra mas y accede a categoria VIP con 10% de descuento.'}
+              </h2>
+              <p>
+                {isVip
+                  ? 'Tu descuento exclusivo ya se aplica automaticamente en toda la coleccion.'
+                  : 'Una forma elegante de premiar a quienes mas confian en Luxury Jewelry.'}
+              </p>
+            </div>
           </div>
           <div className="catalog-vip-actions">
             <div className="catalog-vip-highlight">
