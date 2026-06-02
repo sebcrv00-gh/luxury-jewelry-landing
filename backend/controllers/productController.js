@@ -11,6 +11,11 @@ const getUploadedImagePath = (req, fieldName) => {
   return null;
 };
 
+const buildInternalVariantName = (index, providedName) => {
+  const normalized = String(providedName || '').trim();
+  return normalized || `Variante ${index + 1}`;
+};
+
 const parseVariants = (req) => {
   if (!hasValue(req.body.variantes)) return [];
 
@@ -25,7 +30,7 @@ const parseVariants = (req) => {
     .map((variant, index) => {
       const imageField = variant.imageField || `variante_imagen_${index}`;
       return {
-        color_nombre: String(variant.color_nombre || variant.colorNombre || '').trim(),
+        color_nombre: buildInternalVariantName(index, variant.color_nombre || variant.colorNombre),
         color_codigo: hasValue(variant.color_codigo || variant.colorCodigo)
           ? String(variant.color_codigo || variant.colorCodigo).trim()
           : null,
@@ -34,7 +39,7 @@ const parseVariants = (req) => {
         orden: Number(variant.orden ?? index)
       };
     })
-    .filter(variant => variant.color_nombre);
+    .filter(variant => variant.imagen_url);
 };
 
 const productController = {
@@ -95,7 +100,7 @@ const productController = {
       }
 
       if (variantes.length > 0 && variantes.some(variant => !variant.imagen_url)) {
-        return res.status(400).json({ error: 'Cada color debe incluir una imagen identificable' });
+        return res.status(400).json({ error: 'Cada variante debe incluir una imagen identificable' });
       }
 
       const imagen_url = getUploadedImagePath(req, 'imagen');
@@ -130,7 +135,7 @@ const productController = {
       if (categoria !== undefined) data.categoria = categoria;
       if (hasValue(req.body.variantes)) {
         if (variantes.some(variant => !variant.imagen_url)) {
-          return res.status(400).json({ error: 'Cada color debe incluir una imagen identificable' });
+          return res.status(400).json({ error: 'Cada variante debe incluir una imagen identificable' });
         }
         data.variantes = variantes;
       }

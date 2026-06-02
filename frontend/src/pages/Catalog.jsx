@@ -221,7 +221,6 @@ export default function Catalog() {
         id: cartItemId,
         baseProductId: product.dbProductId,
         variantId: product.selectedVariant?.id || null,
-        color: product.selectedVariant?.color_nombre || null,
         nombre: product.nombre,
         precio: finalPrice,
         cantidad: Math.min(qty, activeStock),
@@ -479,7 +478,7 @@ export default function Catalog() {
                     </div>
                     {p.variantes.length > 0 && (
                       <div className="catalog-product-colors-note" style={{ color: 'var(--gold)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '14px' }}>
-                        {p.variantes.length} colores disponibles
+                        {p.variantes.length} variantes disponibles
                       </div>
                     )}
                     <button
@@ -586,7 +585,7 @@ export default function Catalog() {
                      <img
                        key={variant.id}
                        src={variant.img}
-                       alt={variant.color_nombre}
+                       alt={`Variante ${variant.orden + 1}`}
                        className={`product-detail-thumbnail ${activeVariant?.id === variant.id ? 'active' : ''}`}
                        onClick={() => {
                          setSelectedVariant(variant);
@@ -618,11 +617,8 @@ export default function Catalog() {
                  <div className="product-detail-variants" style={{ marginBottom: '28px' }}>
                    <div className="product-detail-variants-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
                      <span className="product-detail-variants-label" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                       Selecciona un color
+                       Selecciona una imagen
                      </span>
-                     <strong className="product-detail-variant-name" style={{ color: 'var(--gold-light)', fontSize: '0.9rem' }}>
-                       {activeVariant?.color_nombre || 'Sin color seleccionado'}
-                     </strong>
                    </div>
                    <div className="product-detail-variants-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                      {selectedProduct.variantes.map(variant => {
@@ -639,26 +635,29 @@ export default function Catalog() {
                            style={{
                              display: 'inline-flex',
                              alignItems: 'center',
-                             gap: '10px',
-                             borderRadius: '999px',
-                             padding: '10px 14px',
+                             justifyContent: 'center',
+                             borderRadius: '16px',
+                             padding: '6px',
                              border: isActive ? '1px solid rgba(201,168,76,0.8)' : '1px solid rgba(255,255,255,0.12)',
                              background: isActive ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
                              color: 'var(--text-primary)',
                              cursor: 'pointer'
                            }}
+                           aria-label={`Seleccionar variante ${variant.orden + 1}`}
                          >
-                           <span className="product-detail-variant-swatch" style={{
-                             width: '16px',
-                             height: '16px',
-                             borderRadius: '50%',
-                             background: variant.color_codigo || '#D4AF37',
-                             border: '1px solid rgba(255,255,255,0.4)'
-                           }} />
-                           <span className="product-detail-variant-chip-name">{variant.color_nombre}</span>
-                           <span className="product-detail-variant-chip-stock" style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                             {variant.stock > 0 ? `${variant.stock} uds` : 'Agotado'}
-                           </span>
+                           <img
+                             src={variant.img}
+                             alt={`Variante ${variant.orden + 1}`}
+                             style={{
+                               width: '72px',
+                               height: '72px',
+                               objectFit: 'cover',
+                               borderRadius: '12px',
+                               display: 'block',
+                               opacity: variant.stock > 0 ? 1 : 0.55,
+                               filter: variant.stock > 0 ? 'none' : 'grayscale(0.65)'
+                             }}
+                           />
                          </button>
                        );
                      })}

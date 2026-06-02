@@ -1,14 +1,19 @@
 const { pool } = require('../config/db');
 
+const buildInternalVariantName = (index, providedName) => {
+  const normalized = String(providedName || '').trim();
+  return normalized || `Variante ${index + 1}`;
+};
+
 const normalizeVariants = (variants = []) => variants
   .map((variant, index) => ({
-    color_nombre: String(variant.color_nombre || '').trim(),
+    color_nombre: buildInternalVariantName(index, variant.color_nombre),
     color_codigo: variant.color_codigo ? String(variant.color_codigo).trim() : null,
     imagen_url: variant.imagen_url || null,
     stock: Number(variant.stock || 0),
     orden: Number(variant.orden ?? index)
   }))
-  .filter(variant => variant.color_nombre);
+  .filter(variant => variant.imagen_url);
 
 const getVariantTotalStock = (variants = []) =>
   variants.reduce((sum, variant) => sum + Number(variant.stock || 0), 0);

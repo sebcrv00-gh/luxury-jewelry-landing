@@ -8,7 +8,6 @@ import {
   X,
   CheckCircle2,
   ImagePlus,
-  Palette,
   Plus
 } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
@@ -16,8 +15,6 @@ import api, { getImageUrl } from '../api/axios';
 const mapVariantToForm = (variant = {}) => ({
   key: variant.id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
   id: variant.id || null,
-  colorNombre: variant.color_nombre || '',
-  colorCodigo: variant.color_codigo || '#D4AF37',
   stock: String(variant.stock ?? ''),
   imagen: null,
   preview: variant.imagen_url ? getImageUrl(variant.imagen_url) : '',
@@ -145,10 +142,10 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
 
     if (hasVariants) {
       const invalidVariant = variants.find(variant =>
-        !variant.colorNombre.trim() || (!variant.imagen && !variant.existingImageUrl) || Number(variant.stock || 0) < 0
+        (!variant.imagen && !variant.existingImageUrl) || Number(variant.stock || 0) < 0
       );
       if (invalidVariant) {
-        setEditMsg('Cada color debe tener nombre, imagen y stock valido.');
+        setEditMsg('Cada variante debe tener imagen y stock valido.');
         return;
       }
     }
@@ -177,8 +174,6 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
           }
           return {
             id: variant.id,
-            color_nombre: variant.colorNombre,
-            color_codigo: variant.colorCodigo,
             stock: Number(variant.stock || 0),
             existingImageUrl: variant.existingImageUrl,
             imageField,
@@ -282,7 +277,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                         </span>
                         {Array.isArray(p.variantes) && p.variantes.length > 0 && (
                           <span style={{ color: 'var(--gold)', fontSize: '0.72rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                            {p.variantes.length} colores disponibles
+                            {p.variantes.length} variantes disponibles
                           </span>
                         )}
                       </div>
@@ -323,7 +318,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                             if (variantsSection) variantsSection.scrollIntoView({ behavior: 'smooth' });
                             setEditForm(prev => ({ ...prev, variantes: [...(prev.variantes || []), mapVariantToForm()] }));
                           }, 100);
-                        }} title="Agregar Color Rápido" style={{ color: 'var(--gold)' }}>
+                        }} title="Agregar variante rapida" style={{ color: 'var(--gold)' }}>
                         <Plus size={18} />
                       </button>
                       <button className="action-btn delete" onClick={() => openDeleteDialog(p)} disabled={deleting === p.id} title="Retirar del Catálogo">
@@ -439,10 +434,10 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '18px', flexWrap: 'wrap' }}>
                   <div>
                     <h4 className="text-gold-light" style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.15rem' }}>
-                      Colores del producto
+                      Variantes del producto
                     </h4>
                     <p style={{ margin: '8px 0 0', color: 'var(--text-muted)', fontSize: '0.84rem' }}>
-                      Ajusta imagen y stock de cada color sin duplicar el producto.
+                      Ajusta imagen y stock de cada variante sin duplicar el producto.
                     </p>
                   </div>
                   <button
@@ -452,13 +447,13 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                   >
                     <Plus size={16} />
-                    Agregar color
+                    Agregar variante
                   </button>
                 </div>
 
                 {(editForm.variantes || []).length === 0 ? (
                   <div style={{ border: '1px dashed rgba(201,168,76,0.28)', borderRadius: '16px', padding: '18px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    Este producto no tiene variantes de color registradas.
+                    Este producto no tiene variantes registradas.
                   </div>
                 ) : (
                   <div className="admin-edit-variants-list" style={{ display: 'grid', gap: '18px' }}>
@@ -466,7 +461,6 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                       <div key={variant.key} className="admin-edit-variant-card" style={{ border: '1px solid var(--border-subtle)', borderRadius: '16px', padding: '16px', background: 'rgba(255,255,255,0.02)' }}>
                         <div className="admin-edit-variant-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                           <strong style={{ color: 'var(--gold-light)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Palette size={16} />
                             Variante {index + 1}
                           </strong>
                           <button
@@ -480,18 +474,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
 
                         <div className="admin-edit-variant-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                           <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label>Nombre del color</label>
-                            <input type="text" value={variant.colorNombre} onChange={e => updateEditVariant(variant.key, 'colorNombre', e.target.value)} required />
-                          </div>
-                          <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label>Codigo visual</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <input type="color" value={variant.colorCodigo} onChange={e => updateEditVariant(variant.key, 'colorCodigo', e.target.value)} style={{ width: '52px', height: '52px', padding: 0, border: 'none', background: 'transparent' }} />
-                              <input type="text" value={variant.colorCodigo} onChange={e => updateEditVariant(variant.key, 'colorCodigo', e.target.value)} />
-                            </div>
-                          </div>
-                          <div className="form-group" style={{ marginBottom: 0 }}>
-                            <label>Stock del color</label>
+                            <label>Stock de la variante</label>
                             <input type="number" min="0" value={variant.stock} onChange={e => updateEditVariant(variant.key, 'stock', e.target.value)} required />
                           </div>
                         </div>
@@ -531,13 +514,13 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
                         >
                           {variant.preview ? (
                             <>
-                              <img src={variant.preview} alt={variant.colorNombre || `Variante ${index + 1}`} style={{ width: '100%', maxHeight: '135px', objectFit: 'cover', borderRadius: '12px' }} />
+                              <img src={variant.preview} alt={`Variante ${index + 1}`} style={{ width: '100%', maxHeight: '135px', objectFit: 'cover', borderRadius: '12px' }} />
                               <span style={{ color: 'var(--gold-light)', fontSize: '0.78rem' }}>{variant.fileName || 'Imagen actual'}</span>
                             </>
                           ) : (
                             <>
                               <ImagePlus size={22} />
-                              <strong>Sube la imagen del color</strong>
+                              <strong>Sube la imagen de la variante</strong>
                             </>
                           )}
                         </label>
@@ -577,7 +560,7 @@ export default function ProductListAdmin({ refreshTrigger, setStats }) {
 
             <p style={{ color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '24px' }}>
               Vas a eliminar <strong style={{ color: 'var(--gold-light)' }}>{deleteProduct.nombre}</strong> del catálogo administrativo.
-              Esta acción retira la pieza y sus colores asociados del sistema activo.
+              Esta acción retira la pieza y sus variantes asociadas del sistema activo.
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '14px' }}>
