@@ -1065,7 +1065,7 @@ button {
   align-items: center;
   gap: 18px;
   width: min(980px, calc(100% - 40px));
-  margin: 0 auto 14px;
+  margin: 0 auto 8px;
   padding: 15px 18px;
   border-radius: 20px;
   border: 1px solid rgba(201, 168, 76, 0.16);
@@ -1213,7 +1213,7 @@ button {
   width: 100%;
 }
 
-.catalog-search-box {
+.search-box.catalog-search-box {
   margin: 0;
   max-width: 720px;
   width: 100%;
@@ -2633,7 +2633,7 @@ footer p+p {
     grid-template-columns: 1fr;
     gap: 12px;
     width: calc(100% - 24px);
-    margin-bottom: 14px;
+    margin-bottom: 8px;
     padding: 14px;
     border-radius: 18px;
   }
@@ -2685,7 +2685,7 @@ footer p+p {
     gap: 10px;
   }
 
-  .catalog-search-box {
+  .search-box.catalog-search-box {
     max-width: 100%;
   }
 
