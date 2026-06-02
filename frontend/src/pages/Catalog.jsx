@@ -581,6 +581,28 @@ export default function Catalog() {
             const activeVariant = selectedVariant || null;
             const selectedStock = activeVariant ? activeVariant.stock : selectedProduct.stock;
             const activeImage = activeVariant?.img || selectedProduct.img;
+            const galleryImages = [
+              {
+                key: 'base',
+                src: selectedProduct.img,
+                alt: selectedProduct.nombre,
+                isActive: !activeVariant,
+                onClick: () => {
+                  setSelectedVariant(null);
+                  setQuantity(1);
+                }
+              },
+              ...(selectedProduct.variantes || []).map((variant) => ({
+                key: `variant_${variant.id}`,
+                src: variant.img,
+                alt: `Variante ${variant.orden + 1}`,
+                isActive: activeVariant?.id === variant.id,
+                onClick: () => {
+                  setSelectedVariant(variant);
+                  setQuantity(1);
+                }
+              }))
+            ];
             const cartSelectionId = activeVariant
               ? `db_${selectedProduct.dbProductId}__variant_${activeVariant.id}`
               : selectedProduct.id;
@@ -610,24 +632,15 @@ export default function Catalog() {
                <div className="product-detail-category" style={{ position: 'absolute', top: '20px', left: '20px', background: 'rgba(10,10,10,0.6)', backdropFilter: 'blur(4px)', border: '1px solid var(--gold)', padding: '6px 16px', borderRadius: '4px', color: 'var(--gold)', letterSpacing: '2px', fontSize: '0.7rem', textTransform: 'uppercase' }}>
                   {selectedProduct.categoria}
                </div>
-               {selectedProduct.variantes.length > 0 && (
+               {galleryImages.length > 1 && (
                  <div className="product-detail-gallery">
-                   <img 
-                     src={selectedProduct.img} 
-                     alt="Original"
-                     className={`product-detail-thumbnail ${!activeVariant ? 'active' : ''}`}
-                     onClick={() => setSelectedVariant(null)}
-                   />
-                   {selectedProduct.variantes.map(variant => (
+                   {galleryImages.map((image) => (
                      <img
-                       key={variant.id}
-                       src={variant.img}
-                       alt={`Variante ${variant.orden + 1}`}
-                       className={`product-detail-thumbnail ${activeVariant?.id === variant.id ? 'active' : ''}`}
-                       onClick={() => {
-                         setSelectedVariant(variant);
-                         setQuantity(1);
-                       }}
+                       key={image.key}
+                       src={image.src}
+                       alt={image.alt}
+                       className={`product-detail-thumbnail ${image.isActive ? 'active' : ''}`}
+                       onClick={image.onClick}
                      />
                    ))}
                  </div>
@@ -650,57 +663,6 @@ export default function Catalog() {
                <p className="product-detail-description" style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.7', marginBottom: '40px', fontWeight: '300' }}>
                   {selectedProduct.descripcion}
                </p>
-               {selectedProduct.variantes.length > 0 && (
-                 <div className="product-detail-variants" style={{ marginBottom: '28px' }}>
-                   <div className="product-detail-variants-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                     <span className="product-detail-variants-label" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                       Selecciona una imagen
-                     </span>
-                   </div>
-                   <div className="product-detail-variants-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                     {selectedProduct.variantes.map(variant => {
-                       const isActive = activeVariant?.id === variant.id;
-                       return (
-                         <button
-                           className={`product-detail-variant-chip ${isActive ? 'active' : ''}`}
-                           key={variant.id}
-                           type="button"
-                           onClick={() => {
-                             setSelectedVariant(variant);
-                             setQuantity(1);
-                           }}
-                           style={{
-                             display: 'inline-flex',
-                             alignItems: 'center',
-                             justifyContent: 'center',
-                             borderRadius: '16px',
-                             padding: '6px',
-                             border: isActive ? '1px solid rgba(201,168,76,0.8)' : '1px solid rgba(255,255,255,0.12)',
-                             background: isActive ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
-                             color: 'var(--text-primary)',
-                             cursor: 'pointer'
-                           }}
-                           aria-label={`Seleccionar variante ${variant.orden + 1}`}
-                         >
-                           <img
-                             src={variant.img}
-                             alt={`Variante ${variant.orden + 1}`}
-                             style={{
-                               width: '72px',
-                               height: '72px',
-                               objectFit: 'cover',
-                               borderRadius: '12px',
-                               display: 'block',
-                               opacity: variant.stock > 0 ? 1 : 0.55,
-                               filter: variant.stock > 0 ? 'none' : 'grayscale(0.65)'
-                             }}
-                           />
-                         </button>
-                       );
-                     })}
-                   </div>
-                 </div>
-               )}
                <div className="catalog-product-reviews-box">
                  <div className="catalog-product-reviews-head">
                    <div>
