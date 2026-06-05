@@ -73,7 +73,7 @@ export default function Catalog() {
   const isVip = user?.rol === 'vip';
   const hasUsedFirstShipping = isLoggedIn && user ? Number(user.primer_envio_gratis_usado || 0) !== 0 : false;
   const showFreeShippingNote = !isLoggedIn || (isLoggedIn && user && !hasUsedFirstShipping);
-  const showVipBanner = isLoggedIn && user && !showFreeShippingNote;
+  const showVipBanner = Boolean(isLoggedIn && user);
   const VIP_DISCOUNT = 0.10;
   const [wishlistIds, setWishlistIds] = useState(new Set());
 
@@ -418,8 +418,12 @@ export default function Catalog() {
               <Sparkles size={16} />
             </div>
             <div className="catalog-free-shipping-note-copy">
-              <strong>Envío gratis en tu primera compra</strong>
-              <span>Regístrate y el sistema aplicará el envío sin costo automáticamente en tu primer pedido.</span>
+              <strong>{isLoggedIn ? 'Tu primer envio gratis sigue activo' : 'Envío gratis en tu primera compra'}</strong>
+              <span>
+                {isLoggedIn
+                  ? 'Haz tu primer pedido y el sistema aplicará el envío sin costo automáticamente.'
+                  : 'Regístrate y el sistema aplicará el envío sin costo automáticamente en tu primer pedido.'}
+              </span>
             </div>
             {!isLoggedIn ? (
               <button
@@ -443,7 +447,7 @@ export default function Catalog() {
         
         <div className="catalog-premium-toolbar">
           <div className={`catalog-category-shell ${isCategoryMenuOpen ? 'open' : ''}`} ref={categoryMenuRef}>
-            <div className="catalog-toolbar-row">
+            <div className="catalog-toolbar-main">
               <button
                 id="catalog-category-trigger"
                 type="button"
@@ -469,7 +473,9 @@ export default function Catalog() {
                   />
                 </div>
               </div>
+            </div>
 
+            <div className="catalog-toolbar-secondary">
               <div className="catalog-spotlight-actions" role="group" aria-label="Filtros destacados del catalogo">
                 <button
                   type="button"
