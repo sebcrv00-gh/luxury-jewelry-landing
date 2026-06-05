@@ -37,6 +37,31 @@ const Order = {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
+      let shippingCost = SHIPPING_COST;
+      let freeShippingApplied = false;
+
+      const [userRows] = await conn.query(
+        'SELECT id, primer_envio_gratis_usado FROM usuarios WHERE id = ? LIMIT 1 FOR UPDATE',
+        [userId]
+      );
+      const userRow = userRows[0];
+      if (!userRow) {
+        throw new OrderValidationError('Usuario no encontrado. Vuelve a iniciar sesion para continuar.', 401);
+      }
+      if (Number(userRow.primer_envio_gratis_usado || 0) === 0) {
+        const [existingOrderRows] = await conn.query(
+          'SELECT id FROM ordenes WHERE usuario_id = ? LIMIT 1',
+          [userId]
+        );
+
+        if (existingOrderRows.length === 0) {
+          shippingCost = 0;
+          freeShippingApplied = true;
+        }
+
+        await conn.query('UPDATE usuarios SET primer_envio_gratis_usado = 1 WHERE id = ?', [userId]);
+      }
+
       const normalizedItems = [];
       for (const item of items) {
         const parsedIds = parseCartItemId(item.id);
@@ -115,12 +140,12 @@ const Order = {
       }
 
       const subtotal = normalizedItems.reduce((sum, item) => sum + item.subtotal, 0);
-      const total = subtotal + SHIPPING_COST;
+      const total = subtotal + shippingCost;
 
       const [orderResult] = await conn.query(
         `INSERT INTO ordenes (usuario_id, total, costo_envio, nombre_envio, telefono_envio, direccion_envio, ciudad_envio, notas)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, total, SHIPPING_COST, shipping.nombre, shipping.telefono, shipping.direccion, shipping.ciudad, shipping.notas || null]
+        [userId, total, shippingCost, shipping.nombre, shipping.telefono, shipping.direccion, shipping.ciudad, shipping.notas || null]
       );
 
       const orderId = orderResult.insertId;
@@ -154,7 +179,7 @@ const Order = {
       }
 
       await conn.commit();
-      return { id: orderId, total };
+      return { id: orderId, total, shippingCost, freeShippingApplied };
     } catch (err) {
       await conn.rollback();
       throw err;

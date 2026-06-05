@@ -188,6 +188,12 @@ export default function Checkout() {
               <span className="text-muted">Total Pagado</span>
               <span className="text-gold-light" style={{ fontSize: '1.2rem', fontWeight: 600 }}>${Number(orderResult.total).toLocaleString('es-CO')}</span>
             </div>
+            {orderResult.freeShippingApplied && (
+              <div className="confirmation-row">
+                <span className="text-muted">Envío</span>
+                <span className="badge-premium badge-gold">Gratis (primer pedido)</span>
+              </div>
+            )}
             <div className="confirmation-row">
               <span className="text-muted">Método de Pago</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: pm.color, fontWeight: 600 }}>

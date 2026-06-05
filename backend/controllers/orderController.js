@@ -16,7 +16,13 @@ const orderController = {
       }
 
       const order = await Order.create(userId, shipping, items);
-      return res.json({ ok: true, orderId: order.id, total: order.total });
+      return res.json({
+        ok: true,
+        orderId: order.id,
+        total: order.total,
+        shippingCost: order.shippingCost,
+        freeShippingApplied: order.freeShippingApplied
+      });
     } catch (err) {
       console.error('Error al crear orden:', err);
       return res

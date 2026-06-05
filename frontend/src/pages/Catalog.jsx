@@ -369,13 +369,9 @@ export default function Catalog() {
   return (
     <>
       {/* ── MENÚ DE CATEGORÍAS ── */}
-      <div className="catalog-header catalog-header-shell" style={{ paddingTop: 'calc(var(--header-height) + 34px)', textAlign: 'center' }}>
-        <h1 className="catalog-header-title" style={{ fontFamily: 'var(--font-display)', fontSize: '2.8rem', color: 'var(--gold-light)', letterSpacing: '4px', marginBottom: '10px', textTransform: 'uppercase' }}>
-          Colecciones
-        </h1>
-        <p className="catalog-header-subtitle" style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '24px' }}>
-          Descubre nuestra exclusiva selección
-        </p>
+      <div className="catalog-header catalog-header-shell">
+        <h1 className="catalog-header-title">Colecciones</h1>
+        <p className="catalog-header-subtitle">Descubre nuestra exclusiva selección</p>
         
         <div className={`catalog-vip-banner ${isVip ? 'is-active' : ''}`}>
           <div className="catalog-vip-main">
@@ -410,6 +406,25 @@ export default function Catalog() {
             </button>
           </div>
         </div>
+
+        {!isLoggedIn && (
+          <div className="catalog-free-shipping-note" role="note">
+            <div className="catalog-free-shipping-note-icon" aria-hidden="true">
+              <Sparkles size={16} />
+            </div>
+            <div className="catalog-free-shipping-note-copy">
+              <strong>Envío gratis en tu primera compra</strong>
+              <span>Regístrate y el sistema aplicará el envío sin costo automáticamente en tu primer pedido.</span>
+            </div>
+            <button
+              type="button"
+              className="catalog-free-shipping-note-cta"
+              onClick={() => openAuthModal('register')}
+            >
+              Crear cuenta
+            </button>
+          </div>
+        )}
         
         <div className="catalog-premium-toolbar">
           <div className="catalog-search-hero">

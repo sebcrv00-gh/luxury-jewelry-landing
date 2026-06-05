@@ -87,7 +87,8 @@ async function initDB() {
         telefono VARCHAR(50) DEFAULT NULL,
         direccion VARCHAR(255) DEFAULT NULL,
         foto LONGTEXT DEFAULT NULL,
-        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        primer_envio_gratis_usado TINYINT(1) DEFAULT 0
       )
     `);
 
@@ -98,6 +99,15 @@ async function initDB() {
       }
     } catch (err) {
       console.warn('⚠️ No se pudo verificar/agregar la columna creado_en en usuarios:', err.message);
+    }
+
+    try {
+      const [freeShippingColumn] = await conn.query("SHOW COLUMNS FROM usuarios LIKE 'primer_envio_gratis_usado'");
+      if (freeShippingColumn.length === 0) {
+        await conn.query("ALTER TABLE usuarios ADD COLUMN primer_envio_gratis_usado TINYINT(1) DEFAULT 0 AFTER creado_en");
+      }
+    } catch (err) {
+      console.warn('⚠️ No se pudo verificar/agregar la columna primer_envio_gratis_usado en usuarios:', err.message);
     }
 
     await conn.query(`
