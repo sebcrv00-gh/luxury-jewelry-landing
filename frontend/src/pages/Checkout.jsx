@@ -14,7 +14,7 @@ const PAYMENT_METHODS = [
 ];
 
 export default function Checkout() {
-  const { user, isLoggedIn, openAuthModal } = useAuth();
+  const { user, isLoggedIn, openAuthModal, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
   const [step, setStep] = useState(1);
@@ -118,6 +118,9 @@ export default function Checkout() {
         items: cart,
         metodo_pago: paymentMethod
       });
+      if (res.data?.freeShippingApplied) {
+        try { await refreshUser(); } catch {}
+      }
       setOrderResult({ ...res.data, metodo_pago: paymentMethod });
       clearCart(cartUserId);
       setStep(3);

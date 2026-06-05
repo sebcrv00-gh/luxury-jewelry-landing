@@ -4,7 +4,7 @@ const User = {
   async findAll() {
     const [rows] = await pool.query(`
       SELECT 
-        u.id, u.nombre, u.email, u.rol, u.telefono, u.direccion, u.foto, u.creado_en,
+        u.id, u.nombre, u.email, u.rol, u.telefono, u.direccion, u.foto, u.creado_en, u.primer_envio_gratis_usado,
         COUNT(o.id) as total_pedidos
       FROM usuarios u 
       LEFT JOIN ordenes o ON u.id = o.usuario_id 
@@ -30,7 +30,10 @@ const User = {
   },
 
   async findById(id) {
-    const [rows] = await pool.query('SELECT id, nombre, email, rol, telefono, direccion, foto FROM usuarios WHERE id = ?', [id]);
+    const [rows] = await pool.query(
+      'SELECT id, nombre, email, rol, telefono, direccion, foto, primer_envio_gratis_usado FROM usuarios WHERE id = ?',
+      [id]
+    );
     return rows[0] || null;
   },
 

@@ -71,6 +71,9 @@ export default function Catalog() {
   const [loadingProductReviews, setLoadingProductReviews] = useState(false);
 
   const isVip = user?.rol === 'vip';
+  const hasUsedFirstShipping = isLoggedIn && user ? Number(user.primer_envio_gratis_usado || 0) !== 0 : false;
+  const showFreeShippingNote = !isLoggedIn || (isLoggedIn && user && !hasUsedFirstShipping);
+  const showVipBanner = isLoggedIn && user && !showFreeShippingNote;
   const VIP_DISCOUNT = 0.10;
   const [wishlistIds, setWishlistIds] = useState(new Set());
 
@@ -373,6 +376,7 @@ export default function Catalog() {
         <h1 className="catalog-header-title">Colecciones</h1>
         <p className="catalog-header-subtitle">Descubre nuestra exclusiva selección</p>
         
+        {showVipBanner && (
         <div className={`catalog-vip-banner ${isVip ? 'is-active' : ''}`}>
           <div className="catalog-vip-main">
             <div className="catalog-vip-badge">
@@ -406,8 +410,9 @@ export default function Catalog() {
             </button>
           </div>
         </div>
+        )}
 
-        {!isLoggedIn && (
+        {showFreeShippingNote && (
           <div className="catalog-free-shipping-note" role="note">
             <div className="catalog-free-shipping-note-icon" aria-hidden="true">
               <Sparkles size={16} />
@@ -416,43 +421,74 @@ export default function Catalog() {
               <strong>Envío gratis en tu primera compra</strong>
               <span>Regístrate y el sistema aplicará el envío sin costo automáticamente en tu primer pedido.</span>
             </div>
-            <button
-              type="button"
-              className="catalog-free-shipping-note-cta"
-              onClick={() => openAuthModal('register')}
-            >
-              Crear cuenta
-            </button>
+            {!isLoggedIn ? (
+              <button
+                type="button"
+                className="catalog-free-shipping-note-cta"
+                onClick={() => openAuthModal('register')}
+              >
+                Crear cuenta
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="catalog-free-shipping-note-cta"
+                onClick={handleVipCta}
+              >
+                Aprovechar
+              </button>
+            )}
           </div>
         )}
         
         <div className="catalog-premium-toolbar">
-          <div className="catalog-search-hero">
-            <div className="search-box catalog-search-box">
-              <input
-                type="text"
-                placeholder="Buscar piezas, categorias o descripciones..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-
           <div className={`catalog-category-shell ${isCategoryMenuOpen ? 'open' : ''}`} ref={categoryMenuRef}>
-            <button
-              id="catalog-category-trigger"
-              type="button"
-              className={`catalog-category-trigger ${isCategoryMenuOpen ? 'active' : ''}`}
-              onClick={() => setIsCategoryMenuOpen((current) => !current)}
-              aria-haspopup="listbox"
-              aria-expanded={isCategoryMenuOpen}
-            >
-              <span className="catalog-category-trigger-copy">
-                <strong>Categorias</strong>
-                <small>{activeCategory} · {categoryCountMap[activeCategory] || 0} piezas</small>
-              </span>
-              <ChevronDown size={16} />
-            </button>
+            <div className="catalog-toolbar-row">
+              <button
+                id="catalog-category-trigger"
+                type="button"
+                className={`catalog-category-trigger ${isCategoryMenuOpen ? 'active' : ''}`}
+                onClick={() => setIsCategoryMenuOpen((current) => !current)}
+                aria-haspopup="listbox"
+                aria-expanded={isCategoryMenuOpen}
+              >
+                <span className="catalog-category-trigger-copy">
+                  <strong>Categorias</strong>
+                  <small>{activeCategory} · {categoryCountMap[activeCategory] || 0} piezas</small>
+                </span>
+                <ChevronDown size={16} />
+              </button>
+
+              <div className="catalog-search-hero">
+                <div className="search-box catalog-search-box">
+                  <input
+                    type="text"
+                    placeholder="Buscar piezas, categorias o descripciones..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="catalog-spotlight-actions" role="group" aria-label="Filtros destacados del catalogo">
+                <button
+                  type="button"
+                  className={`catalog-spotlight-btn catalog-spotlight-btn--featured ${activeShowcase === SHOWCASE_FILTERS.featured ? 'active' : ''}`}
+                  onClick={() => setActiveShowcase((current) => current === SHOWCASE_FILTERS.featured ? SHOWCASE_FILTERS.all : SHOWCASE_FILTERS.featured)}
+                >
+                  <Sparkles size={16} />
+                  <span>Productos mas destacados</span>
+                </button>
+                <button
+                  type="button"
+                  className={`catalog-spotlight-btn catalog-spotlight-btn--new ${activeShowcase === SHOWCASE_FILTERS.newest ? 'active' : ''}`}
+                  onClick={() => setActiveShowcase((current) => current === SHOWCASE_FILTERS.newest ? SHOWCASE_FILTERS.all : SHOWCASE_FILTERS.newest)}
+                >
+                  <Clock3 size={16} />
+                  <span>Productos nuevos</span>
+                </button>
+              </div>
+            </div>
 
             <div className="catalog-category-rail" role="listbox" aria-label="Categorias del catalogo">
               {categoryOptions.map(cat => (
@@ -472,25 +508,6 @@ export default function Catalog() {
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="catalog-spotlight-actions" role="group" aria-label="Filtros destacados del catalogo">
-            <button
-              type="button"
-              className={`catalog-spotlight-btn catalog-spotlight-btn--featured ${activeShowcase === SHOWCASE_FILTERS.featured ? 'active' : ''}`}
-              onClick={() => setActiveShowcase((current) => current === SHOWCASE_FILTERS.featured ? SHOWCASE_FILTERS.all : SHOWCASE_FILTERS.featured)}
-            >
-              <Sparkles size={16} />
-              <span>Productos mas destacados</span>
-            </button>
-            <button
-              type="button"
-              className={`catalog-spotlight-btn catalog-spotlight-btn--new ${activeShowcase === SHOWCASE_FILTERS.newest ? 'active' : ''}`}
-              onClick={() => setActiveShowcase((current) => current === SHOWCASE_FILTERS.newest ? SHOWCASE_FILTERS.all : SHOWCASE_FILTERS.newest)}
-            >
-              <Clock3 size={16} />
-              <span>Productos nuevos</span>
-            </button>
           </div>
         </div>
 

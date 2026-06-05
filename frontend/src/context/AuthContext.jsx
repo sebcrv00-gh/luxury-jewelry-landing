@@ -30,6 +30,12 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
+  const refreshUser = async () => {
+    const res = await api.get('/auth/me');
+    setUser(res.data.user);
+    return res.data;
+  };
+
   const login = async (email, clave, skipAnimation = false) => {
     const res = await api.post('/auth/login', { email, clave });
     setUser(res.data.user);
@@ -88,6 +94,7 @@ export function AuthProvider({ children }) {
     register,
     logout,
     updateProfile,
+    refreshUser,
     showWelcome,
     welcomeName,
     triggerWelcome,

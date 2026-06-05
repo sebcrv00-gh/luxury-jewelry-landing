@@ -67,7 +67,8 @@ const authController = {
           rol: usuario.rol || 'cliente',
           telefono: usuario.telefono,
           direccion: usuario.direccion,
-          foto: usuario.foto
+          foto: usuario.foto,
+          primer_envio_gratis_usado: usuario.primer_envio_gratis_usado
         }
       });
     } catch (err) {
