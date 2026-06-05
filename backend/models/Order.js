@@ -1,4 +1,32 @@
-const { pool, buildProductRef } = require('../config/db');
+const { pool } = require('../config/db');
+
+class OrderValidationError extends Error {
+  constructor(message, statusCode = 400) {
+    super(message);
+    this.name = 'OrderValidationError';
+    this.statusCode = statusCode;
+  }
+}
+
+const SHIPPING_COST = 15000;
+
+const parseCartItemId = (itemId) => {
+  const match = typeof itemId === 'string'
+    ? itemId.match(/^db_(\d+)(?:__variant_(\d+))?$/)
+    : null;
+
+  if (!match) return null;
+
+  return {
+    productId: Number(match[1]),
+    variantId: match[2] ? Number(match[2]) : null
+  };
+};
+
+const normalizeQuantity = (value) => {
+  const quantity = Number.parseInt(value, 10);
+  return Number.isFinite(quantity) ? quantity : 0;
+};
 
 const Order = {
   /**
@@ -9,13 +37,84 @@ const Order = {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
+      const normalizedItems = [];
+      for (const item of items) {
+        const parsedIds = parseCartItemId(item.id);
+        if (!parsedIds?.productId) {
+          throw new OrderValidationError('Uno de los productos del carrito ya no es valido. Actualiza tu carrito antes de continuar.');
+        }
 
-      const subtotal = items.reduce((sum, i) => {
-        const p = parseFloat(i.precio) || 0;
-        const q = parseInt(i.cantidad) || 0;
-        return sum + (p * q);
-      }, 0);
-      const SHIPPING_COST = 15000;
+        const quantity = normalizeQuantity(item.cantidad);
+        if (quantity <= 0) {
+          throw new OrderValidationError('La cantidad solicitada para uno de los productos no es valida.');
+        }
+
+        const [productRows] = await conn.query(
+          'SELECT id, nombre, precio, stock FROM productos WHERE id = ? LIMIT 1 FOR UPDATE',
+          [parsedIds.productId]
+        );
+        const product = productRows[0];
+
+        if (!product) {
+          throw new OrderValidationError('Uno de los productos del carrito ya no existe. Actualiza tu carrito antes de continuar.');
+        }
+
+        if (parsedIds.variantId) {
+          const [variantRows] = await conn.query(
+            `SELECT id, producto_id, stock, orden
+             FROM producto_variantes
+             WHERE id = ? AND producto_id = ?
+             LIMIT 1
+             FOR UPDATE`,
+            [parsedIds.variantId, parsedIds.productId]
+          );
+          const variant = variantRows[0];
+
+          if (!variant) {
+            throw new OrderValidationError(`La variante seleccionada para "${product.nombre}" ya no existe. Vuelve a seleccionar el producto.`);
+          }
+
+          if (quantity > Number(variant.stock || 0)) {
+            throw new OrderValidationError(`No hay stock suficiente para la variante seleccionada de "${product.nombre}".`);
+          }
+
+          const lineSubtotal = Number(product.precio) * quantity;
+          normalizedItems.push({
+            producto_id: product.id,
+            producto_ref: `db_${product.id}`,
+            producto_nombre: product.nombre,
+            producto_precio: Number(product.precio),
+            cantidad: quantity,
+            subtotal: lineSubtotal,
+            variantId: variant.id
+          });
+        } else {
+          const [variantCountRows] = await conn.query(
+            'SELECT COUNT(*) AS total_variants FROM producto_variantes WHERE producto_id = ?',
+            [parsedIds.productId]
+          );
+          if (Number(variantCountRows[0]?.total_variants || 0) > 0) {
+            throw new OrderValidationError(`"${product.nombre}" requiere seleccionar una variante antes de finalizar la compra.`);
+          }
+
+          if (quantity > Number(product.stock || 0)) {
+            throw new OrderValidationError(`No hay stock suficiente para "${product.nombre}".`);
+          }
+
+          const lineSubtotal = Number(product.precio) * quantity;
+          normalizedItems.push({
+            producto_id: product.id,
+            producto_ref: `db_${product.id}`,
+            producto_nombre: product.nombre,
+            producto_precio: Number(product.precio),
+            cantidad: quantity,
+            subtotal: lineSubtotal,
+            variantId: null
+          });
+        }
+      }
+
+      const subtotal = normalizedItems.reduce((sum, item) => sum + item.subtotal, 0);
       const total = subtotal + SHIPPING_COST;
 
       const [orderResult] = await conn.query(
@@ -26,40 +125,30 @@ const Order = {
 
       const orderId = orderResult.insertId;
 
-      for (const item of items) {
-        const subtotal = item.precio * item.cantidad;
-        const productMatch = item.id
-          ? String(item.id).match(/^db_(\d+)(?:__variant_(\d+))?$/)
-          : null;
-        const dbId = productMatch ? Number(productMatch[1]) : null;
-        const variantId = productMatch && productMatch[2] ? Number(productMatch[2]) : null;
-        const displayName = item.color ? `${item.nombre} - ${item.color}` : item.nombre;
-        const productRef = dbId ? `db_${dbId}` : buildProductRef(item.nombre);
-
+      for (const item of normalizedItems) {
         await conn.query(
           `INSERT INTO orden_items (orden_id, producto_id, producto_ref, producto_nombre, producto_precio, cantidad, subtotal)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [orderId, dbId, productRef, displayName, item.precio, item.cantidad, subtotal]
+          [orderId, item.producto_id, item.producto_ref, item.producto_nombre, item.producto_precio, item.cantidad, item.subtotal]
         );
 
-        if (variantId) {
+        if (item.variantId) {
           await conn.query(
-            'UPDATE producto_variantes SET stock = GREATEST(stock - ?, 0) WHERE id = ? AND producto_id = ?',
-            [item.cantidad, variantId, dbId]
+            'UPDATE producto_variantes SET stock = stock - ? WHERE id = ? AND producto_id = ?',
+            [item.cantidad, item.variantId, item.producto_id]
           );
           const [variantStockRows] = await conn.query(
             'SELECT COALESCE(SUM(stock), 0) AS total_stock FROM producto_variantes WHERE producto_id = ?',
-            [dbId]
+            [item.producto_id]
           );
           await conn.query(
             'UPDATE productos SET stock = ? WHERE id = ?',
-            [Number(variantStockRows[0]?.total_stock || 0), dbId]
+            [Number(variantStockRows[0]?.total_stock || 0), item.producto_id]
           );
-        } else if (dbId) {
-          // Si el producto viene de la base de datos, reducir stock
+        } else {
           await conn.query(
-            'UPDATE productos SET stock = GREATEST(stock - ?, 0) WHERE id = ?',
-            [item.cantidad, dbId]
+            'UPDATE productos SET stock = stock - ? WHERE id = ?',
+            [item.cantidad, item.producto_id]
           );
         }
       }
@@ -171,3 +260,4 @@ const Order = {
 };
 
 module.exports = Order;
+module.exports.OrderValidationError = OrderValidationError;

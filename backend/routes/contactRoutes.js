@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Ticket = require('../models/Ticket');
 const { isAuthenticated } = require('../middleware/auth');
+const { contactLimiter } = require('../middleware/rateLimit');
 const {
   getAdminContactEmail,
   getEmailDeliveryErrorMessage,
@@ -9,7 +10,7 @@ const {
   sendEmail
 } = require('../services/emailService');
 
-router.post('/', isAuthenticated, async (req, res) => {
+router.post('/', isAuthenticated, contactLimiter, async (req, res) => {
   const { name, email, phone, message, category } = req.body;
   const userId = req.session.userId;
   const safeCategory = category === 'reporte' ? 'reporte' : 'comentario';

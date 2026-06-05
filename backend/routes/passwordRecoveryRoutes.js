@@ -3,6 +3,10 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const PasswordResetCode = require('../models/PasswordResetCode');
 const { getEmailDeliveryErrorMessage, sendEmail } = require('../services/emailService');
+const {
+  recoveryRequestLimiter,
+  recoveryVerifyLimiter
+} = require('../middleware/rateLimit');
 
 const router = express.Router();
 const CODE_TTL_MINUTES = Number(process.env.RECOVERY_CODE_TTL_MINUTES || 10);
@@ -61,7 +65,7 @@ async function sendRecoveryCodeEmail({ user, email, code }) {
   });
 }
 
-router.post('/request-code', async (req, res) => {
+router.post('/request-code', recoveryRequestLimiter, async (req, res) => {
   try {
     const email = normalizeEmail(req.body.email);
     if (!email) {
@@ -110,7 +114,7 @@ router.post('/request-code', async (req, res) => {
   }
 });
 
-router.post('/verify-code', async (req, res) => {
+router.post('/verify-code', recoveryVerifyLimiter, async (req, res) => {
   try {
     const email = normalizeEmail(req.body.email);
     const code = String(req.body.code || '').trim();
@@ -134,7 +138,7 @@ router.post('/verify-code', async (req, res) => {
   }
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', recoveryVerifyLimiter, async (req, res) => {
   try {
     const email = normalizeEmail(req.body.email);
     const code = String(req.body.code || '').trim();

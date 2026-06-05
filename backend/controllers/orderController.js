@@ -19,7 +19,9 @@ const orderController = {
       return res.json({ ok: true, orderId: order.id, total: order.total });
     } catch (err) {
       console.error('Error al crear orden:', err);
-      return res.status(500).json({ error: 'Error al procesar la orden' });
+      return res
+        .status(err.statusCode || 500)
+        .json({ error: err.message || 'Error al procesar la orden' });
     }
   },
 
