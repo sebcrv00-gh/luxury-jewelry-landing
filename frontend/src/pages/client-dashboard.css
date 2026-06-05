@@ -190,6 +190,194 @@
   font-weight: 700;
 }
 
+.cd-membership-card {
+  margin-top: 30px;
+  padding: 50px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid var(--gold);
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.8), rgba(10, 10, 10, 0.95));
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+}
+
+.cd-membership-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.cd-membership-glow--top {
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.15) 0%, transparent 70%);
+}
+
+.cd-membership-glow--bottom {
+  bottom: -80px;
+  left: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(201, 168, 76, 0.1) 0%, transparent 70%);
+}
+
+.cd-membership-inner {
+  display: flex;
+  gap: 50px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.cd-membership-identity {
+  text-align: center;
+}
+
+.cd-membership-avatar-frame {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  padding: 6px;
+  background: rgba(201, 168, 76, 0.1);
+  margin-bottom: 20px;
+}
+
+.cd-membership-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cd-membership-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 24px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.cd-membership-role-badge--admin {
+  background: rgba(201, 168, 76, 0.2);
+  color: var(--gold-light);
+  border: 1px solid var(--gold);
+}
+
+.cd-membership-role-badge--vip {
+  background: linear-gradient(90deg, #ffd700, #c9a84c);
+  color: #000;
+  box-shadow: 0 10px 20px rgba(255, 215, 0, 0.2);
+}
+
+.cd-membership-role-badge--standard {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.cd-membership-body {
+  flex: 1;
+}
+
+.cd-membership-name {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  color: var(--text-primary);
+  margin: 0 0 5px;
+  letter-spacing: 1px;
+}
+
+.cd-membership-email {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin: 0 0 35px;
+  letter-spacing: 1px;
+}
+
+.cd-membership-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+
+.cd-membership-stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cd-membership-stat-label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.cd-membership-stat-value-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.cd-membership-stat-icon {
+  color: var(--gold-light);
+  flex-shrink: 0;
+}
+
+.cd-membership-stat-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cd-membership-featured-item {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-membership-meta {
+  margin-top: 30px;
+  display: flex;
+  gap: 20px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.cd-membership-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cd-membership-seal {
+  position: absolute;
+  bottom: 20px;
+  right: 30px;
+  opacity: 0.1;
+  transform: rotate(-10deg);
+}
+
+.cd-membership-seal-image {
+  width: 120px;
+}
+
 /* ── FORMS ── */
 .cd-form label { display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 500; }
 .cd-input {
@@ -499,5 +687,8 @@ select.cd-input option {
   }
   .cd-membership-name {
     font-size: 1.8rem !important;
+  }
+  .cd-membership-meta {
+    justify-content: center;
   }
 }

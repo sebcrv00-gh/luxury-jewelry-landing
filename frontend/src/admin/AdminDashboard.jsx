@@ -14,7 +14,9 @@ import {
   Layers,
   Database,
   MessageSquare,
-  Crown
+  Crown,
+  Menu,
+  X
 } from 'lucide-react';
 import AddProduct from './AddProduct';
 import ProductListAdmin from './ProductListAdmin';
@@ -49,6 +51,16 @@ const TAB_META = {
   }
 };
 
+const ADMIN_NAV_ITEMS = [
+  { key: 'dashboard', icon: LayoutDashboard, label: 'Resumen' },
+  { key: 'inventory', icon: Gem, label: 'Inventario' },
+  { key: 'orders', icon: ShoppingCart, label: 'Pedidos' },
+  { key: 'clients', icon: Users, label: 'Clientes' },
+  { key: 'tickets', icon: MessageSquare, label: 'Soporte' },
+  { key: 'settings', icon: Settings, label: 'Configuración' },
+  { key: 'profile', icon: Users, label: 'Perfil' }
+];
+
 export default function AdminDashboard() {
   const { isLoggedIn, isAdmin, loading, logout, user } = useAuth();
   const fotoSrc = user?.foto
@@ -59,6 +71,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('inventory'); // 'dashboard', 'inventory', 'orders', 'clients', 'tickets' , 'settings', 'profile'
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overview, setOverview] = useState({
     products: 0,
@@ -124,6 +137,17 @@ export default function AdminDashboard() {
     }
   }, [loading, isLoggedIn, isAdmin]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 900) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const setInventoryStats = ({ total, lowStock, categories }) => {
     setOverview(prev => ({
       ...prev,
@@ -136,6 +160,7 @@ export default function AdminDashboard() {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setShowAddForm(false);
+    setIsMobileSidebarOpen(false);
     navigate(`/admin?tab=${tab}`);
   };
 
@@ -223,67 +248,39 @@ export default function AdminDashboard() {
   return (
     <div className="admin-layout">
       {/* ── SIDEBAR ── */}
-      <aside className="admin-sidebar">
-        <div className="admin-brand" onClick={() => handleTabChange('dashboard')} style={{ cursor: 'pointer' }}>
-          <div className="admin-brand-badge-wrap">
-            <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Luxury Jewelry" />
+      <aside className={`admin-sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
+        <div className="admin-sidebar-head">
+          <div className="admin-brand" onClick={() => handleTabChange('dashboard')} style={{ cursor: 'pointer' }}>
+            <div className="admin-brand-badge-wrap">
+              <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Luxury Jewelry" />
+            </div>
+            <div className="admin-brand-copy">
+              <h2>L.J. Admin</h2>
+              <span className="admin-brand-subtitle">Enterprise Console</span>
+            </div>
           </div>
-          <div className="admin-brand-copy">
-            <h2>L.J. Admin</h2>
-            <span className="admin-brand-subtitle">Enterprise Console</span>
-          </div>
+          <button
+            type="button"
+            className="admin-sidebar-close"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="Cerrar navegación del panel admin"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <nav className="admin-nav">
-          <div
-            className={`admin-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => handleTabChange('dashboard')}
-          >
-            <LayoutDashboard size={20} />
-            <span>Resumen</span>
-          </div>
-          <div
-            className={`admin-nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
-            onClick={() => handleTabChange('inventory')}
-          >
-            <Gem size={20} />
-            <span>Inventario</span>
-          </div>
-          <div
-            className={`admin-nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => handleTabChange('orders')}
-          >
-            <ShoppingCart size={20} />
-            <span>Pedidos</span>
-          </div>
-          <div
-            className={`admin-nav-item ${activeTab === 'clients' ? 'active' : ''}`}
-            onClick={() => handleTabChange('clients')}
-          >
-            <Users size={20} />
-            <span>Clientes</span>
-          </div>
-          <div
-            className={`admin-nav-item ${activeTab === 'tickets' ? 'active' : ''}`}
-            onClick={() => handleTabChange('tickets')}
-          >
-            <MessageSquare size={20} />
-            <span>Soporte</span>
-          </div>
-          <div
-            className={`admin-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-            onClick={() => handleTabChange('settings')}
-          >
-            <Settings size={20} />
-            <span>Configuración</span>
-          </div>
-          <div
-            className={`admin-nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => handleTabChange('profile')}
-          >
-            <Users size={20} />
-            <span>Perfil</span>
-          </div>
+          {ADMIN_NAV_ITEMS.map(({ key, icon: Icon, label }) => (
+            <button
+              key={key}
+              type="button"
+              className={`admin-nav-item ${activeTab === key ? 'active' : ''}`}
+              onClick={() => handleTabChange(key)}
+            >
+              <Icon size={20} />
+              <span>{label}</span>
+            </button>
+          ))}
         </nav>
 
         <div className="admin-logout">
@@ -298,11 +295,26 @@ export default function AdminDashboard() {
           </button>
         </div>
       </aside>
+      <button
+        type="button"
+        className={`admin-sidebar-overlay ${isMobileSidebarOpen ? 'visible' : ''}`}
+        onClick={() => setIsMobileSidebarOpen(false)}
+        aria-label="Cerrar navegación lateral"
+      />
 
       {/* ── MAIN CONTENT ── */}
       <main className="admin-main">
         <header className="admin-topbar">
           <div className="admin-topbar-left">
+            <button
+              type="button"
+              className="admin-sidebar-toggle"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              aria-label="Abrir navegación del panel admin"
+              aria-expanded={isMobileSidebarOpen}
+            >
+              <Menu size={18} />
+            </button>
             <h1 className="admin-page-title">{tabInfo.title}</h1>
           </div>
 

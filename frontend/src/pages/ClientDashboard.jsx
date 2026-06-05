@@ -647,73 +647,64 @@ export default function ClientDashboard() {
               <h2 className="cd-title">Membresía Luxury</h2>
               <p className="cd-subtitle">Detalles de tu estatus exclusivo en nuestra joyería</p>
               
-              <div className="cd-membership-card" style={{ 
-                background: 'linear-gradient(135deg, rgba(20,20,20,0.8), rgba(10,10,10,0.95))',
-                border: '1px solid var(--gold)',
-                borderRadius: '24px',
-                padding: '50px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
-                marginTop: '30px'
-              }}>
+              <div className="cd-membership-card">
                 {/* Decoración de fondo */}
-                <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%)', borderRadius: '50%' }}></div>
-                <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%)', borderRadius: '50%' }}></div>
+                <div className="cd-membership-glow cd-membership-glow--top"></div>
+                <div className="cd-membership-glow cd-membership-glow--bottom"></div>
 
-                <div className="cd-membership-inner" style={{ display: 'flex', gap: '50px', alignItems: 'center', position: 'relative', zIndex: 2 }}>
+                <div className="cd-membership-inner">
                   {/* Foto y Badge */}
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: '160px', height: '160px', borderRadius: '50%', border: '3px solid var(--gold)', padding: '6px', background: 'rgba(201,168,76,0.1)', marginBottom: '20px' }}>
-                      <img src={fotoSrc} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  <div className="cd-membership-identity">
+                    <div className="cd-membership-avatar-frame">
+                      <img src={fotoSrc} alt="Avatar" className="cd-membership-avatar" />
                     </div>
                     {user.rol === 'admin' ? (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(201,168,76,0.2)', color: 'var(--gold-light)', padding: '8px 24px', borderRadius: '50px', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px', border: '1px solid var(--gold)' }}>
+                      <div className="cd-membership-role-badge cd-membership-role-badge--admin">
                         <Crown size={16} /> ADMINISTRADOR
                       </div>
                     ) : user.rol === 'vip' ? (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(90deg, #FFD700, #C9A84C)', color: 'black', padding: '8px 24px', borderRadius: '50px', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px', boxShadow: '0 10px 20px rgba(255,215,0,0.2)' }}>
+                      <div className="cd-membership-role-badge cd-membership-role-badge--vip">
                         <Crown size={16} /> CLIENTE VIP
                       </div>
                     ) : (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', padding: '8px 24px', borderRadius: '50px', fontWeight: '600', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <div className="cd-membership-role-badge cd-membership-role-badge--standard">
                         MIEMBRO ESTÁNDAR
                       </div>
                     )}
                   </div>
 
                   {/* Datos y Stats */}
-                  <div style={{ flex: 1 }}>
-                    <h3 className="cd-membership-name" style={{ fontFamily: 'var(--font-display)', fontSize: '2.8rem', color: 'var(--text-primary)', marginBottom: '5px', letterSpacing: '1px' }}>{user.nombre}</h3>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '35px', letterSpacing: '1px' }}>{user.email}</p>
+                  <div className="cd-membership-body">
+                    <h3 className="cd-membership-name">{user.nombre}</h3>
+                    <p className="cd-membership-email">{user.email}</p>
                     
-                    <div className="cd-membership-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
-                      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Compras Realizadas</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <ShoppingBag size={22} style={{ color: 'var(--gold-light)' }} />
-                          <span style={{ fontSize: '1.6rem', fontWeight: '600', color: 'var(--text-primary)' }}>{totalOrders}</span>
+                    <div className="cd-membership-stats">
+                      <div className="cd-membership-stat-card">
+                        <span className="cd-membership-stat-label">Compras Realizadas</span>
+                        <div className="cd-membership-stat-value-row">
+                          <ShoppingBag size={22} className="cd-membership-stat-icon" />
+                          <span className="cd-membership-stat-value">{totalOrders}</span>
                         </div>
                       </div>
-                      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>Tu Joya Predilecta</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <Gem size={22} style={{ color: 'var(--gold-light)' }} />
-                          <span style={{ fontSize: '1.1rem', fontWeight: '500', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{bestItem}</span>
+                      <div className="cd-membership-stat-card">
+                        <span className="cd-membership-stat-label">Tu Joya Predilecta</span>
+                        <div className="cd-membership-stat-value-row">
+                          <Gem size={22} className="cd-membership-stat-icon" />
+                          <span className="cd-membership-featured-item">{bestItem}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div style={{ marginTop: '30px', display: 'flex', gap: '20px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Phone size={14} /> {user.telefono || 'Sin teléfono'}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><MapPin size={14} /> {user.direccion || 'Sin dirección'}</div>
+                    <div className="cd-membership-meta">
+                      <div className="cd-membership-meta-item"><Phone size={14} /> {user.telefono || 'Sin teléfono'}</div>
+                      <div className="cd-membership-meta-item"><MapPin size={14} /> {user.direccion || 'Sin dirección'}</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Sello de Autenticidad */}
-                <div style={{ position: 'absolute', bottom: '20px', right: '30px', opacity: 0.1, transform: 'rotate(-10deg)' }}>
-                  <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Seal" style={{ width: '120px' }} />
+                <div className="cd-membership-seal">
+                  <img src="/images/Logo_Luxury_Joyeria-removebg-preview.png" alt="Seal" className="cd-membership-seal-image" />
                 </div>
               </div>
               
