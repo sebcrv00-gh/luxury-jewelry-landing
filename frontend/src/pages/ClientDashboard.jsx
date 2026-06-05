@@ -717,11 +717,11 @@ export default function ClientDashboard() {
                 </div>
               </div>
               
-              <div style={{ marginTop: '30px', padding: '20px', borderRadius: '12px', background: 'rgba(255,193,7,0.05)', border: '1px solid rgba(255,193,7,0.1)', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <AlertCircle size={20} style={{ color: '#ffc107' }} />
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', margin: 0 }}>
+              <div className="cd-membership-note">
+                <AlertCircle size={20} className="cd-membership-note-icon" />
+                <p className="cd-membership-note-text">
                   Esta es tu tarjeta de membresía digital. Tus datos han sido verificados por nuestros expertos joyeros. 
-                  ¿Deseas actualizar tu información? <span onClick={() => navigate(user.rol === 'admin' ? '/admin?tab=profile' : '/perfil')} style={{ color: 'var(--gold-light)', cursor: 'pointer', textDecoration: 'underline', fontWeight: 'bold' }}>Haz clic aquí para editar tu perfil.</span>
+                  ¿Deseas actualizar tu información? <span className="cd-membership-note-link" onClick={() => navigate(user.rol === 'admin' ? '/admin?tab=profile' : '/perfil')}>Haz clic aquí para editar tu perfil.</span>
                 </p>
               </div>
             </div>
@@ -731,27 +731,30 @@ export default function ClientDashboard() {
         {/* ═══ SOPORTE ═══ */}
         {activeSection === 'soporte' && (
           <div className="cd-section">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
-              <div><h2 className="cd-title" style={{margin:0}}>Soporte y Mensajes</h2><p className="cd-subtitle" style={{margin:0}}>Comunícate con nuestro equipo de atención</p></div>
+            <div className="cd-support-toolbar">
+              <div className="cd-support-head">
+                <h2 className="cd-title cd-support-title">Soporte y Mensajes</h2>
+                <p className="cd-subtitle cd-support-subtitle">Comunícate con nuestro equipo de atención</p>
+              </div>
               <button className="cd-action-btn" onClick={() => setShowTicketForm(!showTicketForm)}><Plus size={16}/> Nuevo Ticket</button>
             </div>
             {supportMessage && (
-              <div className="auth-alert" style={{ marginBottom: 20, ...(supportMessage.type === 'success' ? { background: 'rgba(78,205,196,0.08)', border: '1px solid rgba(78,205,196,0.2)', color: 'var(--success)' } : { background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.2)', color: '#e74c3c' }) }}>
+              <div className={`auth-alert cd-support-alert ${supportMessage.type === 'success' ? 'cd-support-alert--success' : 'cd-support-alert--error'}`}>
                 <span>{supportMessage.type === 'success' ? '✓' : '⚠'}</span> {supportMessage.text}
               </div>
             )}
             {showTicketForm && (
-              <form className="cd-card cd-form" onSubmit={submitTicket} style={{marginBottom:24}}>
+              <form className="cd-card cd-form cd-support-form-card" onSubmit={submitTicket}>
                 <div><label>Asunto</label><input className="cd-input" required value={ticketForm.asunto} onChange={e => setTicketForm({...ticketForm, asunto: e.target.value})} placeholder="Ej: Devolución del pedido #42"/></div>
-                <div style={{marginTop:16}}><label>Mensaje</label><textarea className="cd-input cd-textarea" required value={ticketForm.mensaje} onChange={e => setTicketForm({...ticketForm, mensaje: e.target.value})} placeholder="Describe tu solicitud en detalle..." rows={5}/></div>
-                <div style={{display:'flex',gap:12,marginTop:20}}>
+                <div className="cd-support-field-group"><label>Mensaje</label><textarea className="cd-input cd-textarea" required value={ticketForm.mensaje} onChange={e => setTicketForm({...ticketForm, mensaje: e.target.value})} placeholder="Describe tu solicitud en detalle..." rows={5}/></div>
+                <div className="cd-support-form-actions">
                   <button type="submit" className="cd-action-btn"><Send size={14}/> Enviar Ticket</button>
                   <button type="button" className="cd-link-btn" onClick={() => setShowTicketForm(false)}>Cancelar</button>
                 </div>
               </form>
             )}
             {tickets.length === 0 && !showTicketForm ? <div className="cd-empty-state"><MessageCircle size={48}/><p>No tienes tickets abiertos</p></div> : (
-              <div style={{display:'grid',gridTemplateColumns:'minmax(280px, 360px) minmax(0, 1fr)',gap:24,alignItems:'start'}}>
+              <div className="cd-support-layout">
                 <div className="cd-tickets-list">
                   {tickets.map(t => (
                     <div
@@ -774,45 +777,38 @@ export default function ClientDashboard() {
                   ))}
                 </div>
 
-                <div className="cd-card">
+                <div className="cd-card cd-support-conversation-card">
                   {!selectedSupportTicketId ? (
-                    <div className="cd-empty-state" style={{padding:'30px 0'}}><MessageCircle size={44}/><p>Selecciona un ticket para ver la conversación</p></div>
+                    <div className="cd-empty-state cd-support-empty-state"><MessageCircle size={44}/><p>Selecciona un ticket para ver la conversación</p></div>
                   ) : supportLoading ? (
-                    <div className="cd-empty-state" style={{padding:'30px 0'}}><MessageCircle size={44}/><p>Cargando conversación...</p></div>
+                    <div className="cd-empty-state cd-support-empty-state"><MessageCircle size={44}/><p>Cargando conversación...</p></div>
                   ) : (
                     <>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,gap:16,flexWrap:'wrap'}}>
+                      <div className="cd-support-conversation-header">
                         <div>
-                          <h3 style={{margin:'0 0 6px 0'}}>#{supportConversation?.ticket?.id} — {supportConversation?.ticket?.asunto}</h3>
-                          <p style={{margin:0,color:'var(--text-muted)',fontSize:'0.82rem'}}>Historial completo con soporte de Luxury Jewelry</p>
+                          <h3 className="cd-support-conversation-title">#{supportConversation?.ticket?.id} — {supportConversation?.ticket?.asunto}</h3>
+                          <p className="cd-support-conversation-subtitle">Historial completo con soporte de Luxury Jewelry</p>
                         </div>
                         <span className="cd-badge" style={{background: supportConversation?.ticket?.estado === 'abierto' ? 'rgba(243,156,18,0.15)' : supportConversation?.ticket?.estado === 'resuelto' ? 'rgba(46,204,113,0.15)' : 'rgba(52,152,219,0.15)', color: supportConversation?.ticket?.estado === 'abierto' ? '#f39c12' : supportConversation?.ticket?.estado === 'resuelto' ? '#2ecc71' : '#3498db'}}>
                           {supportConversation?.ticket?.estado}
                         </span>
                       </div>
 
-                      <div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:20}}>
+                      <div className="cd-support-message-list">
                         {(supportConversation?.messages || []).map(message => {
                           const isAdminReply = message.author_type === 'admin';
                           return (
                             <div
                               key={message.id}
-                              style={{
-                                alignSelf: isAdminReply ? 'flex-start' : 'flex-end',
-                                maxWidth:'78%',
-                                background: isAdminReply ? 'rgba(255,255,255,0.05)' : 'rgba(201,168,76,0.12)',
-                                border: `1px solid ${isAdminReply ? 'rgba(255,255,255,0.08)' : 'rgba(201,168,76,0.25)'}`,
-                                borderRadius:14,
-                                padding:'14px 16px'
-                              }}
+                              className={`cd-support-bubble ${isAdminReply ? 'cd-support-bubble--admin' : 'cd-support-bubble--client'}`}
                             >
-                              <div style={{fontSize:'0.78rem',fontWeight:600,color:isAdminReply ? 'var(--text-secondary)' : 'var(--gold-light)',marginBottom:8}}>
+                              <div className={`cd-support-bubble-author ${isAdminReply ? 'cd-support-bubble-author--admin' : 'cd-support-bubble-author--client'}`}>
                                 {isAdminReply ? 'Soporte Luxury Jewelry' : 'Tú'}
                               </div>
-                              <div style={{whiteSpace:'pre-wrap',lineHeight:1.6,color:'var(--text-primary)',fontSize:'0.9rem'}}>
+                              <div className="cd-support-bubble-body">
                                 {message.mensaje}
                               </div>
-                              <div style={{marginTop:10,fontSize:'0.72rem',color:'var(--text-muted)'}}>
+                              <div className="cd-support-bubble-date">
                                 {new Date(message.creado_en).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' })}
                               </div>
                             </div>
@@ -821,7 +817,7 @@ export default function ClientDashboard() {
                       </div>
 
                       <form onSubmit={submitSupportReply}>
-                        <label style={{display:'block',marginBottom:8,color:'var(--text-secondary)',fontSize:'0.82rem'}}>Responder a soporte</label>
+                        <label className="cd-support-reply-label">Responder a soporte</label>
                         <textarea
                           className="cd-input cd-textarea"
                           value={supportReply}
@@ -829,7 +825,7 @@ export default function ClientDashboard() {
                           placeholder="Escribe aquí tu respuesta o información adicional para el equipo de soporte..."
                           rows={4}
                         />
-                        <div style={{display:'flex',gap:12,marginTop:16}}>
+                        <div className="cd-support-reply-actions">
                           <button type="submit" className="cd-action-btn" disabled={!supportReply.trim()}><Send size={14}/> Enviar respuesta</button>
                         </div>
                       </form>

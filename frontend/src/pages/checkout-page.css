@@ -1,0 +1,269 @@
+.checkout-access-actions,
+.checkout-confirmation-actions,
+.checkout-actions-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.checkout-access-actions,
+.checkout-confirmation-actions {
+  justify-content: center;
+}
+
+.checkout-actions-row {
+  margin-top: 28px;
+}
+
+.checkout-shipping-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.checkout-shipping-grid--compact {
+  margin-bottom: 20px;
+}
+
+.checkout-shipping-grid--wide {
+  margin-bottom: 30px;
+}
+
+.checkout-field-block {
+  margin-bottom: 20px;
+}
+
+.checkout-payment-section {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 28px;
+  margin-bottom: 24px;
+}
+
+.checkout-payment-title {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkout-payment-lock {
+  color: var(--gold);
+}
+
+.checkout-payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.checkout-payment-method-card {
+  --payment-accent: var(--gold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.3s;
+  position: relative;
+}
+
+.checkout-payment-method-card.is-active {
+  background: var(--payment-active-bg);
+  border: 2px solid var(--payment-accent);
+}
+
+.checkout-payment-method-icon {
+  color: var(--text-muted);
+  transition: color 0.3s;
+}
+
+.checkout-payment-method-card.is-active .checkout-payment-method-icon {
+  color: var(--payment-accent);
+}
+
+.checkout-payment-method-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.checkout-payment-method-card.is-active .checkout-payment-method-name {
+  color: #fff;
+}
+
+.checkout-payment-method-desc {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.checkout-payment-method-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--payment-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-payment-method-badge-icon {
+  color: #fff;
+}
+
+.checkout-payment-panel {
+  border-radius: 16px;
+  padding: 28px;
+  animation: checkoutFadeInPanel 0.35s ease;
+}
+
+.checkout-payment-panel--card {
+  background: linear-gradient(145deg, rgba(52, 152, 219, 0.06), rgba(20, 20, 20, 0.8));
+  border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.checkout-payment-panel--nequi {
+  background: linear-gradient(145deg, rgba(233, 30, 99, 0.06), rgba(20, 20, 20, 0.8));
+  border: 1px solid rgba(233, 30, 99, 0.2);
+}
+
+.checkout-payment-panel--cash {
+  background: linear-gradient(145deg, rgba(46, 204, 113, 0.06), rgba(20, 20, 20, 0.8));
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.checkout-payment-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.checkout-payment-panel-head--compact {
+  margin-bottom: 12px;
+}
+
+.checkout-payment-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+
+.checkout-payment-panel-icon--card {
+  color: #3498db;
+}
+
+.checkout-payment-panel-icon--nequi {
+  color: #e91e63;
+}
+
+.checkout-payment-panel-icon--cash {
+  color: #2ecc71;
+}
+
+.checkout-payment-panel-security {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.checkout-payment-field {
+  margin-bottom: 16px;
+}
+
+.checkout-payment-label {
+  font-size: 0.6rem;
+}
+
+.checkout-card-number-input,
+.checkout-nequi-input {
+  letter-spacing: 2px;
+}
+
+.checkout-card-number-input {
+  font-size: 1.05rem;
+}
+
+.checkout-card-holder-input {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.checkout-nequi-input {
+  font-size: 1.1rem;
+}
+
+.checkout-card-expiry-cvv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.checkout-payment-panel-note {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.checkout-payment-panel-note--compact {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.checkout-payment-amount--nequi {
+  color: #e91e63;
+}
+
+.checkout-payment-amount--cash {
+  color: #2ecc71;
+}
+
+.checkout-mini-summary-box {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+@keyframes checkoutFadeInPanel {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .checkout-payment-panel {
+    padding: 20px 18px;
+  }
+
+  .checkout-card-expiry-cvv-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

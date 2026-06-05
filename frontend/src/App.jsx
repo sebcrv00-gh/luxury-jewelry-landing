@@ -12,11 +12,12 @@ import FloatingContact from './components/FloatingContact'
 import AuthModal from './components/AuthModal'
 import WelcomeAnimation from './components/WelcomeAnimation'
 import { useAuth } from './context/AuthContext'
+import './styles/app-layout.css'
 
 function RouteTransition({ children }) {
   const location = useLocation();
   return (
-    <div key={location.pathname} className="luxury-page-transition" style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <div key={location.pathname} className="luxury-page-transition route-transition-shell">
       {children}
     </div>
   );
@@ -41,7 +42,7 @@ export default function App() {
             <ClientAreaGuard>
               <>
                 <Header />
-                <main style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
+                <main className="app-main-shell">
                   <RouteTransition>
                     <Routes>
                       <Route path="/" element={<Home />} />
@@ -67,7 +68,9 @@ export default function App() {
           <ClientAreaGuard>
             <>
               <Header />
-              <ClientDashboard />
+              <main className="app-main-shell app-main-shell--client">
+                <ClientDashboard />
+              </main>
             </>
           </ClientAreaGuard>
         } />

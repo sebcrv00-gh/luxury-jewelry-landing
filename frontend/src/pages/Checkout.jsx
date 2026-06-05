@@ -5,6 +5,7 @@ import api from '../api/axios';
 import { CreditCard, Landmark, Smartphone, Banknote, ShieldCheck, Lock, FileDown } from 'lucide-react';
 import { downloadInvoicePdf } from '../utils/invoicePdf';
 import { POST_LOGIN_REDIRECT_KEY, readCart, clearCart } from '../utils/cartStorage';
+import './checkout-page.css';
 
 const PAYMENT_METHODS = [
   { id: 'efectivo', label: 'Efectivo', desc: 'Pago contra entrega', icon: Banknote, color: '#2ecc71' },
@@ -138,7 +139,7 @@ export default function Checkout() {
           <p className="text-muted" style={{ margin: '18px auto 30px', maxWidth: '520px', lineHeight: 1.7 }}>
             Tu cotizacion ya esta lista en el carrito. Para continuar con el pago, confirma tu cuenta iniciando sesion o registrandote.
           </p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="checkout-access-actions">
             <button
               className="btn-primary"
               onClick={() => {
@@ -204,7 +205,7 @@ export default function Checkout() {
             coordinar la entrega en <strong style={{ color: 'var(--gold-light)' }}>{shipping.ciudad}</strong>.
           </p>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="checkout-confirmation-actions">
             <button className="btn-outline" onClick={handleDownloadInvoice} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
               <FileDown size={16} /> Imprimir factura en PDF
             </button>
@@ -277,7 +278,7 @@ export default function Checkout() {
                 <span>${total.toLocaleString('es-CO')}</span>
               </div>
             </div>
-            <div className="checkout-actions" style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
+            <div className="checkout-actions checkout-actions-row">
               <button className="btn-outline" style={{ flex: 1 }} onClick={() => navigate('/carrito')}>
                 ← Volver al Carrito
               </button>
@@ -293,7 +294,7 @@ export default function Checkout() {
           <>
             <h3 className="checkout-title">Datos de Envío</h3>
             <form onSubmit={handleSubmitOrder}>
-              <div className="shipping-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+              <div className="shipping-form-grid checkout-shipping-grid checkout-shipping-grid--compact">
                 <div className="form-group">
                   <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.65rem' }}>Nombre Completo</label>
                   <input type="text" value={shipping.nombre} onChange={e => setShipping({ ...shipping, nombre: e.target.value })} placeholder="Nombre y apellido" required />
@@ -304,12 +305,12 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginBottom: '20px' }}>
+              <div className="form-group checkout-field-block">
                 <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.65rem' }}>Dirección de Entrega</label>
                 <input type="text" value={shipping.direccion} onChange={e => setShipping({ ...shipping, direccion: e.target.value })} placeholder="Calle, número, apartamento..." required />
               </div>
 
-              <div className="shipping-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+              <div className="shipping-form-grid checkout-shipping-grid checkout-shipping-grid--wide">
                 <div className="form-group">
                   <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.65rem' }}>Ciudad</label>
                   <input type="text" value={shipping.ciudad} onChange={e => setShipping({ ...shipping, ciudad: e.target.value })} placeholder="Ej: Bogotá" required />
@@ -321,32 +322,26 @@ export default function Checkout() {
               </div>
 
               {/* ═══ MÉTODO DE PAGO ═══ */}
-              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '28px', marginBottom: '24px' }}>
-                <h3 className="checkout-title" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Lock size={18} style={{ color: 'var(--gold)' }}/> Método de Pago
+              <div className="checkout-payment-section">
+                <h3 className="checkout-title checkout-payment-title">
+                  <Lock size={18} className="checkout-payment-lock" /> Método de Pago
                 </h3>
 
-                <div className="payment-methods-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+                <div className="payment-methods-grid checkout-payment-methods-grid">
                   {PAYMENT_METHODS.map(pm => (
                     <button
                       type="button"
                       key={pm.id}
-                      className={`payment-method-card ${paymentMethod === pm.id ? 'is-active' : ''}`}
+                      className={`payment-method-card checkout-payment-method-card ${paymentMethod === pm.id ? 'is-active' : ''}`}
                       onClick={() => setPaymentMethod(pm.id)}
-                      style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
-                        padding: '20px 16px', borderRadius: '12px', cursor: 'pointer',
-                        background: paymentMethod === pm.id ? `${pm.color}12` : 'rgba(255,255,255,0.02)',
-                        border: paymentMethod === pm.id ? `2px solid ${pm.color}` : '1px solid var(--border-subtle)',
-                        transition: 'all 0.3s', position: 'relative',
-                      }}
+                      style={{ '--payment-accent': pm.color, '--payment-active-bg': `${pm.color}12` }}
                     >
-                      <pm.icon size={28} style={{ color: paymentMethod === pm.id ? pm.color : 'var(--text-muted)', transition: 'color 0.3s' }}/>
-                      <span className="payment-method-name" style={{ fontSize: '0.82rem', fontWeight: 600, color: paymentMethod === pm.id ? '#fff' : 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>{pm.label}</span>
-                      <span className="payment-method-desc" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center' }}>{pm.desc}</span>
+                      <pm.icon size={28} className="checkout-payment-method-icon" />
+                      <span className="payment-method-name checkout-payment-method-name">{pm.label}</span>
+                      <span className="payment-method-desc checkout-payment-method-desc">{pm.desc}</span>
                       {paymentMethod === pm.id && (
-                        <div style={{ position: 'absolute', top: '8px', right: '8px', width: '18px', height: '18px', borderRadius: '50%', background: pm.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <ShieldCheck size={11} style={{ color: '#fff' }}/>
+                        <div className="checkout-payment-method-badge">
+                          <ShieldCheck size={11} className="checkout-payment-method-badge-icon" />
                         </div>
                       )}
                     </button>
@@ -355,27 +350,29 @@ export default function Checkout() {
 
                 {/* ── Formulario Tarjeta ── */}
                 {paymentMethod === 'tarjeta' && (
-                  <div className="payment-card-form" style={{ background: 'linear-gradient(145deg, rgba(52,152,219,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(52,152,219,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                      <CreditCard size={20} style={{ color: '#3498db' }}/>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Información de Tarjeta</span>
-                      <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}><Lock size={10}/> Cifrado SSL</span>
+                  <div className="payment-card-form checkout-payment-panel checkout-payment-panel--card">
+                    <div className="checkout-payment-panel-head">
+                      <div className="checkout-payment-panel-title">
+                        <CreditCard size={20} className="checkout-payment-panel-icon checkout-payment-panel-icon--card" />
+                        <span>Informacion de Tarjeta</span>
+                      </div>
+                      <span className="checkout-payment-panel-security"><Lock size={10}/> Cifrado SSL</span>
                     </div>
-                    <div className="form-group" style={{ marginBottom: '16px' }}>
-                      <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Número de Tarjeta</label>
-                      <input type="text" value={cardData.numero} onChange={e => setCardData({...cardData, numero: formatCardNumber(e.target.value)})} placeholder="0000 0000 0000 0000" maxLength={19} style={{ letterSpacing: '2px', fontSize: '1.05rem' }}/>
+                    <div className="form-group checkout-payment-field">
+                      <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">Numero de Tarjeta</label>
+                      <input className="checkout-card-number-input" type="text" value={cardData.numero} onChange={e => setCardData({...cardData, numero: formatCardNumber(e.target.value)})} placeholder="0000 0000 0000 0000" maxLength={19} />
                     </div>
-                    <div className="form-group" style={{ marginBottom: '16px' }}>
-                      <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Titular de la Tarjeta</label>
-                      <input type="text" value={cardData.titular} onChange={e => setCardData({...cardData, titular: e.target.value.toUpperCase()})} placeholder="NOMBRE COMO APARECE EN LA TARJETA" style={{ textTransform: 'uppercase', letterSpacing: '1px' }}/>
+                    <div className="form-group checkout-payment-field">
+                      <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">Titular de la Tarjeta</label>
+                      <input className="checkout-card-holder-input" type="text" value={cardData.titular} onChange={e => setCardData({...cardData, titular: e.target.value.toUpperCase()})} placeholder="NOMBRE COMO APARECE EN LA TARJETA" />
                     </div>
-                    <div className="card-expiry-cvv-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="card-expiry-cvv-grid checkout-card-expiry-cvv-grid">
                       <div className="form-group">
-                        <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Expiración</label>
+                        <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">Expiracion</label>
                         <input type="text" value={cardData.expiracion} onChange={e => setCardData({...cardData, expiracion: formatExpiration(e.target.value)})} placeholder="MM/YY" maxLength={5}/>
                       </div>
                       <div className="form-group">
-                        <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>CVV</label>
+                        <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">CVV</label>
                         <input type="password" value={cardData.cvv} onChange={e => setCardData({...cardData, cvv: e.target.value.replace(/\D/g, '').slice(0, 4)})} placeholder="•••" maxLength={4}/>
                       </div>
                     </div>
@@ -385,38 +382,42 @@ export default function Checkout() {
 
                 {/* ── Formulario Nequi ── */}
                 {paymentMethod === 'nequi' && (
-                  <div className="payment-nequi-form" style={{ background: 'linear-gradient(145deg, rgba(233,30,99,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(233,30,99,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                      <Smartphone size={20} style={{ color: '#e91e63' }}/>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Pago con Nequi</span>
+                  <div className="payment-nequi-form checkout-payment-panel checkout-payment-panel--nequi">
+                    <div className="checkout-payment-panel-head">
+                      <div className="checkout-payment-panel-title">
+                        <Smartphone size={20} className="checkout-payment-panel-icon checkout-payment-panel-icon--nequi" />
+                        <span>Pago con Nequi</span>
+                      </div>
                     </div>
                     <div className="form-group">
-                      <label className="text-gold text-uppercase letter-spacing-lg" style={{ fontSize: '0.6rem' }}>Número de Celular Nequi</label>
-                      <input type="tel" value={nequiData.celular} onChange={e => setNequiData({celular: e.target.value.replace(/\D/g, '').slice(0, 10)})} placeholder="3XX XXX XXXX" maxLength={10} style={{ letterSpacing: '2px', fontSize: '1.1rem' }}/>
+                      <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">Numero de Celular Nequi</label>
+                      <input className="checkout-nequi-input" type="tel" value={nequiData.celular} onChange={e => setNequiData({celular: e.target.value.replace(/\D/g, '').slice(0, 10)})} placeholder="3XX XXX XXXX" maxLength={10} />
                     </div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '14px', lineHeight: 1.5 }}>
-                      Al confirmar, recibirás una notificación push en tu app Nequi para autorizar el pago de <strong style={{ color: '#e91e63' }}>${total.toLocaleString('es-CO')}</strong>.
+                    <p className="checkout-payment-panel-note">
+                      Al confirmar, recibiras una notificacion push en tu app Nequi para autorizar el pago de <strong className="checkout-payment-amount checkout-payment-amount--nequi">${total.toLocaleString('es-CO')}</strong>.
                     </p>
                   </div>
                 )}
 
                 {/* ── Efectivo Info ── */}
                 {paymentMethod === 'efectivo' && (
-                  <div className="payment-cash-info" style={{ background: 'linear-gradient(145deg, rgba(46,204,113,0.06), rgba(20,20,20,0.8))', border: '1px solid rgba(46,204,113,0.2)', borderRadius: '16px', padding: '28px', animation: 'cdFadeIn 0.35s ease' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                      <Banknote size={20} style={{ color: '#2ecc71' }}/>
-                      <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.5px' }}>Pago Contra Entrega</span>
+                  <div className="payment-cash-info checkout-payment-panel checkout-payment-panel--cash">
+                    <div className="checkout-payment-panel-head checkout-payment-panel-head--compact">
+                      <div className="checkout-payment-panel-title">
+                        <Banknote size={20} className="checkout-payment-panel-icon checkout-payment-panel-icon--cash" />
+                        <span>Pago Contra Entrega</span>
+                      </div>
                     </div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', lineHeight: 1.6, margin: 0 }}>
-                      Pagarás <strong style={{ color: '#2ecc71' }}>${total.toLocaleString('es-CO')}</strong> directamente al repartidor en el momento de la entrega.
-                      Asegúrate de tener el monto exacto disponible.
+                    <p className="checkout-payment-panel-note checkout-payment-panel-note--compact">
+                      Pagaras <strong className="checkout-payment-amount checkout-payment-amount--cash">${total.toLocaleString('es-CO')}</strong> directamente al repartidor en el momento de la entrega.
+                      Asegurate de tener el monto exacto disponible.
                     </p>
                   </div>
                 )}
               </div>
 
               {/* Mini resumen */}
-              <div className="checkout-mini-summary" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+              <div className="checkout-mini-summary checkout-mini-summary-box">
                 <div className="checkout-mini-summary-row">
                   <span className="checkout-mini-summary-label">{cart.length} producto(s)</span>
                   <span className="checkout-mini-summary-value">${subtotal.toLocaleString('es-CO')}</span>
@@ -435,7 +436,7 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="checkout-actions" style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
+              <div className="checkout-actions checkout-actions-row">
                 <button type="button" className="btn-outline" style={{ flex: 1 }} onClick={() => setStep(1)}>
                   ← Volver
                 </button>
