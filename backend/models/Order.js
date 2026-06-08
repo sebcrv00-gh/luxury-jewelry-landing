@@ -9,6 +9,7 @@ class OrderValidationError extends Error {
 }
 
 const SHIPPING_COST = 15000;
+const ALLOWED_PAYMENT_METHODS = ['efectivo', 'wompi'];
 
 const parseCartItemId = (itemId) => {
   const match = typeof itemId === 'string'
@@ -33,12 +34,17 @@ const Order = {
    * Crea una orden con sus items en una transacción.
    * Reduce el stock de los productos con ID de base de datos.
    */
-  async create(userId, shipping, items) {
+  async create(userId, shipping, items, paymentMethod = 'efectivo') {
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
       let shippingCost = SHIPPING_COST;
       let freeShippingApplied = false;
+
+      const normalizedPaymentMethod = String(paymentMethod || 'efectivo').trim().toLowerCase();
+      if (!ALLOWED_PAYMENT_METHODS.includes(normalizedPaymentMethod)) {
+        throw new OrderValidationError('El metodo de pago seleccionado no es valido.');
+      }
 
       const [userRows] = await conn.query(
         'SELECT id, primer_envio_gratis_usado FROM usuarios WHERE id = ? LIMIT 1 FOR UPDATE',
@@ -143,9 +149,9 @@ const Order = {
       const total = subtotal + shippingCost;
 
       const [orderResult] = await conn.query(
-        `INSERT INTO ordenes (usuario_id, total, costo_envio, nombre_envio, telefono_envio, direccion_envio, ciudad_envio, notas)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, total, shippingCost, shipping.nombre, shipping.telefono, shipping.direccion, shipping.ciudad, shipping.notas || null]
+        `INSERT INTO ordenes (usuario_id, total, costo_envio, metodo_pago, nombre_envio, telefono_envio, direccion_envio, ciudad_envio, notas)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, total, shippingCost, normalizedPaymentMethod, shipping.nombre, shipping.telefono, shipping.direccion, shipping.ciudad, shipping.notas || null]
       );
 
       const orderId = orderResult.insertId;
@@ -179,7 +185,7 @@ const Order = {
       }
 
       await conn.commit();
-      return { id: orderId, total, shippingCost, freeShippingApplied };
+      return { id: orderId, total, shippingCost, freeShippingApplied, metodo_pago: normalizedPaymentMethod };
     } catch (err) {
       await conn.rollback();
       throw err;

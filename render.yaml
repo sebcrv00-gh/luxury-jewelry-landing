@@ -35,6 +35,14 @@ envVarGroups:
         value: ""
       - key: FRONTEND_URL
         value: "https://luxury-jewelry-frontend.onrender.com"
+      - key: WOMPI_PUBLIC_KEY
+        value: ""
+      - key: WOMPI_INTEGRITY_SECRET
+        value: ""
+      - key: WOMPI_CURRENCY
+        value: "COP"
+      - key: WOMPI_REDIRECT_URL
+        value: "https://luxury-jewelry-frontend.onrender.com/checkout"
       - key: RECOVERY_CODE_TTL_MINUTES
         value: "10"
 
@@ -64,6 +72,10 @@ services:
     envVars:
       - key: VITE_API_URL
         value: /api
+      - key: VITE_WOMPI_PUBLIC_KEY
+        value: ""
+      - key: VITE_WOMPI_CURRENCY
+        value: "COP"
     routes:
       - type: rewrite
         source: /api/*

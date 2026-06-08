@@ -30,6 +30,12 @@ const STATUS_MAP = {
   entregado: { label: 'Entregado', color: '#2ecc71', icon: CheckCircle },
   cancelado: { label: 'Cancelado', color: '#e74c3c', icon: AlertCircle },
 };
+
+const getPaymentLabel = (paymentMethod) => {
+  if (paymentMethod === 'wompi') return 'Wompi';
+  if (paymentMethod === 'efectivo') return 'Efectivo';
+  return 'Pendiente';
+};
   
 const RETURN_REASONS = [
   'Producto equivocado',
@@ -154,7 +160,7 @@ export default function ClientDashboard() {
       order,
       customerName: user?.nombre || order.nombre_envio,
       customerEmail: user?.email,
-      paymentLabel: 'Pago coordinado',
+      paymentLabel: getPaymentLabel(order.metodo_pago),
       generatedBy: user?.nombre || 'Cliente'
     });
   };
@@ -313,6 +319,7 @@ export default function ClientDashboard() {
                 </div>
                 <div className="cd-order-meta">
                   <span>📅 {new Date(selectedOrder.creado_en).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' })}</span>
+                  <span className="cd-badge" style={{background:'rgba(201,168,76,0.14)',color:'var(--gold-light)',border:'1px solid rgba(201,168,76,0.28)'}}>{getPaymentLabel(selectedOrder.metodo_pago)}</span>
                   <span className="cd-badge" style={{background:`${statusInfo(selectedOrder.estado).color}20`,color:statusInfo(selectedOrder.estado).color,border:`1px solid ${statusInfo(selectedOrder.estado).color}40`}}>{statusInfo(selectedOrder.estado).label}</span>
                 </div>
                 <div className="cd-table-wrap" style={{marginTop:20}}>
@@ -338,7 +345,7 @@ export default function ClientDashboard() {
                 {orders.length === 0 ? <div className="cd-empty-state"><ShoppingBag size={48}/><p>No tienes pedidos aún</p></div> : (
                   <div className="cd-table-wrap">
                     <table className="cd-table">
-                      <thead><tr><th>#</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+                      <thead><tr><th>#</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Pago</th><th>Estado</th><th></th></tr></thead>
                       <tbody>
                         {orders.map(o => { const si = statusInfo(o.estado); return (
                           <tr key={o.id}>
@@ -346,6 +353,7 @@ export default function ClientDashboard() {
                             <td>{new Date(o.creado_en).toLocaleDateString('es-CO')}</td>
                             <td>{o.items?.length || 0} artículos</td>
                             <td style={{color:'var(--gold-light)'}}>${Number(o.total).toLocaleString('es-CO')}</td>
+                            <td>{getPaymentLabel(o.metodo_pago)}</td>
                             <td><span className="cd-badge" style={{background:`${si.color}20`,color:si.color,border:`1px solid ${si.color}40`}}><si.icon size={12}/>{si.label}</span></td>
                             <td><button className="cd-link-btn" onClick={() => setSelectedOrder(o)}><Eye size={14}/> Detalles</button></td>
                           </tr>

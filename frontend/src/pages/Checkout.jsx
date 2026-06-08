@@ -2,15 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
-import { CreditCard, Landmark, Smartphone, Banknote, ShieldCheck, Lock, FileDown } from 'lucide-react';
+import { Landmark, Banknote, ShieldCheck, Lock, FileDown } from 'lucide-react';
 import { downloadInvoicePdf } from '../utils/invoicePdf';
 import { POST_LOGIN_REDIRECT_KEY, readCart, clearCart } from '../utils/cartStorage';
 import './checkout-page.css';
 
 const PAYMENT_METHODS = [
   { id: 'efectivo', label: 'Efectivo', desc: 'Pago contra entrega', icon: Banknote, color: '#2ecc71' },
-  { id: 'tarjeta', label: 'Tarjeta Crédito / Débito', desc: 'Visa, Mastercard, Amex', icon: CreditCard, color: '#3498db' },
-  { id: 'nequi', label: 'Nequi', desc: 'Billetera digital', icon: Smartphone, color: '#e91e63' },
+  { id: 'wompi', label: 'Wompi', desc: 'Pasarela digital segura en COP', icon: Landmark, color: '#7c5cff' },
 ];
 
 export default function Checkout() {
@@ -28,9 +27,8 @@ export default function Checkout() {
 
   // Payment
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
-  const [cardData, setCardData] = useState({ numero: '', titular: '', expiracion: '', cvv: '' });
-  const [nequiData, setNequiData] = useState({ celular: '' });
   const currentPaymentMethod = PAYMENT_METHODS.find(m => m.id === paymentMethod) || PAYMENT_METHODS[0];
+  const wompiPublicKeyConfigured = Boolean(import.meta.env.VITE_WOMPI_PUBLIC_KEY);
   const handleDownloadInvoice = () => {
     if (!orderResult) return;
 
@@ -84,32 +82,9 @@ export default function Checkout() {
   const shippingFee = 15000;
   const total = subtotal + shippingFee;
 
-  // Card number formatting (xxxx xxxx xxxx xxxx)
-  const formatCardNumber = (val) => {
-    const nums = val.replace(/\D/g, '').slice(0, 16);
-    return nums.replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  // Expiration formatting (MM/YY)
-  const formatExpiration = (val) => {
-    const nums = val.replace(/\D/g, '').slice(0, 4);
-    if (nums.length > 2) return nums.slice(0, 2) + '/' + nums.slice(2);
-    return nums;
-  };
-
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
     setError('');
-
-    // Validate payment data
-    if (paymentMethod === 'tarjeta') {
-      if (cardData.numero.replace(/\s/g, '').length < 16) { setError('Número de tarjeta inválido'); return; }
-      if (!cardData.titular) { setError('Titular de la tarjeta requerido'); return; }
-      if (cardData.expiracion.length < 5) { setError('Fecha de expiración inválida'); return; }
-      if (cardData.cvv.length < 3) { setError('CVV inválido'); return; }
-    } else if (paymentMethod === 'nequi') {
-      if (nequiData.celular.replace(/\D/g, '').length < 10) { setError('Número de celular Nequi inválido'); return; }
-    }
 
     setSending(true);
     try {
@@ -357,53 +332,34 @@ export default function Checkout() {
                   ))}
                 </div>
 
-                {/* ── Formulario Tarjeta ── */}
-                {paymentMethod === 'tarjeta' && (
-                  <div className="payment-card-form checkout-payment-panel checkout-payment-panel--card">
+                {paymentMethod === 'wompi' && (
+                  <div className="checkout-payment-panel checkout-payment-panel--card">
                     <div className="checkout-payment-panel-head">
                       <div className="checkout-payment-panel-title">
-                        <CreditCard size={20} className="checkout-payment-panel-icon checkout-payment-panel-icon--card" />
-                        <span>Informacion de Tarjeta</span>
+                        <Landmark size={20} className="checkout-payment-panel-icon" />
+                        <span>Pago digital con Wompi</span>
                       </div>
-                      <span className="checkout-payment-panel-security"><Lock size={10}/> Cifrado SSL</span>
+                      <span className="checkout-payment-panel-security"><Lock size={10}/> Pasarela segura</span>
                     </div>
-                    <div className="form-group checkout-payment-field">
-                      <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">Numero de Tarjeta</label>
-                      <input className="checkout-card-number-input" type="text" value={cardData.numero} onChange={e => setCardData({...cardData, numero: formatCardNumber(e.target.value)})} placeholder="0000 0000 0000 0000" maxLength={19} />
-                    </div>
-                    <div className="form-group checkout-payment-field">
-                      <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">Titular de la Tarjeta</label>
-                      <input className="checkout-card-holder-input" type="text" value={cardData.titular} onChange={e => setCardData({...cardData, titular: e.target.value.toUpperCase()})} placeholder="NOMBRE COMO APARECE EN LA TARJETA" />
-                    </div>
-                    <div className="card-expiry-cvv-grid checkout-card-expiry-cvv-grid">
-                      <div className="form-group">
-                        <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">Expiracion</label>
-                        <input type="text" value={cardData.expiracion} onChange={e => setCardData({...cardData, expiracion: formatExpiration(e.target.value)})} placeholder="MM/YY" maxLength={5}/>
-                      </div>
-                      <div className="form-group">
-                        <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">CVV</label>
-                        <input type="password" value={cardData.cvv} onChange={e => setCardData({...cardData, cvv: e.target.value.replace(/\D/g, '').slice(0, 4)})} placeholder="•••" maxLength={4}/>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
-
-                {/* ── Formulario Nequi ── */}
-                {paymentMethod === 'nequi' && (
-                  <div className="payment-nequi-form checkout-payment-panel checkout-payment-panel--nequi">
-                    <div className="checkout-payment-panel-head">
-                      <div className="checkout-payment-panel-title">
-                        <Smartphone size={20} className="checkout-payment-panel-icon checkout-payment-panel-icon--nequi" />
-                        <span>Pago con Nequi</span>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="text-gold text-uppercase letter-spacing-lg checkout-payment-label">Numero de Celular Nequi</label>
-                      <input className="checkout-nequi-input" type="tel" value={nequiData.celular} onChange={e => setNequiData({celular: e.target.value.replace(/\D/g, '').slice(0, 10)})} placeholder="3XX XXX XXXX" maxLength={10} />
-                    </div>
                     <p className="checkout-payment-panel-note">
-                      Al confirmar, recibiras una notificacion push en tu app Nequi para autorizar el pago de <strong className="checkout-payment-amount checkout-payment-amount--nequi">${total.toLocaleString('es-CO')}</strong>.
+                      Seleccionas una pasarela confiable, moderna y alineada con una experiencia premium.
+                      Tu pedido quedará registrado con Wompi como método elegido por un total de <strong className="checkout-payment-amount" style={{ color: '#b8a2ff' }}>${total.toLocaleString('es-CO')}</strong>.
+                    </p>
+                    <div style={{ display: 'grid', gap: '10px', marginTop: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', padding: '12px 14px', borderRadius: '12px', background: 'rgba(124, 92, 255, 0.08)', border: '1px solid rgba(124, 92, 255, 0.18)' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Moneda</span>
+                        <strong style={{ color: '#d4c8ff' }}>{import.meta.env.VITE_WOMPI_CURRENCY || 'COP'}</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', padding: '12px 14px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Estado de configuración</span>
+                        <strong style={{ color: wompiPublicKeyConfigured ? '#7CFC98' : '#f5c96b' }}>
+                          {wompiPublicKeyConfigured ? 'Clave pública detectada' : 'Pendiente de credenciales'}
+                        </strong>
+                      </div>
+                    </div>
+                    <p className="checkout-payment-panel-note" style={{ marginTop: '14px' }}>
+                      Esta interfaz ya quedó preparada para operar con Wompi en Render. Cuando cargues las credenciales reales, el siguiente paso será conectar la creación del checkout seguro y la confirmación de transacción.
                     </p>
                   </div>
                 )}

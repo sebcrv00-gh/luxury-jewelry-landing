@@ -6,7 +6,7 @@ const orderController = {
   async create(req, res) {
     try {
       const userId = req.session.userId;
-      const { shipping, items } = req.body;
+      const { shipping, items, metodo_pago } = req.body;
 
       if (!shipping || !items || items.length === 0) {
         return res.status(400).json({ error: 'Datos de envío e items son obligatorios' });
@@ -15,13 +15,14 @@ const orderController = {
         return res.status(400).json({ error: 'Completa todos los campos de envío' });
       }
 
-      const order = await Order.create(userId, shipping, items);
+      const order = await Order.create(userId, shipping, items, metodo_pago);
       return res.json({
         ok: true,
         orderId: order.id,
         total: order.total,
         shippingCost: order.shippingCost,
-        freeShippingApplied: order.freeShippingApplied
+        freeShippingApplied: order.freeShippingApplied,
+        metodo_pago: order.metodo_pago
       });
     } catch (err) {
       console.error('Error al crear orden:', err);

@@ -12,6 +12,12 @@ const REPORT_PERIODS = [
   { key: 'all', label: 'Completo', description: 'Base historica integral de ventas' }
 ];
 
+const getPaymentLabel = (paymentMethod) => {
+  if (paymentMethod === 'wompi') return 'Wompi';
+  if (paymentMethod === 'efectivo') return 'Efectivo';
+  return 'Pendiente';
+};
+
 export default function OrderListAdmin({ refreshTrigger }) {
   const exportMenuRef = useRef(null);
   const [orders, setOrders] = useState([]);
@@ -79,7 +85,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
         },
         customerName: order.usuario_nombre,
         customerEmail: order.usuario_email,
-        paymentLabel: 'Pago coordinado',
+        paymentLabel: getPaymentLabel(order.metodo_pago),
         generatedBy: 'Panel administrativo'
       });
     } catch (err) {
@@ -255,6 +261,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
                 <th>Cliente</th>
                 <th>Ciudad Destino</th>
                 <th>Total (COP)</th>
+                <th>Pago</th>
                 <th>Estado</th>
                 <th>Gestión</th>
                 <th>Factura</th>
@@ -264,7 +271,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '80px 0' }}>
+                  <td colSpan="9" style={{ textAlign: 'center', padding: '80px 0' }}>
                     <PackageOpen size={48} className="text-muted" style={{ margin: '0 auto 16px', opacity: 0.5 }} />
                     <h4 className="text-gold-light" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Sin Pedidos Registrados</h4>
                   </td>
@@ -286,6 +293,11 @@ export default function OrderListAdmin({ refreshTrigger }) {
                     <td>{order.ciudad_envio}</td>
                     <td style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
                       ${parseFloat(order.total).toLocaleString('es-CO')}
+                    </td>
+                    <td>
+                      <span className="admin-badge-pill info">
+                        {getPaymentLabel(order.metodo_pago)}
+                      </span>
                     </td>
                     <td>
                       <span className={`admin-badge-pill ${getStatusClass(order.estado)}`}>

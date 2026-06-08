@@ -144,6 +144,7 @@ async function initDB() {
         usuario_id INT(11) NOT NULL,
         total DECIMAL(12,2) NOT NULL,
         costo_envio DECIMAL(12,2) DEFAULT 15000.00,
+        metodo_pago VARCHAR(50) DEFAULT 'efectivo',
         estado VARCHAR(50) DEFAULT 'pendiente',
         nombre_envio VARCHAR(255) NOT NULL,
         telefono_envio VARCHAR(50) NOT NULL,
@@ -163,6 +164,15 @@ async function initDB() {
       }
     } catch (err) {
       console.warn('⚠️ No se pudo verificar/agregar la columna costo_envio:', err.message);
+    }
+
+    try {
+      const [paymentMethodColumn] = await conn.query("SHOW COLUMNS FROM ordenes LIKE 'metodo_pago'");
+      if (paymentMethodColumn.length === 0) {
+        await conn.query("ALTER TABLE ordenes ADD COLUMN metodo_pago VARCHAR(50) DEFAULT 'efectivo' AFTER costo_envio");
+      }
+    } catch (err) {
+      console.warn('⚠️ No se pudo verificar/agregar la columna metodo_pago:', err.message);
     }
 
     await conn.query(`
