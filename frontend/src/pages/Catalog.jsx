@@ -503,7 +503,7 @@ export default function Catalog() {
                   </span>
                   <span className="catalog-spotlight-btn-copy">
                     <strong>Productos mas destacados</strong>
-                    <small>{showcaseCountMap[SHOWCASE_FILTERS.featured]} piezas recomendadas</small>
+                    <small>{showcaseCountMap[SHOWCASE_FILTERS.featured]} mas comprados</small>
                   </span>
                 </button>
                 <button

@@ -107,9 +107,16 @@ const Product = {
          p.categoria,
          p.imagen_url,
          p.creado_en,
-         COALESCE(SUM(oi.cantidad), 0) AS total_vendido
+         COALESCE(SUM(
+           CASE
+             WHEN o.metodo_pago = 'wompi' AND o.estado_pago = 'aprobado' THEN oi.cantidad
+             WHEN o.metodo_pago = 'efectivo' AND o.estado_pago = 'aprobado' AND o.estado = 'entregado' THEN oi.cantidad
+             ELSE 0
+           END
+         ), 0) AS total_vendido
        FROM productos p
        LEFT JOIN orden_items oi ON oi.producto_id = p.id
+       LEFT JOIN ordenes o ON o.id = oi.orden_id
        WHERE p.stock > 0
        GROUP BY p.id, p.sku, p.nombre, p.descripcion, p.precio, p.stock, p.categoria, p.imagen_url, p.creado_en
        ORDER BY total_vendido DESC, p.creado_en DESC
