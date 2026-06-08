@@ -5,6 +5,7 @@ import { downloadInvoicePdf } from '../utils/invoicePdf';
 import { exportSalesReportToExcel } from '../utils/adminExcelExport';
 
 const ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
+const CASH_PAYMENT_STATUSES = ['pendiente', 'aprobado'];
 const REPORT_PERIODS = [
   { key: 'daily', label: 'Diario', description: 'Base operativa completa del dia' },
   { key: 'weekly', label: 'Semanal', description: 'Base completa de los ultimos 7 dias' },
@@ -18,7 +19,9 @@ const getPaymentLabel = (paymentMethod) => {
   return 'Pendiente';
 };
 
-const getPaymentStatusLabel = (paymentStatus) => {
+const getPaymentStatusLabel = (paymentStatus, paymentMethod) => {
+  if (paymentMethod === 'efectivo' && paymentStatus === 'aprobado') return 'Cobrado';
+  if (paymentMethod === 'efectivo' && paymentStatus === 'pendiente') return 'Pendiente de cobro';
   if (paymentStatus === 'aprobado') return 'Aprobado';
   if (paymentStatus === 'rechazado') return 'Rechazado';
   if (paymentStatus === 'error') return 'Error';
@@ -40,6 +43,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [updatingPaymentOrderId, setUpdatingPaymentOrderId] = useState(null);
   const [downloadingInvoiceId, setDownloadingInvoiceId] = useState(null);
   const [exportingPeriod, setExportingPeriod] = useState('');
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -85,6 +89,22 @@ export default function OrderListAdmin({ refreshTrigger }) {
       setStatusFeedback(err.response?.data?.error || 'No fue posible actualizar el estado del pedido.');
     } finally {
       setUpdatingOrderId(null);
+    }
+  };
+
+  const updateCashPaymentStatus = async (orderId, nextStatus) => {
+    setUpdatingPaymentOrderId(orderId);
+    setStatusFeedback('');
+    try {
+      const { data } = await api.put(`/orders/${orderId}/payment-status`, { estado_pago: nextStatus });
+      setOrders(prev => prev.map(order => (
+        order.id === orderId ? { ...order, ...data.order } : order
+      )));
+      setStatusFeedback(`Pago del pedido #${String(orderId).padStart(5, '0')} actualizado a ${nextStatus === 'aprobado' ? 'cobrado' : 'pendiente'}.`);
+    } catch (err) {
+      setStatusFeedback(err.response?.data?.error || 'No fue posible actualizar el estado de cobro.');
+    } finally {
+      setUpdatingPaymentOrderId(null);
     }
   };
 
@@ -149,7 +169,18 @@ export default function OrderListAdmin({ refreshTrigger }) {
 
   const pendingOrders = orders.filter(order => order.estado === 'pendiente').length;
   const deliveredOrders = orders.filter(order => order.estado === 'entregado').length;
-  const revenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const countsAsProcessedRevenue = (order) => {
+    if (order.metodo_pago === 'wompi') {
+      return order.estado_pago === 'aprobado';
+    }
+    if (order.metodo_pago === 'efectivo') {
+      return order.estado_pago === 'aprobado' && order.estado === 'entregado';
+    }
+    return false;
+  };
+  const revenue = orders
+    .filter(countsAsProcessedRevenue)
+    .reduce((sum, order) => sum + Number(order.total || 0), 0);
   const latestOrderDate = orders[0]?.creado_en
     ? new Date(orders[0].creado_en).toLocaleDateString('es-CO')
     : 'Sin registros';
@@ -236,7 +267,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
             <span className="admin-info-card-icon"><CircleDollarSign size={18} /></span>
           </div>
           <span className="admin-info-card-value">${revenue.toLocaleString('es-CO')}</span>
-          <span className="admin-info-card-meta">Facturación agregada del historial</span>
+          <span className="admin-info-card-meta">Solo ingresos realmente cobrados y validados</span>
         </div>
         <div className="admin-info-card">
           <div className="admin-info-card-top">
@@ -318,8 +349,33 @@ export default function OrderListAdmin({ refreshTrigger }) {
                     </td>
                     <td>
                       <span className={`admin-badge-pill ${getPaymentStatusClass(order.estado_pago)}`}>
-                        {getPaymentStatusLabel(order.estado_pago)}
+                        {getPaymentStatusLabel(order.estado_pago, order.metodo_pago)}
                       </span>
+                      {order.metodo_pago === 'efectivo' && (
+                        <select
+                          value={order.estado_pago === 'aprobado' ? 'aprobado' : 'pendiente'}
+                          onChange={(e) => updateCashPaymentStatus(order.id, e.target.value)}
+                          disabled={updatingPaymentOrderId === order.id}
+                          style={{
+                            width: '100%',
+                            minWidth: '150px',
+                            marginTop: '10px',
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(201, 168, 76, 0.18)',
+                            borderRadius: '10px',
+                            color: 'var(--text-primary)',
+                            padding: '10px 12px',
+                            outline: 'none',
+                            cursor: updatingPaymentOrderId === order.id ? 'wait' : 'pointer'
+                          }}
+                        >
+                          {CASH_PAYMENT_STATUSES.map((status) => (
+                            <option key={status} value={status} style={{ color: '#111' }}>
+                              {status === 'aprobado' ? 'Cobrado' : 'Pendiente de cobro'}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </td>
                     <td>
                       <span className={`admin-badge-pill ${getStatusClass(order.estado)}`}>

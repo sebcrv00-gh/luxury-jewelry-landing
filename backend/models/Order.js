@@ -330,6 +330,26 @@ const Order = {
     return orders[0] || null;
   },
 
+  async updatePaymentStatus(orderId, estadoPago) {
+    await pool.query(
+      `UPDATE ordenes
+       SET estado_pago = ?, pago_actualizado_en = NOW()
+       WHERE id = ?`,
+      [estadoPago, orderId]
+    );
+
+    const [orders] = await pool.query(
+      `SELECT o.*, u.nombre as usuario_nombre, u.email as usuario_email
+       FROM ordenes o
+       JOIN usuarios u ON o.usuario_id = u.id
+       WHERE o.id = ?
+       LIMIT 1`,
+      [orderId]
+    );
+
+    return orders[0] || null;
+  },
+
   async updatePaymentFields(orderId, fields) {
     const updates = [];
     const values = [];

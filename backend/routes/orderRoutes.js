@@ -9,6 +9,7 @@ router.get('/mine/detailed', isAuthenticated, orderController.getMyOrdersDetaile
 router.get('/admin/all', isAuthenticated, isAdmin, orderController.getAll);
 router.get('/admin/detailed', isAuthenticated, isAdmin, orderController.getAllDetailed);
 router.put('/:id/status', isAuthenticated, isAdmin, orderController.updateStatus);
+router.put('/:id/payment-status', isAuthenticated, isAdmin, orderController.updatePaymentStatus);
 router.get('/:id', isAuthenticated, orderController.getById);
 
 module.exports = router;

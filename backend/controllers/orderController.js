@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const ALLOWED_ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
+const ALLOWED_MANUAL_PAYMENT_STATUSES = ['pendiente', 'aprobado'];
 
 const orderController = {
   // POST /api/orders — Crear una nueva orden
@@ -111,6 +112,31 @@ const orderController = {
       return res.json({ ok: true, order: updatedOrder });
     } catch (err) {
       console.error('Error al actualizar estado de la orden:', err);
+      return res.status(500).json({ error: 'Error del servidor' });
+    }
+  },
+
+  async updatePaymentStatus(req, res) {
+    try {
+      const { estado_pago } = req.body;
+
+      if (!estado_pago || !ALLOWED_MANUAL_PAYMENT_STATUSES.includes(estado_pago)) {
+        return res.status(400).json({ error: 'Estado de pago no valido.' });
+      }
+
+      const currentOrder = await Order.getById(req.params.id);
+      if (!currentOrder) {
+        return res.status(404).json({ error: 'Orden no encontrada' });
+      }
+
+      if (currentOrder.metodo_pago !== 'efectivo') {
+        return res.status(400).json({ error: 'Solo los pedidos en efectivo se pueden marcar manualmente como pagados.' });
+      }
+
+      const updatedOrder = await Order.updatePaymentStatus(req.params.id, estado_pago);
+      return res.json({ ok: true, order: updatedOrder });
+    } catch (err) {
+      console.error('Error al actualizar estado de pago de la orden:', err);
       return res.status(500).json({ error: 'Error del servidor' });
     }
   }
