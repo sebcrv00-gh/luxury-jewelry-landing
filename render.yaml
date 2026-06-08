@@ -35,9 +35,15 @@ envVarGroups:
         value: ""
       - key: FRONTEND_URL
         value: "https://luxury-jewelry-frontend.onrender.com"
+      - key: WOMPI_ENVIRONMENT
+        value: "sandbox"
       - key: WOMPI_PUBLIC_KEY
         value: ""
+      - key: WOMPI_PRIVATE_KEY
+        value: ""
       - key: WOMPI_INTEGRITY_SECRET
+        value: ""
+      - key: WOMPI_EVENTS_SECRET
         value: ""
       - key: WOMPI_CURRENCY
         value: "COP"
@@ -74,6 +80,8 @@ services:
         value: /api
       - key: VITE_WOMPI_PUBLIC_KEY
         value: ""
+      - key: VITE_WOMPI_ENVIRONMENT
+        value: "sandbox"
       - key: VITE_WOMPI_CURRENCY
         value: "COP"
     routes:
