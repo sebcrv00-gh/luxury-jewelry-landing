@@ -61,6 +61,18 @@ const ADMIN_NAV_ITEMS = [
   { key: 'profile', icon: Users, label: 'Perfil' }
 ];
 
+function countsAsProcessedRevenue(order) {
+  if (order?.metodo_pago === 'wompi') {
+    return order?.estado_pago === 'aprobado';
+  }
+
+  if (order?.metodo_pago === 'efectivo') {
+    return order?.estado_pago === 'aprobado' && order?.estado === 'entregado';
+  }
+
+  return false;
+}
+
 export default function AdminDashboard() {
   const { isLoggedIn, isAdmin, loading, logout, user } = useAuth();
   const fotoSrc = user?.foto
@@ -107,7 +119,9 @@ export default function AdminDashboard() {
         categories: [...new Set(products.map(product => product.categoria).filter(Boolean))].length,
         orders: orders.length,
         pendingOrders: orders.filter(order => order.estado === 'pendiente').length,
-        revenue: orders.reduce((sum, order) => sum + Number(order.total || 0), 0),
+        revenue: orders
+          .filter(countsAsProcessedRevenue)
+          .reduce((sum, order) => sum + Number(order.total || 0), 0),
         clients: clients.filter(client => client.rol !== 'admin').length,
         vipClients: clients.filter(client => client.rol === 'vip').length,
         admins: clients.filter(client => client.rol === 'admin').length,
@@ -135,7 +149,7 @@ export default function AdminDashboard() {
     if (!loading && isLoggedIn && isAdmin) {
       loadOverview();
     }
-  }, [loading, isLoggedIn, isAdmin]);
+  }, [loading, isLoggedIn, isAdmin, activeTab, refreshTrigger]);
 
   useEffect(() => {
     const handleResize = () => {
