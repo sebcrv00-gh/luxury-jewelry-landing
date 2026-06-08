@@ -246,6 +246,18 @@
   border: 1px solid var(--border-subtle);
 }
 
+.badge-premium.badge-success {
+  background: rgba(46, 204, 113, 0.14);
+  color: #7cfcb2;
+  border: 1px solid rgba(46, 204, 113, 0.28);
+}
+
+.badge-premium.badge-danger {
+  background: rgba(231, 76, 60, 0.14);
+  color: #ff9b8f;
+  border: 1px solid rgba(231, 76, 60, 0.28);
+}
+
 @keyframes checkoutFadeInPanel {
   from {
     opacity: 0;

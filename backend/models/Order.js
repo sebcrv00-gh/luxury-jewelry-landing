@@ -10,6 +10,15 @@ class OrderValidationError extends Error {
 
 const SHIPPING_COST = 15000;
 const ALLOWED_PAYMENT_METHODS = ['efectivo', 'wompi'];
+const PAYMENT_UPDATE_FIELDS = new Set([
+  'estado_pago',
+  'wompi_reference',
+  'wompi_transaction_id',
+  'wompi_checkout_url',
+  'wompi_status',
+  'wompi_payload',
+  'pago_actualizado_en'
+]);
 
 const parseCartItemId = (itemId) => {
   const match = typeof itemId === 'string'
@@ -45,6 +54,7 @@ const Order = {
       if (!ALLOWED_PAYMENT_METHODS.includes(normalizedPaymentMethod)) {
         throw new OrderValidationError('El metodo de pago seleccionado no es valido.');
       }
+      const initialPaymentStatus = normalizedPaymentMethod === 'wompi' ? 'pendiente_checkout' : 'pendiente';
 
       const [userRows] = await conn.query(
         'SELECT id, primer_envio_gratis_usado FROM usuarios WHERE id = ? LIMIT 1 FOR UPDATE',
@@ -149,9 +159,9 @@ const Order = {
       const total = subtotal + shippingCost;
 
       const [orderResult] = await conn.query(
-        `INSERT INTO ordenes (usuario_id, total, costo_envio, metodo_pago, nombre_envio, telefono_envio, direccion_envio, ciudad_envio, notas)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, total, shippingCost, normalizedPaymentMethod, shipping.nombre, shipping.telefono, shipping.direccion, shipping.ciudad, shipping.notas || null]
+        `INSERT INTO ordenes (usuario_id, total, costo_envio, metodo_pago, estado_pago, nombre_envio, telefono_envio, direccion_envio, ciudad_envio, notas)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, total, shippingCost, normalizedPaymentMethod, initialPaymentStatus, shipping.nombre, shipping.telefono, shipping.direccion, shipping.ciudad, shipping.notas || null]
       );
 
       const orderId = orderResult.insertId;
@@ -185,7 +195,14 @@ const Order = {
       }
 
       await conn.commit();
-      return { id: orderId, total, shippingCost, freeShippingApplied, metodo_pago: normalizedPaymentMethod };
+      return {
+        id: orderId,
+        total,
+        shippingCost,
+        freeShippingApplied,
+        metodo_pago: normalizedPaymentMethod,
+        estado_pago: initialPaymentStatus
+      };
     } catch (err) {
       await conn.rollback();
       throw err;
@@ -223,6 +240,30 @@ const Order = {
 
     const [items] = await pool.query('SELECT * FROM orden_items WHERE orden_id = ?', [orderId]);
     return { ...orders[0], items };
+  },
+
+  async getByIdWithUser(orderId) {
+    const [orders] = await pool.query(
+      `SELECT o.*, u.nombre AS usuario_nombre, u.email AS usuario_email, u.telefono AS usuario_telefono
+       FROM ordenes o
+       JOIN usuarios u ON o.usuario_id = u.id
+       WHERE o.id = ?
+       LIMIT 1`,
+      [orderId]
+    );
+    return orders[0] || null;
+  },
+
+  async getByWompiReference(reference) {
+    const [orders] = await pool.query(
+      `SELECT o.*, u.nombre AS usuario_nombre, u.email AS usuario_email, u.telefono AS usuario_telefono
+       FROM ordenes o
+       JOIN usuarios u ON o.usuario_id = u.id
+       WHERE o.wompi_reference = ?
+       LIMIT 1`,
+      [reference]
+    );
+    return orders[0] || null;
   },
 
   /** Obtiene todas las órdenes (para admin) */
@@ -287,6 +328,33 @@ const Order = {
     );
 
     return orders[0] || null;
+  },
+
+  async updatePaymentFields(orderId, fields) {
+    const updates = [];
+    const values = [];
+
+    Object.entries(fields || {}).forEach(([key, value]) => {
+      if (!PAYMENT_UPDATE_FIELDS.has(key) || typeof value === 'undefined') {
+        return;
+      }
+      updates.push(`${key} = ?`);
+      values.push(value);
+    });
+
+    if (updates.length === 0) {
+      return this.getById(orderId);
+    }
+
+    values.push(orderId);
+    await pool.query(
+      `UPDATE ordenes
+       SET ${updates.join(', ')}
+       WHERE id = ?`,
+      values
+    );
+
+    return this.getById(orderId);
   }
 };
 

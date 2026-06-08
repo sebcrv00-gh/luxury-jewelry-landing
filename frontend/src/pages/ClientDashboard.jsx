@@ -36,6 +36,16 @@ const getPaymentLabel = (paymentMethod) => {
   if (paymentMethod === 'efectivo') return 'Efectivo';
   return 'Pendiente';
 };
+
+const getPaymentStatus = (paymentStatus) => {
+  if (paymentStatus === 'aprobado') return { label: 'Pago aprobado', color: '#2ecc71' };
+  if (paymentStatus === 'rechazado') return { label: 'Pago rechazado', color: '#e74c3c' };
+  if (paymentStatus === 'error') return { label: 'Error de pago', color: '#ff7b72' };
+  if (paymentStatus === 'pendiente_confirmacion') return { label: 'Pendiente confirmacion', color: '#f5c96b' };
+  if (paymentStatus === 'checkout_generado') return { label: 'Checkout generado', color: '#b8a2ff' };
+  if (paymentStatus === 'pendiente_checkout') return { label: 'Pendiente checkout', color: '#f5c96b' };
+  return { label: 'Pendiente', color: '#f5c96b' };
+};
   
 const RETURN_REASONS = [
   'Producto equivocado',
@@ -320,6 +330,7 @@ export default function ClientDashboard() {
                 <div className="cd-order-meta">
                   <span>📅 {new Date(selectedOrder.creado_en).toLocaleDateString('es-CO', { year:'numeric', month:'long', day:'numeric' })}</span>
                   <span className="cd-badge" style={{background:'rgba(201,168,76,0.14)',color:'var(--gold-light)',border:'1px solid rgba(201,168,76,0.28)'}}>{getPaymentLabel(selectedOrder.metodo_pago)}</span>
+                  <span className="cd-badge" style={{background:`${getPaymentStatus(selectedOrder.estado_pago).color}20`,color:getPaymentStatus(selectedOrder.estado_pago).color,border:`1px solid ${getPaymentStatus(selectedOrder.estado_pago).color}40`}}>{getPaymentStatus(selectedOrder.estado_pago).label}</span>
                   <span className="cd-badge" style={{background:`${statusInfo(selectedOrder.estado).color}20`,color:statusInfo(selectedOrder.estado).color,border:`1px solid ${statusInfo(selectedOrder.estado).color}40`}}>{statusInfo(selectedOrder.estado).label}</span>
                 </div>
                 <div className="cd-table-wrap" style={{marginTop:20}}>
@@ -345,7 +356,7 @@ export default function ClientDashboard() {
                 {orders.length === 0 ? <div className="cd-empty-state"><ShoppingBag size={48}/><p>No tienes pedidos aún</p></div> : (
                   <div className="cd-table-wrap">
                     <table className="cd-table">
-                      <thead><tr><th>#</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Pago</th><th>Estado</th><th></th></tr></thead>
+                      <thead><tr><th>#</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Pago</th><th>Estado pago</th><th>Estado</th><th></th></tr></thead>
                       <tbody>
                         {orders.map(o => { const si = statusInfo(o.estado); return (
                           <tr key={o.id}>
@@ -354,6 +365,7 @@ export default function ClientDashboard() {
                             <td>{o.items?.length || 0} artículos</td>
                             <td style={{color:'var(--gold-light)'}}>${Number(o.total).toLocaleString('es-CO')}</td>
                             <td>{getPaymentLabel(o.metodo_pago)}</td>
+                            <td><span className="cd-badge" style={{background:`${getPaymentStatus(o.estado_pago).color}20`,color:getPaymentStatus(o.estado_pago).color,border:`1px solid ${getPaymentStatus(o.estado_pago).color}40`}}>{getPaymentStatus(o.estado_pago).label}</span></td>
                             <td><span className="cd-badge" style={{background:`${si.color}20`,color:si.color,border:`1px solid ${si.color}40`}}><si.icon size={12}/>{si.label}</span></td>
                             <td><button className="cd-link-btn" onClick={() => setSelectedOrder(o)}><Eye size={14}/> Detalles</button></td>
                           </tr>

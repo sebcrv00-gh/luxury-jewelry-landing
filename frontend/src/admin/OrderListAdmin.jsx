@@ -18,6 +18,22 @@ const getPaymentLabel = (paymentMethod) => {
   return 'Pendiente';
 };
 
+const getPaymentStatusLabel = (paymentStatus) => {
+  if (paymentStatus === 'aprobado') return 'Aprobado';
+  if (paymentStatus === 'rechazado') return 'Rechazado';
+  if (paymentStatus === 'error') return 'Error';
+  if (paymentStatus === 'pendiente_confirmacion') return 'Pendiente confirmacion';
+  if (paymentStatus === 'checkout_generado') return 'Checkout generado';
+  if (paymentStatus === 'pendiente_checkout') return 'Pendiente checkout';
+  return 'Pendiente';
+};
+
+const getPaymentStatusClass = (paymentStatus) => {
+  if (paymentStatus === 'aprobado') return 'success';
+  if (paymentStatus === 'rechazado' || paymentStatus === 'error') return 'danger';
+  return 'pending';
+};
+
 export default function OrderListAdmin({ refreshTrigger }) {
   const exportMenuRef = useRef(null);
   const [orders, setOrders] = useState([]);
@@ -262,6 +278,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
                 <th>Ciudad Destino</th>
                 <th>Total (COP)</th>
                 <th>Pago</th>
+                <th>Estado pago</th>
                 <th>Estado</th>
                 <th>Gestión</th>
                 <th>Factura</th>
@@ -271,7 +288,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ textAlign: 'center', padding: '80px 0' }}>
+                  <td colSpan="10" style={{ textAlign: 'center', padding: '80px 0' }}>
                     <PackageOpen size={48} className="text-muted" style={{ margin: '0 auto 16px', opacity: 0.5 }} />
                     <h4 className="text-gold-light" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Sin Pedidos Registrados</h4>
                   </td>
@@ -297,6 +314,11 @@ export default function OrderListAdmin({ refreshTrigger }) {
                     <td>
                       <span className="admin-badge-pill info">
                         {getPaymentLabel(order.metodo_pago)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`admin-badge-pill ${getPaymentStatusClass(order.estado_pago)}`}>
+                        {getPaymentStatusLabel(order.estado_pago)}
                       </span>
                     </td>
                     <td>

@@ -145,6 +145,13 @@ async function initDB() {
         total DECIMAL(12,2) NOT NULL,
         costo_envio DECIMAL(12,2) DEFAULT 15000.00,
         metodo_pago VARCHAR(50) DEFAULT 'efectivo',
+        estado_pago VARCHAR(50) DEFAULT 'pendiente',
+        wompi_reference VARCHAR(120) DEFAULT NULL,
+        wompi_transaction_id VARCHAR(120) DEFAULT NULL,
+        wompi_checkout_url TEXT DEFAULT NULL,
+        wompi_status VARCHAR(50) DEFAULT NULL,
+        wompi_payload LONGTEXT DEFAULT NULL,
+        pago_actualizado_en DATETIME DEFAULT NULL,
         estado VARCHAR(50) DEFAULT 'pendiente',
         nombre_envio VARCHAR(255) NOT NULL,
         telefono_envio VARCHAR(50) NOT NULL,
@@ -173,6 +180,27 @@ async function initDB() {
       }
     } catch (err) {
       console.warn('⚠️ No se pudo verificar/agregar la columna metodo_pago:', err.message);
+    }
+
+    const missingOrderColumns = [
+      { name: 'estado_pago', sql: "ALTER TABLE ordenes ADD COLUMN estado_pago VARCHAR(50) DEFAULT 'pendiente' AFTER metodo_pago" },
+      { name: 'wompi_reference', sql: "ALTER TABLE ordenes ADD COLUMN wompi_reference VARCHAR(120) DEFAULT NULL AFTER estado_pago" },
+      { name: 'wompi_transaction_id', sql: "ALTER TABLE ordenes ADD COLUMN wompi_transaction_id VARCHAR(120) DEFAULT NULL AFTER wompi_reference" },
+      { name: 'wompi_checkout_url', sql: "ALTER TABLE ordenes ADD COLUMN wompi_checkout_url TEXT DEFAULT NULL AFTER wompi_transaction_id" },
+      { name: 'wompi_status', sql: "ALTER TABLE ordenes ADD COLUMN wompi_status VARCHAR(50) DEFAULT NULL AFTER wompi_checkout_url" },
+      { name: 'wompi_payload', sql: "ALTER TABLE ordenes ADD COLUMN wompi_payload LONGTEXT DEFAULT NULL AFTER wompi_status" },
+      { name: 'pago_actualizado_en', sql: "ALTER TABLE ordenes ADD COLUMN pago_actualizado_en DATETIME DEFAULT NULL AFTER wompi_payload" }
+    ];
+
+    for (const column of missingOrderColumns) {
+      try {
+        const [columnRows] = await conn.query(`SHOW COLUMNS FROM ordenes LIKE '${column.name}'`);
+        if (columnRows.length === 0) {
+          await conn.query(column.sql);
+        }
+      } catch (err) {
+        console.warn(`⚠️ No se pudo verificar/agregar la columna ${column.name}:`, err.message);
+      }
     }
 
     await conn.query(`

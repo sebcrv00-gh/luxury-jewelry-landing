@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { Landmark, Banknote, ShieldCheck, Lock, FileDown } from 'lucide-react';
@@ -12,14 +12,35 @@ const PAYMENT_METHODS = [
   { id: 'wompi', label: 'Wompi', desc: 'Pasarela digital segura en COP', icon: Landmark, color: '#7c5cff' },
 ];
 
+const PAYMENT_STATUS_META = {
+  pendiente: { label: 'Pendiente', tone: 'badge-gold' },
+  pendiente_checkout: { label: 'Pendiente de checkout', tone: 'badge-gold' },
+  checkout_generado: { label: 'Checkout generado', tone: 'badge-gold' },
+  pendiente_confirmacion: { label: 'Pendiente confirmacion', tone: 'badge-gold' },
+  aprobado: { label: 'Pago aprobado', tone: 'badge-success' },
+  rechazado: { label: 'Pago rechazado', tone: 'badge-danger' },
+  error: { label: 'Error en pago', tone: 'badge-danger' }
+};
+
+function getPaymentStatusMeta(status) {
+  return PAYMENT_STATUS_META[status] || { label: 'Pendiente', tone: 'badge-gold' };
+}
+
 export default function Checkout() {
   const { user, isLoggedIn, openAuthModal, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isWompiReturn = searchParams.get('payment_return') === 'wompi';
+  const wompiTransactionId = searchParams.get('id') || '';
+  const wompiOrderId = searchParams.get('order') || '';
   const [cart, setCart] = useState([]);
   const [step, setStep] = useState(1);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [orderResult, setOrderResult] = useState(null);
+  const [returnLoading, setReturnLoading] = useState(false);
+  const [returnPayment, setReturnPayment] = useState(null);
 
   const [shipping, setShipping] = useState({
     nombre: '', telefono: '', direccion: '', ciudad: '', notas: ''
@@ -64,6 +85,7 @@ export default function Checkout() {
   const cartUserId = isLoggedIn ? user?.id : null;
 
   useEffect(() => {
+    if (isWompiReturn) return;
     const saved = readCart(cartUserId);
     if (saved.length === 0) { navigate('/carrito'); return; }
     setCart(saved);
@@ -76,7 +98,38 @@ export default function Checkout() {
         direccion: user.direccion || ''
       }));
     }
-  }, [cartUserId, navigate, user]);
+  }, [cartUserId, isWompiReturn, navigate, user]);
+
+  useEffect(() => {
+    if (!isWompiReturn) return;
+    if (!wompiOrderId || !wompiTransactionId) {
+      setError('La respuesta de Wompi no trajo la informacion suficiente para validar el pago.');
+      return;
+    }
+
+    let cancelled = false;
+    setReturnLoading(true);
+    setError('');
+
+    api.get(`/payments/wompi/orders/${wompiOrderId}/status`, {
+      params: { id: wompiTransactionId }
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setReturnPayment(res.data?.payment || null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.response?.data?.error || 'No fue posible verificar el pago con Wompi.');
+      })
+      .finally(() => {
+        if (!cancelled) setReturnLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isWompiReturn, wompiOrderId, wompiTransactionId]);
 
   const subtotal = cart.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
   const shippingFee = 15000;
@@ -96,6 +149,14 @@ export default function Checkout() {
       if (res.data?.freeShippingApplied) {
         try { await refreshUser(); } catch {}
       }
+
+      if (paymentMethod === 'wompi') {
+        const checkoutRes = await api.post(`/payments/wompi/checkout/${res.data.orderId}`);
+        clearCart(cartUserId);
+        window.location.assign(checkoutRes.data.checkoutUrl);
+        return;
+      }
+
       setOrderResult({ ...res.data, metodo_pago: paymentMethod });
       clearCart(cartUserId);
       setStep(3);
@@ -105,6 +166,81 @@ export default function Checkout() {
       setSending(false);
     }
   };
+
+  if (isWompiReturn) {
+    const paymentMeta = getPaymentStatusMeta(returnPayment?.estado_pago);
+    const wompiMethod = PAYMENT_METHODS.find((method) => method.id === 'wompi');
+
+    return (
+      <div className="checkout-page">
+        <div className="checkout-box confirmation-box">
+          <div className="confirmation-icon">✦</div>
+          <h2>Resultado de tu pago con Wompi</h2>
+          <p className="text-muted" style={{ marginBottom: '24px', fontSize: '0.95rem' }}>
+            Estamos mostrando el estado real consultado en Wompi para tu orden.
+          </p>
+
+          {returnLoading && (
+            <p className="text-muted" style={{ marginBottom: '24px' }}>
+              Validando tu transaccion...
+            </p>
+          )}
+
+          {error && !returnLoading && (
+            <div className="auth-alert auth-alert-error" style={{ marginTop: '8px', marginBottom: '20px' }}>
+              <span>⚠</span> {error}
+            </div>
+          )}
+
+          {returnPayment && !returnLoading && (
+            <>
+              <div className="confirmation-details">
+                <div className="confirmation-row">
+                  <span className="text-muted">N° de Orden</span>
+                  <span className="text-gold" style={{ fontSize: '1.4rem', fontWeight: 700 }}>
+                    #{String(returnPayment.orderId).padStart(5, '0')}
+                  </span>
+                </div>
+                <div className="confirmation-row">
+                  <span className="text-muted">Total</span>
+                  <span className="text-gold-light" style={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                    ${Number(returnPayment.total || 0).toLocaleString('es-CO')}
+                  </span>
+                </div>
+                <div className="confirmation-row">
+                  <span className="text-muted">Metodo</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: wompiMethod.color, fontWeight: 600 }}>
+                    <wompiMethod.icon size={16} /> {wompiMethod.label}
+                  </span>
+                </div>
+                <div className="confirmation-row">
+                  <span className="text-muted">Estado de pago</span>
+                  <span className={`badge-premium ${paymentMeta.tone}`}>{paymentMeta.label}</span>
+                </div>
+                {returnPayment.transaction?.id && (
+                  <div className="confirmation-row">
+                    <span className="text-muted">Transaccion</span>
+                    <span className="text-gold-light">{returnPayment.transaction.id}</span>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-muted" style={{ margin: '28px 0', fontSize: '0.85rem', lineHeight: 1.7 }}>
+                {returnPayment.estado_pago === 'aprobado'
+                  ? 'Tu pago fue aprobado y la orden quedo lista para gestion interna.'
+                  : 'Si el estado aun no es final, seguiremos sincronizando el pago cuando Wompi envie el webhook al backend.'}
+              </p>
+            </>
+          )}
+
+          <div className="checkout-confirmation-actions">
+            <Link to="/catalogo"><button className="btn-primary"><span>Seguir Comprando</span></button></Link>
+            <Link to="/mi-cuenta/pedidos"><button className="btn-outline">Mis Órdenes</button></Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return (
@@ -148,6 +284,7 @@ export default function Checkout() {
   // ── Paso 3: Confirmación ──
   if (step === 3 && orderResult) {
     const pm = PAYMENT_METHODS.find(m => m.id === orderResult.metodo_pago) || PAYMENT_METHODS[0];
+    const paymentMeta = getPaymentStatusMeta(orderResult.estado_pago);
     return (
       <div className="checkout-page">
         <div className="checkout-box confirmation-box">
@@ -180,7 +317,7 @@ export default function Checkout() {
             </div>
             <div className="confirmation-row">
               <span className="text-muted">Estado</span>
-              <span className="badge-premium badge-gold">Pendiente</span>
+              <span className={`badge-premium ${paymentMeta.tone}`}>{paymentMeta.label}</span>
             </div>
           </div>
 
@@ -343,8 +480,8 @@ export default function Checkout() {
                     </div>
 
                     <p className="checkout-payment-panel-note">
-                      Seleccionas una pasarela confiable, moderna y alineada con una experiencia premium.
-                      Tu pedido quedará registrado con Wompi como método elegido por un total de <strong className="checkout-payment-amount" style={{ color: '#b8a2ff' }}>${total.toLocaleString('es-CO')}</strong>.
+                      Vas a salir a un checkout seguro de Wompi para completar el pago de forma real.
+                      Tu orden se crea primero en nuestro sistema y luego Wompi procesa el cobro por un total de <strong className="checkout-payment-amount" style={{ color: '#b8a2ff' }}>${total.toLocaleString('es-CO')}</strong>.
                     </p>
                     <div style={{ display: 'grid', gap: '10px', marginTop: '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', padding: '12px 14px', borderRadius: '12px', background: 'rgba(124, 92, 255, 0.08)', border: '1px solid rgba(124, 92, 255, 0.18)' }}>
@@ -359,7 +496,7 @@ export default function Checkout() {
                       </div>
                     </div>
                     <p className="checkout-payment-panel-note" style={{ marginTop: '14px' }}>
-                      Esta interfaz ya quedó preparada para operar con Wompi en Render. Cuando cargues las credenciales reales, el siguiente paso será conectar la creación del checkout seguro y la confirmación de transacción.
+                      Cuando confirmes, te redirigiremos al checkout de Wompi y al volver validaremos la transaccion contra el backend para mostrar el estado real del pago.
                     </p>
                   </div>
                 )}
@@ -406,7 +543,7 @@ export default function Checkout() {
                   ← Volver
                 </button>
                 <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={sending}>
-                  <span>{sending ? 'Procesando...' : 'Confirmar Pedido'}</span>
+                  <span>{sending ? 'Procesando...' : paymentMethod === 'wompi' ? 'Ir a pagar con Wompi' : 'Confirmar Pedido'}</span>
                 </button>
               </div>
             </form>

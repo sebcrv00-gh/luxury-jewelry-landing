@@ -22,7 +22,8 @@ const orderController = {
         total: order.total,
         shippingCost: order.shippingCost,
         freeShippingApplied: order.freeShippingApplied,
-        metodo_pago: order.metodo_pago
+        metodo_pago: order.metodo_pago,
+        estado_pago: order.estado_pago
       });
     } catch (err) {
       console.error('Error al crear orden:', err);
