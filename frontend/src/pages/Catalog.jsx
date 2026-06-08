@@ -211,27 +211,6 @@ export default function Catalog() {
     [SHOWCASE_FILTERS.featured]: highlightedProductIds.length,
     [SHOWCASE_FILTERS.newest]: newestProductIds.length
   };
-  const showcaseCopyMap = {
-    [SHOWCASE_FILTERS.all]: {
-      eyebrow: 'Vista general',
-      title: 'Explora toda la coleccion',
-      description: 'Combina categorias, busqueda y filtros especiales para encontrar la pieza ideal.',
-      cta: null
-    },
-    [SHOWCASE_FILTERS.featured]: {
-      eyebrow: 'Filtro activo',
-      title: 'Productos mas destacados',
-      description: 'Priorizamos las piezas con mayor movimiento dentro del catalogo para ayudarte a descubrir lo que mas llama la atencion.',
-      cta: 'Quitar filtro'
-    },
-    [SHOWCASE_FILTERS.newest]: {
-      eyebrow: 'Filtro activo',
-      title: 'Productos nuevos',
-      description: 'Estas viendo los ingresos mas recientes del catalogo para detectar novedades de inmediato.',
-      cta: 'Quitar filtro'
-    }
-  };
-  const activeShowcaseCopy = showcaseCopyMap[activeShowcase];
 
   const handleShowcaseChange = (filterKey) => {
     setActiveShowcase((current) => current === filterKey ? SHOWCASE_FILTERS.all : filterKey);
@@ -542,6 +521,15 @@ export default function Catalog() {
                   </span>
                 </button>
               </div>
+              {activeShowcase !== SHOWCASE_FILTERS.all && (
+                <button
+                  type="button"
+                  className="catalog-spotlight-reset"
+                  onClick={() => setActiveShowcase(SHOWCASE_FILTERS.all)}
+                >
+                  Quitar filtro
+                </button>
+              )}
             </div>
 
             <div className="catalog-category-rail" role="listbox" aria-label="Categorias del catalogo">
@@ -565,27 +553,6 @@ export default function Catalog() {
           </div>
         </div>
 
-        <div className={`catalog-showcase-panel ${activeShowcase !== SHOWCASE_FILTERS.all ? 'is-active' : ''}`}>
-          <div className="catalog-showcase-panel-copy">
-            <span className="catalog-showcase-panel-eyebrow">{activeShowcaseCopy.eyebrow}</span>
-            <h2>{activeShowcaseCopy.title}</h2>
-            <p>{activeShowcaseCopy.description}</p>
-          </div>
-          <div className="catalog-showcase-panel-meta">
-            <span>{filtered.length} resultados visibles</span>
-            <span>{activeCategory === DEFAULT_CATEGORY ? 'Todas las categorias' : activeCategory}</span>
-            <span>{search.trim() ? `Busqueda: "${search.trim()}"` : 'Sin busqueda aplicada'}</span>
-          </div>
-          {activeShowcaseCopy.cta && (
-            <button
-              type="button"
-              className="catalog-showcase-panel-reset"
-              onClick={() => setActiveShowcase(SHOWCASE_FILTERS.all)}
-            >
-              {activeShowcaseCopy.cta}
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Toast removed in favor of in-card validation */}

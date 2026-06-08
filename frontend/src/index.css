@@ -1479,10 +1479,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
-  min-height: 68px;
-  padding: 13px 18px;
-  border-radius: 22px;
+  gap: 10px;
+  min-height: 58px;
+  padding: 11px 16px;
+  border-radius: 18px;
   border: 1px solid rgba(201, 168, 76, 0.14);
   background: linear-gradient(145deg, rgba(15, 15, 15, 0.96), rgba(10, 10, 10, 0.98));
   color: var(--text-secondary);
@@ -1502,8 +1502,8 @@ button {
 }
 
 .catalog-spotlight-btn-icon {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -1522,13 +1522,13 @@ button {
 
 .catalog-spotlight-btn-copy strong {
   color: inherit;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   line-height: 1.2;
 }
 
 .catalog-spotlight-btn-copy small {
   color: var(--text-muted);
-  font-size: 0.66rem;
+  font-size: 0.62rem;
   letter-spacing: 0.4px;
   text-transform: none;
 }
@@ -1572,87 +1572,23 @@ button {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(183, 110, 121, 0.12);
 }
 
-.catalog-showcase-panel {
-  width: min(980px, calc(100% - 40px));
-  margin: 0 auto 18px;
-  padding: 22px 24px;
-  border-radius: 24px;
-  border: 1px solid rgba(201, 168, 76, 0.14);
-  background:
-    radial-gradient(circle at top left, rgba(201, 168, 76, 0.08), transparent 34%),
-    linear-gradient(145deg, rgba(14, 14, 14, 0.96), rgba(9, 9, 9, 0.98));
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: center;
-}
-
-.catalog-showcase-panel.is-active {
-  border-color: rgba(201, 168, 76, 0.26);
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
-}
-
-.catalog-showcase-panel-copy h2 {
-  margin: 0 0 8px;
-  font-family: var(--font-display);
-  color: var(--text-primary);
-  font-size: 1.3rem;
-}
-
-.catalog-showcase-panel-copy p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.84rem;
-  line-height: 1.6;
-}
-
-.catalog-showcase-panel-eyebrow {
-  display: inline-flex;
-  margin-bottom: 10px;
-  color: var(--gold-light);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-}
-
-.catalog-showcase-panel-meta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.catalog-showcase-panel-meta span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
+.catalog-spotlight-reset {
+  align-self: center;
+  justify-self: center;
+  min-height: 34px;
+  margin-top: 8px;
   padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(201, 168, 76, 0.12);
-  color: var(--text-secondary);
-  font-size: 0.74rem;
-}
-
-.catalog-showcase-panel-reset {
-  min-height: 42px;
-  padding: 0 18px;
-  border-radius: 999px;
-  border: 1px solid rgba(201, 168, 76, 0.2);
-  background: rgba(201, 168, 76, 0.08);
-  color: var(--gold-light);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  font-size: 0.74rem;
-  font-weight: 600;
-  letter-spacing: 0.6px;
-  transition: transform 0.3s var(--ease-out-expo), border-color 0.3s var(--ease-out-expo), background 0.3s var(--ease-out-expo);
+  transition: color 0.3s var(--ease-out-expo), opacity 0.3s var(--ease-out-expo);
 }
 
-.catalog-showcase-panel-reset:hover {
-  transform: translateY(-1px);
-  border-color: rgba(201, 168, 76, 0.34);
-  background: rgba(201, 168, 76, 0.14);
+.catalog-spotlight-reset:hover {
+  color: var(--gold-light);
 }
 
 .catalog-results-head {
@@ -3057,20 +2993,14 @@ footer p+p {
   }
 
   .catalog-spotlight-btn {
-    min-height: 58px;
+    min-height: 52px;
     padding: 10px 14px;
     font-size: 0.66rem;
     letter-spacing: 0.8px;
   }
 
-  .catalog-showcase-panel {
-    width: calc(100% - 24px);
-    padding: 18px;
-    grid-template-columns: 1fr;
-  }
-
-  .catalog-showcase-panel-meta {
-    justify-content: flex-start;
+  .catalog-spotlight-reset {
+    margin-top: 4px;
   }
 
   .catalog-results-head {
