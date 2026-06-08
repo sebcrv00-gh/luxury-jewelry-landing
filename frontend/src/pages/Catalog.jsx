@@ -54,6 +54,7 @@ export default function Catalog() {
   const { isLoggedIn, user, openAuthModal } = useAuth();
   const carouselRef = useRef(null);
   const categoryMenuRef = useRef(null);
+  const catalogResultsRef = useRef(null);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState(DEFAULT_CATEGORY);
   const [activeShowcase, setActiveShowcase] = useState(SHOWCASE_FILTERS.all);
@@ -203,6 +204,41 @@ export default function Catalog() {
     .slice(0, 12)
     .map(product => product.dbProductId);
   const featuredRankMap = new Map(highlightedProductIds.map((id, index) => [id, index]));
+  const newestProductIdSet = new Set(newestProductIds);
+  const featuredProductIdSet = new Set(highlightedProductIds);
+  const showcaseCountMap = {
+    [SHOWCASE_FILTERS.all]: allProducts.length,
+    [SHOWCASE_FILTERS.featured]: highlightedProductIds.length,
+    [SHOWCASE_FILTERS.newest]: newestProductIds.length
+  };
+  const showcaseCopyMap = {
+    [SHOWCASE_FILTERS.all]: {
+      eyebrow: 'Vista general',
+      title: 'Explora toda la coleccion',
+      description: 'Combina categorias, busqueda y filtros especiales para encontrar la pieza ideal.',
+      cta: null
+    },
+    [SHOWCASE_FILTERS.featured]: {
+      eyebrow: 'Filtro activo',
+      title: 'Productos mas destacados',
+      description: 'Priorizamos las piezas con mayor movimiento dentro del catalogo para ayudarte a descubrir lo que mas llama la atencion.',
+      cta: 'Quitar filtro'
+    },
+    [SHOWCASE_FILTERS.newest]: {
+      eyebrow: 'Filtro activo',
+      title: 'Productos nuevos',
+      description: 'Estas viendo los ingresos mas recientes del catalogo para detectar novedades de inmediato.',
+      cta: 'Quitar filtro'
+    }
+  };
+  const activeShowcaseCopy = showcaseCopyMap[activeShowcase];
+
+  const handleShowcaseChange = (filterKey) => {
+    setActiveShowcase((current) => current === filterKey ? SHOWCASE_FILTERS.all : filterKey);
+    window.requestAnimationFrame(() => {
+      catalogResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   const filtered = allProducts.filter(p => {
     const searchTerm = search.trim().toLowerCase();
@@ -480,18 +516,30 @@ export default function Catalog() {
                 <button
                   type="button"
                   className={`catalog-spotlight-btn catalog-spotlight-btn--featured ${activeShowcase === SHOWCASE_FILTERS.featured ? 'active' : ''}`}
-                  onClick={() => setActiveShowcase((current) => current === SHOWCASE_FILTERS.featured ? SHOWCASE_FILTERS.all : SHOWCASE_FILTERS.featured)}
+                  onClick={() => handleShowcaseChange(SHOWCASE_FILTERS.featured)}
+                  aria-pressed={activeShowcase === SHOWCASE_FILTERS.featured}
                 >
-                  <Sparkles size={16} />
-                  <span>Productos mas destacados</span>
+                  <span className="catalog-spotlight-btn-icon">
+                    <Sparkles size={16} />
+                  </span>
+                  <span className="catalog-spotlight-btn-copy">
+                    <strong>Productos mas destacados</strong>
+                    <small>{showcaseCountMap[SHOWCASE_FILTERS.featured]} piezas recomendadas</small>
+                  </span>
                 </button>
                 <button
                   type="button"
                   className={`catalog-spotlight-btn catalog-spotlight-btn--new ${activeShowcase === SHOWCASE_FILTERS.newest ? 'active' : ''}`}
-                  onClick={() => setActiveShowcase((current) => current === SHOWCASE_FILTERS.newest ? SHOWCASE_FILTERS.all : SHOWCASE_FILTERS.newest)}
+                  onClick={() => handleShowcaseChange(SHOWCASE_FILTERS.newest)}
+                  aria-pressed={activeShowcase === SHOWCASE_FILTERS.newest}
                 >
-                  <Clock3 size={16} />
-                  <span>Productos nuevos</span>
+                  <span className="catalog-spotlight-btn-icon">
+                    <Clock3 size={16} />
+                  </span>
+                  <span className="catalog-spotlight-btn-copy">
+                    <strong>Productos nuevos</strong>
+                    <small>{showcaseCountMap[SHOWCASE_FILTERS.newest]} ingresos recientes</small>
+                  </span>
                 </button>
               </div>
             </div>
@@ -517,18 +565,32 @@ export default function Catalog() {
           </div>
         </div>
 
-        <p className="catalog-filter-meta">
-          {activeShowcase === SHOWCASE_FILTERS.featured
-            ? 'Mostrando las piezas con mayor volumen de compra registrado.'
-            : activeShowcase === SHOWCASE_FILTERS.newest
-              ? 'Mostrando las ultimas piezas incorporadas al catalogo.'
-              : 'Explora el catalogo completo y filtra por categoria o por nombre.'}
-        </p>
+        <div className={`catalog-showcase-panel ${activeShowcase !== SHOWCASE_FILTERS.all ? 'is-active' : ''}`}>
+          <div className="catalog-showcase-panel-copy">
+            <span className="catalog-showcase-panel-eyebrow">{activeShowcaseCopy.eyebrow}</span>
+            <h2>{activeShowcaseCopy.title}</h2>
+            <p>{activeShowcaseCopy.description}</p>
+          </div>
+          <div className="catalog-showcase-panel-meta">
+            <span>{filtered.length} resultados visibles</span>
+            <span>{activeCategory === DEFAULT_CATEGORY ? 'Todas las categorias' : activeCategory}</span>
+            <span>{search.trim() ? `Busqueda: "${search.trim()}"` : 'Sin busqueda aplicada'}</span>
+          </div>
+          {activeShowcaseCopy.cta && (
+            <button
+              type="button"
+              className="catalog-showcase-panel-reset"
+              onClick={() => setActiveShowcase(SHOWCASE_FILTERS.all)}
+            >
+              {activeShowcaseCopy.cta}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Toast removed in favor of in-card validation */}
 
-      <div className="catalog-container">
+      <div className="catalog-container" ref={catalogResultsRef}>
         {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '100px 20px', color: 'var(--text-muted)' }}>
             <h3 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)', color: 'var(--gold)', marginBottom: '16px' }}>No encontramos piezas para este filtro</h3>
@@ -536,9 +598,30 @@ export default function Catalog() {
           </div>
         ) : (
           <>
+            <div className="catalog-results-head">
+              <div>
+                <span className="catalog-results-kicker">
+                  {activeShowcase === SHOWCASE_FILTERS.featured
+                    ? 'Seleccion destacada'
+                    : activeShowcase === SHOWCASE_FILTERS.newest
+                      ? 'Novedades del catalogo'
+                      : 'Resultados del catalogo'}
+                </span>
+                <h2>
+                  {activeShowcase === SHOWCASE_FILTERS.featured
+                    ? 'Piezas mas destacadas'
+                    : activeShowcase === SHOWCASE_FILTERS.newest
+                      ? 'Ultimos ingresos'
+                      : 'Coleccion disponible'}
+                </h2>
+              </div>
+              <span className="catalog-results-count">{filtered.length} productos</span>
+            </div>
             <div className="catalog-grid">
               {currentItems.map(p => {
                 const reviewSummary = getProductReviewSummary(p);
+                const isFeaturedProduct = featuredProductIdSet.has(p.dbProductId);
+                const isNewestProduct = newestProductIdSet.has(p.dbProductId);
                 return (
                 <div className={`product-card catalog-product-card ${p.stock === 0 ? 'out-of-stock' : ''}`} key={p.id}>
                   <div className="product-image-wrap">
@@ -557,6 +640,22 @@ export default function Catalog() {
                         boxShadow: '0 4px 15px rgba(0,0,0,0.5)', zIndex: 2, borderRadius: '4px'
                       }}>
                         Agotado
+                      </div>
+                    )}
+                    {(isFeaturedProduct || isNewestProduct) && (
+                      <div className="catalog-product-tags">
+                        {isFeaturedProduct && (
+                          <span className="catalog-product-tag catalog-product-tag--featured">
+                            <Sparkles size={12} />
+                            Destacado
+                          </span>
+                        )}
+                        {isNewestProduct && (
+                          <span className="catalog-product-tag catalog-product-tag--new">
+                            <Clock3 size={12} />
+                            Nuevo
+                          </span>
+                        )}
                       </div>
                     )}
                     <div className="category-badge">{p.categoria}</div>
