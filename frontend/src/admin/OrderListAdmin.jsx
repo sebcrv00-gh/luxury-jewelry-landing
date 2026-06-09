@@ -352,29 +352,21 @@ export default function OrderListAdmin({ refreshTrigger }) {
                         {getPaymentStatusLabel(order.estado_pago, order.metodo_pago)}
                       </span>
                       {order.metodo_pago === 'efectivo' && (
-                        <select
-                          value={order.estado_pago === 'aprobado' ? 'aprobado' : 'pendiente'}
-                          onChange={(e) => updateCashPaymentStatus(order.id, e.target.value)}
-                          disabled={updatingPaymentOrderId === order.id}
-                          style={{
-                            width: '100%',
-                            minWidth: '150px',
-                            marginTop: '10px',
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(201, 168, 76, 0.18)',
-                            borderRadius: '10px',
-                            color: 'var(--text-primary)',
-                            padding: '10px 12px',
-                            outline: 'none',
-                            cursor: updatingPaymentOrderId === order.id ? 'wait' : 'pointer'
-                          }}
-                        >
-                          {CASH_PAYMENT_STATUSES.map((status) => (
-                            <option key={status} value={status} style={{ color: '#111' }}>
-                              {status === 'aprobado' ? 'Cobrado' : 'Pendiente de cobro'}
-                            </option>
-                          ))}
-                        </select>
+                        <div className={`admin-status-select ${updatingPaymentOrderId === order.id ? 'is-updating' : ''}`}>
+                          <select
+                            value={order.estado_pago === 'aprobado' ? 'aprobado' : 'pendiente'}
+                            onChange={(e) => updateCashPaymentStatus(order.id, e.target.value)}
+                            disabled={updatingPaymentOrderId === order.id}
+                            aria-label={`Actualizar estado de cobro del pedido ${order.id}`}
+                          >
+                            {CASH_PAYMENT_STATUSES.map((status) => (
+                              <option key={status} value={status}>
+                                {status === 'aprobado' ? 'Cobrado' : 'Pendiente de cobro'}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown size={14} />
+                        </div>
                       )}
                     </td>
                     <td>
@@ -383,29 +375,21 @@ export default function OrderListAdmin({ refreshTrigger }) {
                       </span>
                     </td>
                     <td>
-                      <select
-                        value={order.estado}
-                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                        disabled={updatingOrderId === order.id}
-                        style={{
-                          width: '100%',
-                          minWidth: '150px',
-                          background: 'rgba(255,255,255,0.04)',
-                          border: '1px solid rgba(201, 168, 76, 0.18)',
-                          borderRadius: '10px',
-                          color: 'var(--text-primary)',
-                          padding: '10px 12px',
-                          outline: 'none',
-                          textTransform: 'capitalize',
-                          cursor: updatingOrderId === order.id ? 'wait' : 'pointer'
-                        }}
-                      >
-                        {ORDER_STATUSES.map(status => (
-                          <option key={status} value={status} style={{ color: '#111' }}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
+                      <div className={`admin-status-select ${updatingOrderId === order.id ? 'is-updating' : ''}`}>
+                        <select
+                          value={order.estado}
+                          onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                          disabled={updatingOrderId === order.id}
+                          aria-label={`Actualizar estado logistico del pedido ${order.id}`}
+                        >
+                          {ORDER_STATUSES.map(status => (
+                            <option key={status} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} />
+                      </div>
                     </td>
                     <td>
                       <button
