@@ -27,6 +27,8 @@ import SettingsAdmin from './SettingsAdmin';
 import ProfileAdmin from './ProfileAdmin';
 import './admin-layout.css'; // Importamos el CSS premium
 
+const RECENT_ACTIVITY_HOURS = 72;
+
 const TAB_META = {
   dashboard: {
     title: 'Centro de Control'
@@ -61,6 +63,23 @@ const ADMIN_NAV_ITEMS = [
   { key: 'profile', icon: Users, label: 'Perfil' }
 ];
 
+function parseDateValue(value) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isRecentTimestamp(value, hours = RECENT_ACTIVITY_HOURS) {
+  const parsed = parseDateValue(value);
+  if (!parsed) return false;
+  return Date.now() - parsed.getTime() <= hours * 60 * 60 * 1000;
+}
+
+function formatIndicatorCount(value) {
+  if (!value) return '';
+  return value > 9 ? '9+' : String(value);
+}
+
 function countsAsProcessedRevenue(order) {
   if (order?.metodo_pago === 'wompi') {
     return order?.estado_pago === 'aprobado';
@@ -91,11 +110,14 @@ export default function AdminDashboard() {
     categories: 0,
     orders: 0,
     pendingOrders: 0,
+    ordersAttention: 0,
     revenue: 0,
     clients: 0,
+    clientsAttention: 0,
     vipClients: 0,
     admins: 0,
-    openTickets: 0
+    openTickets: 0,
+    ticketsAttention: 0
   });
 
   const loadOverview = async () => {
@@ -112,20 +134,52 @@ export default function AdminDashboard() {
       const orders = ordersRes.data || [];
       const clients = clientsRes.data || [];
       const tickets = ticketsRes.data || [];
+      const nonAdminClients = clients.filter(client => client.rol !== 'admin');
+      const recentClientIds = new Set(
+        nonAdminClients
+          .filter(client => isRecentTimestamp(client.creado_en))
+          .map(client => client.id)
+      );
+      const pendingOrderIds = new Set(
+        orders
+          .filter(order => order.estado === 'pendiente')
+          .map(order => order.id)
+      );
+      const recentOrderIds = new Set(
+        orders
+          .filter(order => isRecentTimestamp(order.creado_en))
+          .map(order => order.id)
+      );
+      const orderAttentionIds = new Set([...pendingOrderIds, ...recentOrderIds]);
+      const openTicketIds = new Set(
+        tickets
+          .filter(ticket => ticket.estado === 'abierto')
+          .map(ticket => ticket.id)
+      );
+      const recentTicketIds = new Set(
+        tickets
+          .filter(ticket => isRecentTimestamp(ticket.creado_en))
+          .map(ticket => ticket.id)
+      );
+      const ticketAttentionIds = new Set([...openTicketIds, ...recentTicketIds]);
+      const lowStockCount = products.filter(product => Number(product.stock) <= 2).length;
 
       setOverview({
         products: products.length,
-        lowStock: products.filter(product => Number(product.stock) <= 2).length,
+        lowStock: lowStockCount,
         categories: [...new Set(products.map(product => product.categoria).filter(Boolean))].length,
         orders: orders.length,
-        pendingOrders: orders.filter(order => order.estado === 'pendiente').length,
+        pendingOrders: pendingOrderIds.size,
+        ordersAttention: orderAttentionIds.size,
         revenue: orders
           .filter(countsAsProcessedRevenue)
           .reduce((sum, order) => sum + Number(order.total || 0), 0),
-        clients: clients.filter(client => client.rol !== 'admin').length,
+        clients: nonAdminClients.length,
+        clientsAttention: recentClientIds.size,
         vipClients: clients.filter(client => client.rol === 'vip').length,
         admins: clients.filter(client => client.rol === 'admin').length,
-        openTickets: tickets.filter(ticket => ticket.estado === 'abierto').length
+        openTickets: openTicketIds.size,
+        ticketsAttention: ticketAttentionIds.size
       });
     } catch (error) {
       console.error('Error al cargar el resumen del panel:', error);
@@ -190,6 +244,15 @@ export default function AdminDashboard() {
   };
 
   const tabInfo = TAB_META[activeTab] || TAB_META.dashboard;
+  const sectionIndicators = {
+    dashboard: overview.lowStock + overview.ordersAttention + overview.clientsAttention + overview.ticketsAttention,
+    inventory: overview.lowStock,
+    orders: overview.ordersAttention,
+    clients: overview.clientsAttention,
+    tickets: overview.ticketsAttention,
+    settings: 0,
+    profile: 0
+  };
   const primaryStats = [
     {
       key: 'products',
@@ -226,28 +289,36 @@ export default function AdminDashboard() {
       icon: Gem,
       title: 'Inventario',
       description: 'Consulta, crea y edita productos del catálogo central.',
-      action: 'Abrir inventario'
+      action: 'Abrir inventario',
+      noticeCount: overview.lowStock,
+      noticeLabel: overview.lowStock > 0 ? `${overview.lowStock} alerta${overview.lowStock === 1 ? '' : 's'} de stock` : ''
     },
     {
       key: 'orders',
       icon: ShoppingCart,
       title: 'Pedidos',
       description: 'Revisa operaciones pendientes y comportamiento comercial.',
-      action: 'Ver pedidos'
+      action: 'Ver pedidos',
+      noticeCount: overview.ordersAttention,
+      noticeLabel: overview.ordersAttention > 0 ? `${overview.ordersAttention} novedad${overview.ordersAttention === 1 ? '' : 'es'} operativa${overview.ordersAttention === 1 ? '' : 's'}` : ''
     },
     {
       key: 'clients',
       icon: Users,
       title: 'Clientes',
       description: 'Administra perfiles, membresías VIP y actividad de compra.',
-      action: 'Ver clientes'
+      action: 'Ver clientes',
+      noticeCount: overview.clientsAttention,
+      noticeLabel: overview.clientsAttention > 0 ? `${overview.clientsAttention} cliente${overview.clientsAttention === 1 ? '' : 's'} nuevo${overview.clientsAttention === 1 ? '' : 's'}` : ''
     },
     {
       key: 'tickets',
       icon: MessageSquare,
       title: 'Soporte',
       description: 'Atiende mensajes, devoluciones y solicitudes abiertas.',
-      action: 'Abrir soporte'
+      action: 'Abrir soporte',
+      noticeCount: overview.ticketsAttention,
+      noticeLabel: overview.ticketsAttention > 0 ? `${overview.ticketsAttention} caso${overview.ticketsAttention === 1 ? '' : 's'} por revisar` : ''
     }
   ];
   const executiveSummary = [
@@ -290,9 +361,15 @@ export default function AdminDashboard() {
               type="button"
               className={`admin-nav-item ${activeTab === key ? 'active' : ''}`}
               onClick={() => handleTabChange(key)}
+              title={sectionIndicators[key] > 0 ? `${sectionIndicators[key]} novedad(es) en ${label}` : label}
             >
               <Icon size={20} />
-              <span>{label}</span>
+              <span className="admin-nav-item-label">{label}</span>
+              {sectionIndicators[key] > 0 && (
+                <span className="admin-nav-indicator" aria-label={`${sectionIndicators[key]} novedades`}>
+                  {formatIndicatorCount(sectionIndicators[key])}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -412,15 +489,23 @@ export default function AdminDashboard() {
               </div>
 
               <div className="admin-module-grid">
-                {quickAccess.map(({ key, icon: Icon, title, description, action }) => (
-                  <button key={key} className="admin-module-card" onClick={() => handleTabChange(key)}>
+                {quickAccess.map(({ key, icon: Icon, title, description, action, noticeCount, noticeLabel }) => (
+                  <button key={key} className={`admin-module-card ${noticeCount > 0 ? 'has-notice' : ''}`} onClick={() => handleTabChange(key)}>
+                    {noticeCount > 0 && (
+                      <span className="admin-module-alert-dot" aria-hidden="true" />
+                    )}
                     <div className="admin-module-icon">
                       <Icon size={20} />
                     </div>
                     <div className="admin-module-content">
                       <strong>{title}</strong>
                       <p>{description}</p>
-                      <span>{action}</span>
+                      <div className="admin-module-footer">
+                        <span>{action}</span>
+                        {noticeCount > 0 && (
+                          <span className="admin-module-alert-label">{noticeLabel}</span>
+                        )}
+                      </div>
                     </div>
                   </button>
                 ))}

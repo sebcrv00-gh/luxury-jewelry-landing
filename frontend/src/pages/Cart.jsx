@@ -4,6 +4,17 @@ import { useAuth } from '../context/AuthContext';
 import { AlertCircle, X } from 'lucide-react';
 import { POST_LOGIN_REDIRECT_KEY, readCart, writeCart } from '../utils/cartStorage';
 
+const BASE_SHIPPING_FEE = 15000;
+
+function hasAvailableFirstShipping(user) {
+  if (!user) return false;
+  if (typeof user.primer_envio_gratis_disponible === 'boolean') {
+    return user.primer_envio_gratis_disponible;
+  }
+
+  return Number(user.primer_envio_gratis_usado || 0) === 0 && Number(user.total_pedidos || 0) === 0;
+}
+
 export default function Cart() {
   const { user, isLoggedIn, openAuthModal } = useAuth();
   const navigate = useNavigate();
@@ -50,7 +61,8 @@ export default function Cart() {
   };
 
   const subtotal = cart.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
-  const shippingFee = 15000;
+  const hasFreeShippingAvailable = isLoggedIn && hasAvailableFirstShipping(user);
+  const shippingFee = hasFreeShippingAvailable ? 0 : BASE_SHIPPING_FEE;
   const total = subtotal + shippingFee;
 
   const handleProceedToCheckout = () => {
@@ -113,13 +125,20 @@ export default function Cart() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-muted)' }}>
                 <span>Envío:</span>
-                <span>${shippingFee.toLocaleString('es-CO')}</span>
+                <span style={shippingFee === 0 ? { color: 'var(--gold-light)', fontWeight: 700 } : undefined}>
+                  {shippingFee === 0 ? 'Gratis' : `$${shippingFee.toLocaleString('es-CO')}`}
+                </span>
               </div>
               <div className="cart-total" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.5rem', marginTop: '10px' }}>
                 <span>Total:</span>
                 <span>${total.toLocaleString('es-CO')}</span>
               </div>
             </div>
+            {hasFreeShippingAvailable && (
+              <div style={{ marginTop: '18px', padding: '16px 18px', borderRadius: '14px', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.18)', color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6 }}>
+                Detectamos que tu cuenta aún tiene disponible el <strong style={{ color: 'var(--gold-light)' }}>primer envío gratis</strong>. El beneficio se aplicará automáticamente al finalizar la compra.
+              </div>
+            )}
 
             <div className="cart-actions">
               <button className="btn-danger" onClick={requestClearCart} style={{ borderRadius: '50px', padding: '12px 24px' }}>Vaciar carrito</button>

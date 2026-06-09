@@ -25,13 +25,42 @@ const User = {
   },
 
   async findByEmail(email) {
-    const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+    const [rows] = await pool.query(
+      `SELECT
+         u.*,
+         (
+           SELECT COUNT(*)
+           FROM ordenes o
+           WHERE o.usuario_id = u.id
+         ) AS total_pedidos
+       FROM usuarios u
+       WHERE u.email = ?
+       LIMIT 1`,
+      [email]
+    );
     return rows[0] || null;
   },
 
   async findById(id) {
     const [rows] = await pool.query(
-      'SELECT id, nombre, email, rol, telefono, direccion, foto, primer_envio_gratis_usado FROM usuarios WHERE id = ?',
+      `SELECT
+         u.id,
+         u.nombre,
+         u.email,
+         u.rol,
+         u.telefono,
+         u.direccion,
+         u.foto,
+         u.creado_en,
+         u.primer_envio_gratis_usado,
+         (
+           SELECT COUNT(*)
+           FROM ordenes o
+           WHERE o.usuario_id = u.id
+         ) AS total_pedidos
+       FROM usuarios u
+       WHERE u.id = ?
+       LIMIT 1`,
       [id]
     );
     return rows[0] || null;

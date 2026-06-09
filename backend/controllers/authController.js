@@ -2,6 +2,25 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const path = require('path');
 
+function formatUserSessionPayload(usuario) {
+  const totalPedidos = Number(usuario?.total_pedidos || 0);
+  const primerEnvioGratisUsado = Number(usuario?.primer_envio_gratis_usado || 0);
+
+  return {
+    id: usuario.id,
+    nombre: usuario.nombre,
+    email: usuario.email,
+    rol: usuario.rol || 'cliente',
+    telefono: usuario.telefono,
+    direccion: usuario.direccion,
+    foto: usuario.foto,
+    creado_en: usuario.creado_en,
+    total_pedidos: totalPedidos,
+    primer_envio_gratis_usado: primerEnvioGratisUsado,
+    primer_envio_gratis_disponible: primerEnvioGratisUsado === 0 && totalPedidos === 0
+  };
+}
+
 const authController = {
   // POST /api/auth/register
   async register(req, res) {
@@ -60,16 +79,7 @@ const authController = {
 
       return res.json({
         ok: true,
-        user: {
-          id: usuario.id,
-          nombre: usuario.nombre,
-          email: usuario.email,
-          rol: usuario.rol || 'cliente',
-          telefono: usuario.telefono,
-          direccion: usuario.direccion,
-          foto: usuario.foto,
-          primer_envio_gratis_usado: usuario.primer_envio_gratis_usado
-        }
+        user: formatUserSessionPayload(usuario)
       });
     } catch (err) {
       console.error('Error en login:', err);
@@ -94,7 +104,7 @@ const authController = {
       }
       const user = await User.findById(req.session.userId);
       if (!user) return res.json({ user: null });
-      return res.json({ user });
+      return res.json({ user: formatUserSessionPayload(user) });
     } catch (err) {
       console.error('Error en /me:', err);
       return res.status(500).json({ error: 'Error del servidor' });
@@ -120,7 +130,7 @@ const authController = {
       if (email) req.session.email = email;
 
       const updatedUser = await User.findById(req.session.userId);
-      return res.json({ ok: true, user: updatedUser });
+      return res.json({ ok: true, user: formatUserSessionPayload(updatedUser) });
     } catch (err) {
       console.error('Error al actualizar perfil:', err);
       return res.status(500).json({ error: 'Error del servidor' });

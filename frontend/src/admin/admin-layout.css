@@ -141,6 +141,29 @@
   font-family: inherit;
 }
 
+.admin-nav-item-label {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-nav-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.24), rgba(201, 168, 76, 0.12));
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  color: var(--gold-light);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  box-shadow: 0 0 0 1px rgba(201, 168, 76, 0.04), 0 0 18px rgba(201, 168, 76, 0.12);
+  flex-shrink: 0;
+}
+
 .admin-nav-item:hover, .admin-nav-item.active {
   background: linear-gradient(90deg, rgba(201, 168, 76, 0.08), transparent);
   color: var(--gold-light);
@@ -541,6 +564,7 @@
 }
 
 .admin-module-card {
+  position: relative;
   background: linear-gradient(145deg, rgba(19, 19, 19, 0.85), rgba(13, 13, 13, 0.95));
   border: 1px solid rgba(201, 168, 76, 0.12);
   border-radius: 16px;
@@ -555,6 +579,21 @@
   transform: translateY(-4px);
   border-color: rgba(201, 168, 76, 0.32);
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+}
+
+.admin-module-card.has-notice {
+  border-color: rgba(201, 168, 76, 0.2);
+}
+
+.admin-module-alert-dot {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #f7df9c 0%, #c9a84c 55%, #8f6a20 100%);
+  box-shadow: 0 0 0 5px rgba(201, 168, 76, 0.08), 0 0 18px rgba(201, 168, 76, 0.28);
 }
 
 .admin-module-icon {
@@ -588,6 +627,29 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 1.8px;
+}
+
+.admin-module-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-module-alert-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid rgba(201, 168, 76, 0.16);
+  color: var(--text-secondary) !important;
+  font-size: 0.66rem !important;
+  font-weight: 700;
+  letter-spacing: 0.9px !important;
+  text-transform: uppercase;
 }
 
 .admin-section-shell {

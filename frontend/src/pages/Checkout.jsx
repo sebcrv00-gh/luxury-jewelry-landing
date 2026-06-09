@@ -22,6 +22,17 @@ const PAYMENT_STATUS_META = {
   error: { label: 'Error en pago', tone: 'badge-danger' }
 };
 
+const BASE_SHIPPING_FEE = 15000;
+
+function hasAvailableFirstShipping(user) {
+  if (!user) return false;
+  if (typeof user.primer_envio_gratis_disponible === 'boolean') {
+    return user.primer_envio_gratis_disponible;
+  }
+
+  return Number(user.primer_envio_gratis_usado || 0) === 0 && Number(user.total_pedidos || 0) === 0;
+}
+
 function getPaymentStatusMeta(status) {
   return PAYMENT_STATUS_META[status] || { label: 'Pendiente', tone: 'badge-gold' };
 }
@@ -50,15 +61,18 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const currentPaymentMethod = PAYMENT_METHODS.find(m => m.id === paymentMethod) || PAYMENT_METHODS[0];
   const wompiPublicKeyConfigured = Boolean(import.meta.env.VITE_WOMPI_PUBLIC_KEY);
+  const hasFreeShippingAvailable = isLoggedIn && hasAvailableFirstShipping(user);
   const handleDownloadInvoice = () => {
     if (!orderResult) return;
+
+    const resolvedShippingCost = Number(orderResult.shippingCost ?? shippingFee);
 
     downloadInvoicePdf({
       order: {
         id: orderResult.orderId,
         creado_en: new Date().toISOString(),
         total: orderResult.total,
-        costo_envio: shippingFee,
+        costo_envio: resolvedShippingCost,
         nombre_envio: shipping.nombre,
         telefono_envio: shipping.telefono,
         direccion_envio: shipping.direccion,
@@ -132,7 +146,7 @@ export default function Checkout() {
   }, [isWompiReturn, wompiOrderId, wompiTransactionId]);
 
   const subtotal = cart.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
-  const shippingFee = 15000;
+  const shippingFee = hasFreeShippingAvailable ? 0 : BASE_SHIPPING_FEE;
   const total = subtotal + shippingFee;
 
   const handleSubmitOrder = async (e) => {
@@ -303,12 +317,16 @@ export default function Checkout() {
               <span className="text-muted">Total Pagado</span>
               <span className="text-gold-light" style={{ fontSize: '1.2rem', fontWeight: 600 }}>${Number(orderResult.total).toLocaleString('es-CO')}</span>
             </div>
-            {orderResult.freeShippingApplied && (
-              <div className="confirmation-row">
-                <span className="text-muted">Envío</span>
-                <span className="badge-premium badge-gold">Gratis (primer pedido)</span>
-              </div>
-            )}
+            <div className="confirmation-row">
+              <span className="text-muted">Envío</span>
+              {Number(orderResult.shippingCost || 0) === 0 ? (
+                <span className="badge-premium badge-gold">
+                  Gratis {orderResult.freeShippingApplied ? '(primer pedido)' : ''}
+                </span>
+              ) : (
+                <span className="text-gold-light">${Number(orderResult.shippingCost || 0).toLocaleString('es-CO')}</span>
+              )}
+            </div>
             <div className="confirmation-row">
               <span className="text-muted">Método de Pago</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: pm.color, fontWeight: 600 }}>
@@ -392,13 +410,22 @@ export default function Checkout() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-muted)' }}>
                 <span>Envío</span>
-                <span>${shippingFee.toLocaleString('es-CO')}</span>
+                {shippingFee === 0 ? (
+                  <span style={{ color: 'var(--gold-light)', fontWeight: 700 }}>Gratis</span>
+                ) : (
+                  <span>${shippingFee.toLocaleString('es-CO')}</span>
+                )}
               </div>
               <div className="checkout-total" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.4rem', fontWeight: 700, marginTop: '10px' }}>
                 <span>Total</span>
                 <span>${total.toLocaleString('es-CO')}</span>
               </div>
             </div>
+            {hasFreeShippingAvailable && (
+              <div style={{ marginTop: '18px', padding: '16px 18px', borderRadius: '14px', background: 'rgba(201, 168, 76, 0.08)', border: '1px solid rgba(201, 168, 76, 0.18)', color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.6 }}>
+                Tu cuenta mantiene activo el beneficio de <strong style={{ color: 'var(--gold-light)' }}>primer envío gratis</strong>. Se aplicará automáticamente en esta compra.
+              </div>
+            )}
             <div className="checkout-actions checkout-actions-row">
               <button className="btn-outline" style={{ flex: 1 }} onClick={() => navigate('/carrito')}>
                 ← Volver al Carrito
@@ -441,6 +468,12 @@ export default function Checkout() {
                   <input type="text" value={shipping.notas} onChange={e => setShipping({ ...shipping, notas: e.target.value })} placeholder="Instrucciones especiales..." />
                 </div>
               </div>
+
+              {hasFreeShippingAvailable && (
+                <div style={{ marginBottom: '24px', padding: '14px 16px', borderRadius: '14px', background: 'rgba(201, 168, 76, 0.08)', border: '1px solid rgba(201, 168, 76, 0.18)', color: 'var(--text-secondary)', fontSize: '0.84rem', lineHeight: 1.6 }}>
+                  Detectamos una cuenta nueva con el beneficio de <strong style={{ color: 'var(--gold-light)' }}>primer envío gratis</strong>. El total final ya lo refleja.
+                </div>
+              )}
 
               {/* ═══ MÉTODO DE PAGO ═══ */}
               <div className="checkout-payment-section">
@@ -526,7 +559,9 @@ export default function Checkout() {
                 </div>
                 <div className="checkout-mini-summary-row">
                   <span className="checkout-mini-summary-label">Envío</span>
-                  <span className="checkout-mini-summary-value">${shippingFee.toLocaleString('es-CO')}</span>
+                  <span className="checkout-mini-summary-value" style={shippingFee === 0 ? { color: 'var(--gold-light)' } : undefined}>
+                    {shippingFee === 0 ? 'Gratis' : `$${shippingFee.toLocaleString('es-CO')}`}
+                  </span>
                 </div>
                 <div className="checkout-mini-summary-row">
                   <span className="checkout-mini-summary-label">Método</span>
