@@ -18,6 +18,12 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Render y otros proxies reversos agregan X-Forwarded-For. Esto evita que
+// express-rate-limit falle al identificar la IP real del cliente.
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // ─── Middleware ───────────────────────────────────────────
 const allowedOrigins = [
   'http://localhost:5173',
