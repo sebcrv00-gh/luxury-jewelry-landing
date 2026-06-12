@@ -68,8 +68,13 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const login = async (email, clave, skipAnimation = false, turnstileToken = '') => {
-    const res = await api.post('/auth/login', { email, clave, turnstileToken });
+  const login = async (email, clave, skipAnimation = false, captchaPayload = {}) => {
+    const res = await api.post('/auth/login', {
+      email,
+      clave,
+      captchaToken: captchaPayload.captchaToken || '',
+      captchaAnswer: captchaPayload.captchaAnswer || ''
+    });
     setUser(res.data.user);
     if (res.data.user?.tema_preferencia) {
       applyThemePreference(res.data.user.tema_preferencia);
@@ -88,8 +93,15 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const register = async (nombre, email, clave, confirmarClave, turnstileToken = '') => {
-    const res = await api.post('/auth/register', { nombre, email, clave, confirmarClave, turnstileToken });
+  const register = async (nombre, email, clave, confirmarClave, captchaPayload = {}) => {
+    const res = await api.post('/auth/register', {
+      nombre,
+      email,
+      clave,
+      confirmarClave,
+      captchaToken: captchaPayload.captchaToken || '',
+      captchaAnswer: captchaPayload.captchaAnswer || ''
+    });
     return res.data;
   };
 

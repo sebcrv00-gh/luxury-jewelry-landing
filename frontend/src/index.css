@@ -5164,19 +5164,93 @@ body:has(.auth-modal-overlay) {
   box-shadow: 0 0 0 3px var(--gold-glow), 0 4px 16px rgba(201, 168, 76, 0.08);
 }
 
-.auth-turnstile-wrap {
+.auth-simple-captcha-wrap {
   margin-bottom: 18px;
 }
 
-.auth-turnstile-note {
+.auth-simple-captcha-box {
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-panel-soft);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.auth-simple-captcha-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.auth-simple-captcha-label {
+  color: var(--gold-light);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+
+.auth-simple-captcha-refresh {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.28s var(--ease-out-expo);
+}
+
+.auth-simple-captcha-refresh:hover:not(:disabled) {
+  color: var(--gold);
+  border-color: var(--border-hover);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.auth-simple-captcha-refresh:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.auth-simple-captcha-refresh .is-spinning {
+  animation: authSpin 0.8s linear infinite;
+}
+
+.auth-simple-captcha-prompt {
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.auth-simple-captcha-input {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-panel-soft-strong);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  padding: 0 16px;
+  outline: none;
+  transition: all 0.3s var(--ease-out-expo);
+}
+
+.auth-simple-captcha-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+.auth-simple-captcha-note {
   margin-top: 10px;
   color: var(--text-muted);
   font-size: 0.74rem;
   line-height: 1.6;
-}
-
-.turnstile-widget-shell {
-  min-height: 66px;
 }
 
 /* Password wrapper */

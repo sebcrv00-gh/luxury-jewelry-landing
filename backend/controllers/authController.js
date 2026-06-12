@@ -1,11 +1,10 @@
 const crypto = require('crypto');
 const User = require('../models/User');
 const {
-  verifyTurnstileToken,
-  formatTurnstileError,
-  isTurnstileEnabled,
-  getTurnstileSiteKey
-} = require('../services/turnstileService');
+  createSimpleCaptcha,
+  verifySimpleCaptcha,
+  formatSimpleCaptchaError
+} = require('../services/simpleCaptchaService');
 
 const VALID_THEME_PREFERENCES = new Set(['light', 'ambient', 'dark']);
 
@@ -38,7 +37,7 @@ const authController = {
   // POST /api/auth/register
   async register(req, res) {
     try {
-      const { nombre, email, clave, confirmarClave, turnstileToken } = req.body;
+      const { nombre, email, clave, confirmarClave, captchaToken, captchaAnswer } = req.body;
       if (!nombre || !email || !clave) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
       }
@@ -49,13 +48,13 @@ const authController = {
         return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
       }
 
-      const turnstileResult = await verifyTurnstileToken({
-        token: turnstileToken,
-        action: 'register',
-        req
+      const captchaResult = verifySimpleCaptcha({
+        token: captchaToken,
+        answer: captchaAnswer,
+        action: 'register'
       });
-      if (!turnstileResult.success) {
-        return res.status(400).json({ error: formatTurnstileError(turnstileResult.errors) });
+      if (!captchaResult.success) {
+        return res.status(400).json({ error: formatSimpleCaptchaError(captchaResult.error) });
       }
 
       const claveHash = crypto.createHash('sha256').update(clave).digest('hex');
@@ -78,18 +77,18 @@ const authController = {
   // POST /api/auth/login
   async login(req, res) {
     try {
-      const { email, clave, turnstileToken } = req.body;
+      const { email, clave, captchaToken, captchaAnswer } = req.body;
       if (!email || !clave) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
       }
 
-      const turnstileResult = await verifyTurnstileToken({
-        token: turnstileToken,
-        action: 'login',
-        req
+      const captchaResult = verifySimpleCaptcha({
+        token: captchaToken,
+        answer: captchaAnswer,
+        action: 'login'
       });
-      if (!turnstileResult.success) {
-        return res.status(400).json({ error: formatTurnstileError(turnstileResult.errors) });
+      if (!captchaResult.success) {
+        return res.status(400).json({ error: formatSimpleCaptchaError(captchaResult.error) });
       }
 
       const usuario = await User.findByEmail(email);
@@ -142,38 +141,16 @@ const authController = {
     }
   },
 
-  // GET /api/auth/security-config
-  async getSecurityConfig(req, res) {
+  // GET /api/auth/simple-captcha
+  async getSimpleCaptcha(req, res) {
     try {
-      // #region debug-point B:security-config-response
-      fetch('http://127.0.0.1:7777/event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId: 'turnstile-missing',
-          runId: 'pre-fix',
-          hypothesisId: 'B',
-          location: 'backend/controllers/authController.js:getSecurityConfig',
-          msg: '[DEBUG] Returning auth security config',
-          data: {
-            required: isTurnstileEnabled(),
-            siteKeyPresent: Boolean(getTurnstileSiteKey()),
-            siteKeyLength: String(getTurnstileSiteKey() || '').length,
-            host: req.get('host') || null
-          },
-          ts: Date.now()
-        })
-      }).catch(() => {});
-      // #endregion
-      return res.json({
-        turnstile: {
-          required: isTurnstileEnabled(),
-          siteKey: getTurnstileSiteKey()
-        }
-      });
+      const action = String(req.query.action || 'login').trim().toLowerCase() === 'register'
+        ? 'register'
+        : 'login';
+      return res.json(createSimpleCaptcha(action));
     } catch (err) {
-      console.error('Error al obtener config de seguridad:', err);
-      return res.status(500).json({ error: 'No fue posible obtener la configuración de seguridad.' });
+      console.error('Error al generar captcha simple:', err);
+      return res.status(500).json({ error: 'No fue posible generar el captcha de seguridad.' });
     }
   },
 

@@ -14,7 +14,7 @@ router.post('/register', authLimiter, authController.register);
 router.post('/login', authLimiter, authController.login);
 router.post('/logout', authController.logout);
 router.get('/me', authController.me);
-router.get('/security-config', authController.getSecurityConfig);
+router.get('/simple-captcha', authController.getSimpleCaptcha);
 router.put('/profile', isAuthenticated, upload.single('foto'), authController.updateProfile);
 router.delete('/profile', isAuthenticated, authController.deleteAccount);
 router.get('/users', isAuthenticated, isAdmin, authController.getAllUsers);

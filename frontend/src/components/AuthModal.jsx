@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, Eye, EyeOff, Sparkles, Crown, Diamond, ArrowLeft, Mail, KeyRound, ShieldCheck } from 'lucide-react';
+import { X, Eye, EyeOff, Sparkles, Crown, Diamond, ArrowLeft, Mail, KeyRound, ShieldCheck, RefreshCw } from 'lucide-react';
 import api from '../api/axios';
-import TurnstileWidget from './TurnstileWidget';
 
 export default function AuthModal() {
-  const { isAuthModalOpen, closeAuthModal, authModalMode, openAuthModal, login, register, themePreference } = useAuth();
-  const fallbackTurnstileSiteKey = String(import.meta.env.VITE_TURNSTILE_SITE_KEY || '').trim();
+  const { isAuthModalOpen, closeAuthModal, authModalMode, openAuthModal, login, register } = useAuth();
   
   const [loginEmail, setLoginEmail] = useState('');
   const [loginClave, setLoginClave] = useState('');
@@ -15,13 +13,14 @@ export default function AuthModal() {
   const [regEmail, setRegEmail] = useState('');
   const [regClave, setRegClave] = useState('');
   const [regConfirmClave, setRegConfirmClave] = useState('');
-  const [loginTurnstileToken, setLoginTurnstileToken] = useState('');
-  const [registerTurnstileToken, setRegisterTurnstileToken] = useState('');
-  const [loginCaptchaNonce, setLoginCaptchaNonce] = useState(0);
-  const [registerCaptchaNonce, setRegisterCaptchaNonce] = useState(0);
-  const [turnstileSiteKey, setTurnstileSiteKey] = useState(fallbackTurnstileSiteKey);
-  const [turnstileRequired, setTurnstileRequired] = useState(Boolean(fallbackTurnstileSiteKey));
-  const [turnstileLoading, setTurnstileLoading] = useState(false);
+  const [loginCaptchaPrompt, setLoginCaptchaPrompt] = useState('');
+  const [loginCaptchaToken, setLoginCaptchaToken] = useState('');
+  const [loginCaptchaAnswer, setLoginCaptchaAnswer] = useState('');
+  const [loginCaptchaLoading, setLoginCaptchaLoading] = useState(false);
+  const [registerCaptchaPrompt, setRegisterCaptchaPrompt] = useState('');
+  const [registerCaptchaToken, setRegisterCaptchaToken] = useState('');
+  const [registerCaptchaAnswer, setRegisterCaptchaAnswer] = useState('');
+  const [registerCaptchaLoading, setRegisterCaptchaLoading] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -37,7 +36,28 @@ export default function AuthModal() {
   const [recoveryEmailHint, setRecoveryEmailHint] = useState('');
   const [recoveryNewPassword, setRecoveryNewPassword] = useState('');
   const [recoveryConfirmPassword, setRecoveryConfirmPassword] = useState('');
-  const isTurnstileEnabled = Boolean(turnstileSiteKey);
+
+  async function loadSimpleCaptcha(action) {
+    const isRegisterCaptcha = action === 'register';
+    const setLoadingState = isRegisterCaptcha ? setRegisterCaptchaLoading : setLoginCaptchaLoading;
+    const setPromptState = isRegisterCaptcha ? setRegisterCaptchaPrompt : setLoginCaptchaPrompt;
+    const setTokenState = isRegisterCaptcha ? setRegisterCaptchaToken : setLoginCaptchaToken;
+    const setAnswerState = isRegisterCaptcha ? setRegisterCaptchaAnswer : setLoginCaptchaAnswer;
+
+    setLoadingState(true);
+    try {
+      const { data } = await api.get(`/auth/simple-captcha?action=${action}`);
+      setPromptState(String(data?.prompt || '').trim());
+      setTokenState(String(data?.token || '').trim());
+      setAnswerState('');
+    } catch {
+      setPromptState('');
+      setTokenState('');
+      setError('No fue posible cargar el captcha de seguridad. Intenta nuevamente.');
+    } finally {
+      setLoadingState(false);
+    }
+  }
 
   useEffect(() => {
     if (isAuthModalOpen) {
@@ -52,90 +72,15 @@ export default function AuthModal() {
       setRecoveryNewPassword('');
       setRecoveryConfirmPassword('');
       setRegConfirmClave('');
-      setLoginTurnstileToken('');
-      setRegisterTurnstileToken('');
-      setLoginCaptchaNonce((value) => value + 1);
-      setRegisterCaptchaNonce((value) => value + 1);
+      setLoginCaptchaAnswer('');
+      setRegisterCaptchaAnswer('');
     }
   }, [isAuthModalOpen, authModalMode]);
 
   useEffect(() => {
-    if (!isAuthModalOpen) return;
-
-    let isCancelled = false;
-
-    const loadSecurityConfig = async () => {
-      setTurnstileLoading(true);
-      try {
-        const { data } = await api.get('/auth/security-config');
-        if (isCancelled) return;
-
-        const apiSiteKey = String(data?.turnstile?.siteKey || '').trim();
-        const resolvedSiteKey = apiSiteKey || fallbackTurnstileSiteKey;
-        // #region debug-point B:frontend-security-config
-        fetch('http://127.0.0.1:7777/event', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: 'turnstile-missing',
-            runId: 'pre-fix',
-            hypothesisId: 'B',
-            location: 'frontend/components/AuthModal.jsx:loadSecurityConfig',
-            msg: '[DEBUG] Frontend received auth security config',
-            data: {
-              required: Boolean(data?.turnstile?.required),
-              apiSiteKeyPresent: Boolean(apiSiteKey),
-              apiSiteKeyLength: apiSiteKey.length,
-              fallbackSiteKeyPresent: Boolean(fallbackTurnstileSiteKey),
-              fallbackSiteKeyLength: fallbackTurnstileSiteKey.length,
-              resolvedSiteKeyPresent: Boolean(resolvedSiteKey),
-              resolvedSiteKeyLength: resolvedSiteKey.length
-            },
-            ts: Date.now()
-          })
-        }).catch(() => {});
-        // #endregion
-        setTurnstileSiteKey(resolvedSiteKey);
-        setTurnstileRequired(Boolean(data?.turnstile?.required || resolvedSiteKey));
-
-        if (data?.turnstile?.required && !resolvedSiteKey) {
-          setError('La verificación de seguridad está activa, pero falta la clave pública de Cloudflare Turnstile.');
-        }
-      } catch {
-        if (isCancelled) return;
-        // #region debug-point B:frontend-security-config-error
-        fetch('http://127.0.0.1:7777/event', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: 'turnstile-missing',
-            runId: 'pre-fix',
-            hypothesisId: 'B',
-            location: 'frontend/components/AuthModal.jsx:loadSecurityConfig:catch',
-            msg: '[DEBUG] Frontend failed to fetch auth security config',
-            data: {
-              fallbackSiteKeyPresent: Boolean(fallbackTurnstileSiteKey),
-              fallbackSiteKeyLength: fallbackTurnstileSiteKey.length
-            },
-            ts: Date.now()
-          })
-        }).catch(() => {});
-        // #endregion
-        setTurnstileSiteKey(fallbackTurnstileSiteKey);
-        setTurnstileRequired(Boolean(fallbackTurnstileSiteKey));
-      } finally {
-        if (!isCancelled) {
-          setTurnstileLoading(false);
-        }
-      }
-    };
-
-    loadSecurityConfig();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [isAuthModalOpen, fallbackTurnstileSiteKey]);
+    if (!isAuthModalOpen || recoveryMode) return;
+    loadSimpleCaptcha(authModalMode === 'register' ? 'register' : 'login');
+  }, [isAuthModalOpen, authModalMode, recoveryMode]);
 
   // Escape key
   useEffect(() => {
@@ -158,20 +103,22 @@ export default function AuthModal() {
     e.preventDefault();
     setError('');
     if (!loginEmail || !loginClave) { setError('Todos los campos son obligatorios'); return; }
-    if (turnstileRequired && !isTurnstileEnabled) { setError('La clave pública de Cloudflare Turnstile no está llegando al frontend.'); return; }
-    if (isTurnstileEnabled && !loginTurnstileToken) { setError('Completa la verificación de seguridad antes de continuar'); return; }
+    if (!loginCaptchaToken || !loginCaptchaPrompt) { setError('No fue posible cargar el captcha. Recárgalo e inténtalo nuevamente.'); return; }
+    if (!loginCaptchaAnswer.trim()) { setError('Resuelve el captcha antes de continuar.'); return; }
     setLoading(true);
     try {
-      await login(loginEmail, loginClave, false, loginTurnstileToken);
+      await login(loginEmail, loginClave, false, {
+        captchaToken: loginCaptchaToken,
+        captchaAnswer: loginCaptchaAnswer
+      });
       handleClose();
       setLoginEmail('');
       setLoginClave('');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');
     } finally {
-      if (isTurnstileEnabled) {
-        setLoginTurnstileToken('');
-        setLoginCaptchaNonce((value) => value + 1);
+      if (isAuthModalOpen) {
+        loadSimpleCaptcha('login');
       }
       setLoading(false);
     }
@@ -184,24 +131,25 @@ export default function AuthModal() {
       setError('La confirmación de la contraseña debe coincidir');
       return;
     }
-    if (turnstileRequired && !isTurnstileEnabled) {
-      setError('La clave pública de Cloudflare Turnstile no está llegando al frontend.');
+    if (!registerCaptchaToken || !registerCaptchaPrompt) {
+      setError('No fue posible cargar el captcha. Recárgalo e inténtalo nuevamente.');
       return;
     }
-    if (isTurnstileEnabled && !registerTurnstileToken) {
-      setError('Completa la verificación de seguridad antes de continuar');
+    if (!registerCaptchaAnswer.trim()) {
+      setError('Resuelve el captcha antes de continuar.');
       return;
     }
     setLoading(true);
     try {
       const registeredEmail = regEmail;
-      await register(regNombre, regEmail, regClave, regConfirmClave, registerTurnstileToken);
+      await register(regNombre, regEmail, regClave, regConfirmClave, {
+        captchaToken: registerCaptchaToken,
+        captchaAnswer: registerCaptchaAnswer
+      });
       setRegNombre('');
       setRegEmail('');
       setRegClave('');
       setRegConfirmClave('');
-      setRegisterTurnstileToken('');
-      setRegisterCaptchaNonce((value) => value + 1);
       openAuthModal('login');
       setLoginEmail(registeredEmail);
       setTimeout(() => {
@@ -210,9 +158,8 @@ export default function AuthModal() {
     } catch (err) {
       setError(err.response?.data?.error || 'Error al registrar');
     } finally {
-      if (isTurnstileEnabled) {
-        setRegisterTurnstileToken('');
-        setRegisterCaptchaNonce((value) => value + 1);
+      if (isAuthModalOpen) {
+        loadSimpleCaptcha('register');
       }
       setLoading(false);
     }
@@ -292,6 +239,37 @@ export default function AuthModal() {
   };
 
   const isLogin = authModalMode === 'login';
+  const renderSimpleCaptcha = ({ prompt, answer, setAnswer, token, loadingState, onRefresh, compactText }) => (
+    <div className="auth-simple-captcha-wrap">
+      <div className="auth-simple-captcha-box">
+        <div className="auth-simple-captcha-head">
+          <span className="auth-simple-captcha-label">Captcha de seguridad</span>
+          <button
+            type="button"
+            className="auth-simple-captcha-refresh"
+            onClick={onRefresh}
+            disabled={loadingState}
+            aria-label="Recargar captcha"
+          >
+            <RefreshCw size={15} className={loadingState ? 'is-spinning' : ''} />
+          </button>
+        </div>
+        <div className="auth-simple-captcha-prompt">
+          {loadingState ? 'Generando captcha...' : prompt || 'No fue posible generar el captcha.'}
+        </div>
+        <input
+          type="text"
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value.replace(/[^\d-]/g, '').slice(0, 6))}
+          placeholder="Escribe tu respuesta"
+          className="auth-simple-captcha-input"
+          disabled={loadingState || !token}
+          required
+        />
+      </div>
+      <p className="auth-simple-captcha-note">{compactText}</p>
+    </div>
+  );
 
   // ─── Recovery UI Renderer ───
   const renderRecovery = () => {
@@ -538,34 +516,15 @@ export default function AuthModal() {
                   >
                     ¿Olvidaste tu contraseña?
                   </button>
-                  {turnstileLoading && (
-                    <div className="auth-turnstile-wrap">
-                      <p className="auth-turnstile-note">Cargando verificación de seguridad...</p>
-                    </div>
-                  )}
-                  {!turnstileLoading && turnstileRequired && !isTurnstileEnabled && (
-                    <div className="auth-turnstile-wrap">
-                      <p className="auth-turnstile-note">
-                        Cloudflare Turnstile está activo en backend, pero el frontend no recibió la clave pública.
-                      </p>
-                    </div>
-                  )}
-                  {isTurnstileEnabled && (
-                    <div className="auth-turnstile-wrap">
-                      <TurnstileWidget
-                        key={`login-${loginCaptchaNonce}`}
-                        siteKey={turnstileSiteKey}
-                        action="login"
-                        theme={themePreference === 'light' ? 'light' : 'dark'}
-                        resetKey={loginCaptchaNonce}
-                        onTokenChange={setLoginTurnstileToken}
-                        onError={setError}
-                      />
-                      <p className="auth-turnstile-note">
-                        Protección inteligente activa para accesos al sistema.
-                      </p>
-                    </div>
-                  )}
+                  {renderSimpleCaptcha({
+                    prompt: loginCaptchaPrompt,
+                    answer: loginCaptchaAnswer,
+                    setAnswer: setLoginCaptchaAnswer,
+                    token: loginCaptchaToken,
+                    loadingState: loginCaptchaLoading,
+                    onRefresh: () => loadSimpleCaptcha('login'),
+                    compactText: 'Protección sencilla activa para validar accesos al sistema.'
+                  })}
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? (
                       <span className="auth-spinner"></span>
@@ -615,34 +574,15 @@ export default function AuthModal() {
                       </button>
                     </div>
                   </div>
-                  {turnstileLoading && (
-                    <div className="auth-turnstile-wrap">
-                      <p className="auth-turnstile-note">Cargando verificación de seguridad...</p>
-                    </div>
-                  )}
-                  {!turnstileLoading && turnstileRequired && !isTurnstileEnabled && (
-                    <div className="auth-turnstile-wrap">
-                      <p className="auth-turnstile-note">
-                        Cloudflare Turnstile está activo en backend, pero el frontend no recibió la clave pública.
-                      </p>
-                    </div>
-                  )}
-                  {isTurnstileEnabled && (
-                    <div className="auth-turnstile-wrap">
-                      <TurnstileWidget
-                        key={`register-${registerCaptchaNonce}`}
-                        siteKey={turnstileSiteKey}
-                        action="register"
-                        theme={themePreference === 'light' ? 'light' : 'dark'}
-                        resetKey={registerCaptchaNonce}
-                        onTokenChange={setRegisterTurnstileToken}
-                        onError={setError}
-                      />
-                      <p className="auth-turnstile-note">
-                        Verificación avanzada activa para proteger la creación de cuentas.
-                      </p>
-                    </div>
-                  )}
+                  {renderSimpleCaptcha({
+                    prompt: registerCaptchaPrompt,
+                    answer: registerCaptchaAnswer,
+                    setAnswer: setRegisterCaptchaAnswer,
+                    token: registerCaptchaToken,
+                    loadingState: registerCaptchaLoading,
+                    onRefresh: () => loadSimpleCaptcha('register'),
+                    compactText: 'Validación simple activa para proteger la creación de cuentas.'
+                  })}
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? (
                       <span className="auth-spinner"></span>
