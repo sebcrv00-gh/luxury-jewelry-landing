@@ -158,7 +158,7 @@ export default function Header() {
         </nav>
       </div>
 
-      {!isLoggedIn && !isAdmin && (
+      {!isAdmin && (
         <div
           ref={guestThemeMenuRef}
           className={`guest-theme-fab ${showGuestThemeMenu ? 'is-open' : ''}`}
