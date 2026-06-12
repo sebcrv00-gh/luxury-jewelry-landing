@@ -4,7 +4,7 @@ const User = {
   async findAll() {
     const [rows] = await pool.query(`
       SELECT 
-        u.id, u.nombre, u.email, u.rol, u.telefono, u.direccion, u.foto, u.creado_en, u.primer_envio_gratis_usado,
+        u.id, u.nombre, u.email, u.rol, u.telefono, u.direccion, u.foto, u.creado_en, u.primer_envio_gratis_usado, u.tema_preferencia,
         COUNT(o.id) as total_pedidos
       FROM usuarios u 
       LEFT JOIN ordenes o ON u.id = o.usuario_id 
@@ -53,6 +53,7 @@ const User = {
          u.foto,
          u.creado_en,
          u.primer_envio_gratis_usado,
+         u.tema_preferencia,
          (
            SELECT COUNT(*)
            FROM ordenes o

@@ -88,7 +88,8 @@ async function initDB() {
         direccion VARCHAR(255) DEFAULT NULL,
         foto LONGTEXT DEFAULT NULL,
         creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        primer_envio_gratis_usado TINYINT(1) DEFAULT 0
+        primer_envio_gratis_usado TINYINT(1) DEFAULT 0,
+        tema_preferencia VARCHAR(20) DEFAULT 'dark'
       )
     `);
 
@@ -108,6 +109,15 @@ async function initDB() {
       }
     } catch (err) {
       console.warn('⚠️ No se pudo verificar/agregar la columna primer_envio_gratis_usado en usuarios:', err.message);
+    }
+
+    try {
+      const [themePreferenceColumn] = await conn.query("SHOW COLUMNS FROM usuarios LIKE 'tema_preferencia'");
+      if (themePreferenceColumn.length === 0) {
+        await conn.query("ALTER TABLE usuarios ADD COLUMN tema_preferencia VARCHAR(20) DEFAULT 'dark' AFTER primer_envio_gratis_usado");
+      }
+    } catch (err) {
+      console.warn('⚠️ No se pudo verificar/agregar la columna tema_preferencia en usuarios:', err.message);
     }
 
     await conn.query(`

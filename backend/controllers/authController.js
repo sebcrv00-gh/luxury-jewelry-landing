@@ -1,6 +1,13 @@
 const crypto = require('crypto');
 const User = require('../models/User');
-const path = require('path');
+const { verifyTurnstileToken, formatTurnstileError } = require('../services/turnstileService');
+
+const VALID_THEME_PREFERENCES = new Set(['light', 'ambient', 'dark']);
+
+function normalizeThemePreference(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  return VALID_THEME_PREFERENCES.has(normalized) ? normalized : 'dark';
+}
 
 function formatUserSessionPayload(usuario) {
   const totalPedidos = Number(usuario?.total_pedidos || 0);
@@ -17,7 +24,8 @@ function formatUserSessionPayload(usuario) {
     creado_en: usuario.creado_en,
     total_pedidos: totalPedidos,
     primer_envio_gratis_usado: primerEnvioGratisUsado,
-    primer_envio_gratis_disponible: primerEnvioGratisUsado === 0 && totalPedidos === 0
+    primer_envio_gratis_disponible: primerEnvioGratisUsado === 0 && totalPedidos === 0,
+    tema_preferencia: normalizeThemePreference(usuario?.tema_preferencia)
   };
 }
 
@@ -25,7 +33,7 @@ const authController = {
   // POST /api/auth/register
   async register(req, res) {
     try {
-      const { nombre, email, clave, confirmarClave } = req.body;
+      const { nombre, email, clave, confirmarClave, turnstileToken } = req.body;
       if (!nombre || !email || !clave) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
       }
@@ -34,6 +42,15 @@ const authController = {
       }
       if (String(clave).length < 6) {
         return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+      }
+
+      const turnstileResult = await verifyTurnstileToken({
+        token: turnstileToken,
+        action: 'register',
+        req
+      });
+      if (!turnstileResult.success) {
+        return res.status(400).json({ error: formatTurnstileError(turnstileResult.errors) });
       }
 
       const claveHash = crypto.createHash('sha256').update(clave).digest('hex');
@@ -56,9 +73,18 @@ const authController = {
   // POST /api/auth/login
   async login(req, res) {
     try {
-      const { email, clave } = req.body;
+      const { email, clave, turnstileToken } = req.body;
       if (!email || !clave) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+      }
+
+      const turnstileResult = await verifyTurnstileToken({
+        token: turnstileToken,
+        action: 'login',
+        req
+      });
+      if (!turnstileResult.success) {
+        return res.status(400).json({ error: formatTurnstileError(turnstileResult.errors) });
       }
 
       const usuario = await User.findByEmail(email);
@@ -114,8 +140,12 @@ const authController = {
   // PUT /api/auth/profile
   async updateProfile(req, res) {
     try {
-      const { nombre, email, telefono, direccion } = req.body;
+      const { nombre, email, telefono, direccion, tema_preferencia } = req.body;
       const data = { nombre, email, telefono, direccion };
+
+      if (tema_preferencia !== undefined) {
+        data.tema_preferencia = normalizeThemePreference(tema_preferencia);
+      }
 
       // Si subieron foto
       if (req.file && req.file.buffer) {

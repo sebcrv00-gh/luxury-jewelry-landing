@@ -2,9 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { X, Eye, EyeOff, Sparkles, Crown, Diamond, ArrowLeft, Mail, KeyRound, ShieldCheck } from 'lucide-react';
 import api from '../api/axios';
+import TurnstileWidget from './TurnstileWidget';
 
 export default function AuthModal() {
-  const { isAuthModalOpen, closeAuthModal, authModalMode, openAuthModal, login, register } = useAuth();
+  const { isAuthModalOpen, closeAuthModal, authModalMode, openAuthModal, login, register, themePreference } = useAuth();
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+  const isTurnstileEnabled = Boolean(turnstileSiteKey);
   
   const [loginEmail, setLoginEmail] = useState('');
   const [loginClave, setLoginClave] = useState('');
@@ -13,8 +16,10 @@ export default function AuthModal() {
   const [regEmail, setRegEmail] = useState('');
   const [regClave, setRegClave] = useState('');
   const [regConfirmClave, setRegConfirmClave] = useState('');
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
-  const [nums, setNums] = useState([0, 0]);
+  const [loginTurnstileToken, setLoginTurnstileToken] = useState('');
+  const [registerTurnstileToken, setRegisterTurnstileToken] = useState('');
+  const [loginCaptchaNonce, setLoginCaptchaNonce] = useState(0);
+  const [registerCaptchaNonce, setRegisterCaptchaNonce] = useState(0);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -44,9 +49,10 @@ export default function AuthModal() {
       setRecoveryNewPassword('');
       setRecoveryConfirmPassword('');
       setRegConfirmClave('');
-      if (authModalMode === 'register') {
-        setNums([Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 10) + 1]);
-      }
+      setLoginTurnstileToken('');
+      setRegisterTurnstileToken('');
+      setLoginCaptchaNonce((value) => value + 1);
+      setRegisterCaptchaNonce((value) => value + 1);
     }
   }, [isAuthModalOpen, authModalMode]);
 
@@ -71,15 +77,20 @@ export default function AuthModal() {
     e.preventDefault();
     setError('');
     if (!loginEmail || !loginClave) { setError('Todos los campos son obligatorios'); return; }
+    if (isTurnstileEnabled && !loginTurnstileToken) { setError('Completa la verificación de seguridad antes de continuar'); return; }
     setLoading(true);
     try {
-      await login(loginEmail, loginClave);
+      await login(loginEmail, loginClave, false, loginTurnstileToken);
       handleClose();
       setLoginEmail('');
       setLoginClave('');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');
     } finally {
+      if (isTurnstileEnabled) {
+        setLoginTurnstileToken('');
+        setLoginCaptchaNonce((value) => value + 1);
+      }
       setLoading(false);
     }
   };
@@ -91,18 +102,32 @@ export default function AuthModal() {
       setError('La confirmación de la contraseña debe coincidir');
       return;
     }
-    if (parseInt(captchaAnswer) !== nums[0] + nums[1]) {
-      setError('La respuesta de verificación es incorrecta');
+    if (isTurnstileEnabled && !registerTurnstileToken) {
+      setError('Completa la verificación de seguridad antes de continuar');
       return;
     }
     setLoading(true);
     try {
-      await register(regNombre, regEmail, regClave, regConfirmClave);
-      await login(regEmail, regClave); // Log in immediately
-      handleClose(); // Close the modal, global WelcomeAnimation kicks in
+      const registeredEmail = regEmail;
+      await register(regNombre, regEmail, regClave, regConfirmClave, registerTurnstileToken);
+      setRegNombre('');
+      setRegEmail('');
+      setRegClave('');
+      setRegConfirmClave('');
+      setRegisterTurnstileToken('');
+      setRegisterCaptchaNonce((value) => value + 1);
+      openAuthModal('login');
+      setLoginEmail(registeredEmail);
+      setTimeout(() => {
+        setSuccess('Cuenta creada correctamente. Ahora confirma tu acceso iniciando sesión.');
+      }, 0);
     } catch (err) {
       setError(err.response?.data?.error || 'Error al registrar');
     } finally {
+      if (isTurnstileEnabled) {
+        setRegisterTurnstileToken('');
+        setRegisterCaptchaNonce((value) => value + 1);
+      }
       setLoading(false);
     }
   };
@@ -427,6 +452,22 @@ export default function AuthModal() {
                   >
                     ¿Olvidaste tu contraseña?
                   </button>
+                  {isTurnstileEnabled && (
+                    <div className="auth-turnstile-wrap">
+                      <TurnstileWidget
+                        key={`login-${loginCaptchaNonce}`}
+                        siteKey={turnstileSiteKey}
+                        action="login"
+                        theme={themePreference === 'light' ? 'light' : 'dark'}
+                        resetKey={loginCaptchaNonce}
+                        onTokenChange={setLoginTurnstileToken}
+                        onError={setError}
+                      />
+                      <p className="auth-turnstile-note">
+                        Protección inteligente activa para accesos al sistema.
+                      </p>
+                    </div>
+                  )}
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? (
                       <span className="auth-spinner"></span>
@@ -476,10 +517,22 @@ export default function AuthModal() {
                       </button>
                     </div>
                   </div>
-                  <div className="auth-field">
-                    <label>Verificación: ¿Cuánto es {nums[0]} + {nums[1]}?</label>
-                    <input type="number" value={captchaAnswer} onChange={e => setCaptchaAnswer(e.target.value)} placeholder="Tu respuesta" required />
-                  </div>
+                  {isTurnstileEnabled && (
+                    <div className="auth-turnstile-wrap">
+                      <TurnstileWidget
+                        key={`register-${registerCaptchaNonce}`}
+                        siteKey={turnstileSiteKey}
+                        action="register"
+                        theme={themePreference === 'light' ? 'light' : 'dark'}
+                        resetKey={registerCaptchaNonce}
+                        onTokenChange={setRegisterTurnstileToken}
+                        onError={setError}
+                      />
+                      <p className="auth-turnstile-note">
+                        Verificación avanzada activa para proteger la creación de cuentas.
+                      </p>
+                    </div>
+                  )}
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? (
                       <span className="auth-spinner"></span>

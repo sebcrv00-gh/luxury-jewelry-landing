@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Lock, Eye, EyeOff, Store, Truck, Percent, CheckCircle, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, Store, Truck, Percent, CheckCircle, AlertCircle, Palette } from 'lucide-react';
 import api from '../api/axios';
+import ThemePreferencePanel from '../components/ThemePreferencePanel';
 
 export default function SettingsAdmin() {
   const [activeSection, setActiveSection] = useState('security');
@@ -62,13 +63,14 @@ export default function SettingsAdmin() {
 
   const sections = [
     { id: 'security', icon: Lock, label: 'Seguridad' },
+    { id: 'appearance', icon: Palette, label: 'Estilo de la Página' },
     { id: 'business', icon: Store, label: 'Información del Negocio' },
     { id: 'shipping', icon: Truck, label: 'Tarifas de Envío' },
     { id: 'taxes', icon: Percent, label: 'Impuestos' },
   ];
 
   const inputStyle = {
-    width: '100%', padding: '14px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)',
+    width: '100%', padding: '14px 18px', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)',
     borderRadius: '8px', color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none', transition: 'all 0.3s',
     fontFamily: 'var(--font-body)'
   };
@@ -79,7 +81,7 @@ export default function SettingsAdmin() {
   };
 
   const cardStyle = {
-    background: 'linear-gradient(145deg, rgba(20, 20, 20, 0.6), rgba(12, 12, 12, 0.8))',
+    background: 'linear-gradient(145deg, var(--bg-card), var(--bg-elevated))',
     border: '1px solid rgba(201, 168, 76, 0.08)', borderRadius: '12px', padding: '40px', marginBottom: '24px'
   };
 
@@ -92,7 +94,7 @@ export default function SettingsAdmin() {
 
       {/* SAVED TOAST */}
       {savedMsg && (
-        <div style={{ position: 'fixed', bottom: '32px', right: '32px', zIndex: 15000, display: 'flex', alignItems: 'center', gap: '14px', background: 'linear-gradient(135deg, rgba(20,20,20,0.95), rgba(12,12,12,0.95))', backdropFilter: 'blur(12px)', border: '1px solid rgba(78, 205, 196, 0.3)', borderRadius: '12px', padding: '18px 28px', boxShadow: '0 15px 40px rgba(0,0,0,0.7)', animation: 'toastSlideUp 0.5s ease forwards' }}>
+        <div style={{ position: 'fixed', bottom: '32px', right: '32px', zIndex: 15000, display: 'flex', alignItems: 'center', gap: '14px', background: 'linear-gradient(135deg, var(--bg-card), var(--bg-elevated))', backdropFilter: 'blur(12px)', border: '1px solid rgba(78, 205, 196, 0.3)', borderRadius: '12px', padding: '18px 28px', boxShadow: '0 15px 40px rgba(0,0,0,0.35)', animation: 'toastSlideUp 0.5s ease forwards' }}>
           <CheckCircle size={22} style={{ color: 'var(--success)' }} />
           <span style={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}>Configuración de <strong>{savedMsg}</strong> guardada correctamente</span>
         </div>
@@ -165,6 +167,19 @@ export default function SettingsAdmin() {
                   {pwdLoading ? 'ACTUALIZANDO...' : 'ACTUALIZAR CONTRASEÑA'}
                 </button>
               </form>
+            </div>
+          )}
+
+          {activeSection === 'appearance' && (
+            <div style={cardStyle}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', color: 'var(--text-primary)', marginBottom: '8px' }}>Estilo de la Página</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '28px' }}>
+                Define la presentación visual del panel administrativo. La preferencia queda asociada a tu cuenta y se mantiene como predeterminada al volver a iniciar sesión.
+              </p>
+              <ThemePreferencePanel
+                title="Apariencia administrativa"
+                description="Selecciona el ambiente visual con el que deseas gestionar el ecosistema Luxury Jewelry. El modo oscuro sigue siendo el predeterminado del sistema."
+              />
             </div>
           )}
 

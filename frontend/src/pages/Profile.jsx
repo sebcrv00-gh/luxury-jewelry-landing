@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getImageUrl } from '../api/axios';
 import api from '../api/axios';
 import { Lock, KeyRound, Eye, EyeOff, X, ShieldCheck, Diamond } from 'lucide-react';
+import ThemePreferencePanel from '../components/ThemePreferencePanel';
 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
@@ -169,6 +170,13 @@ export default function Profile() {
             </button>
           </div>
         </form>
+
+        <div className="profile-theme-block">
+          <ThemePreferencePanel
+            title="Estilo de la página"
+            description="Tu preferencia visual se guarda en tu cuenta para que siempre vuelvas al mismo ambiente, incluso al iniciar sesión desde otro dispositivo."
+          />
+        </div>
 
         <div style={{ marginTop: '50px', paddingTop: '30px', borderTop: '1px solid var(--border-subtle)' }}>
           <h3 style={{ color: 'var(--danger)', fontSize: '1.2rem', marginBottom: '10px' }}>Zona de Peligro</h3>
