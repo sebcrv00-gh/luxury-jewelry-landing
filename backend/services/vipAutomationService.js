@@ -1,6 +1,6 @@
 const { pool } = require('../config/db');
 
-const DEFAULT_VIP_MIN_TOTAL = 2000000;
+const DEFAULT_VIP_MIN_TOTAL = 500000;
 
 function getVipMinimumTotal() {
   const raw = Number(process.env.VIP_AUTO_MIN_TOTAL || DEFAULT_VIP_MIN_TOTAL);

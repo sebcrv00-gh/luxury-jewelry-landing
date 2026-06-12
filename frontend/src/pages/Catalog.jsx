@@ -402,7 +402,7 @@ export default function Catalog() {
               <h2>
                 {isVip
                   ? 'Tu beneficio VIP ya esta activo.'
-                  : 'Compra mas y accede a categoria VIP con 10% de descuento.'}
+                  : 'Haz compras mayores a 500k y accede a VIP con 10% de descuento.'}
               </h2>
               <p>
                 {isVip
