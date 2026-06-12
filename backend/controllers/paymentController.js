@@ -11,6 +11,7 @@ const {
   mapTransactionStatusToPaymentStatus,
   validateEventChecksum
 } = require('../services/wompiService');
+const { syncVipStatusByPurchases } = require('../services/vipAutomationService');
 
 function getFrontendBaseUrl() {
   return (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
@@ -45,13 +46,15 @@ function canAccessOrder(req, order) {
 
 async function syncOrderFromTransaction(order, transaction) {
   const nextPaymentStatus = mapTransactionStatusToPaymentStatus(transaction?.status);
-  return Order.updatePaymentFields(order.id, {
+  const updatedOrder = await Order.updatePaymentFields(order.id, {
     estado_pago: nextPaymentStatus,
     wompi_transaction_id: transaction?.id || order.wompi_transaction_id || null,
     wompi_status: transaction?.status || order.wompi_status || null,
     wompi_payload: JSON.stringify(transaction || {}),
     pago_actualizado_en: new Date()
   });
+  await syncVipStatusByPurchases(updatedOrder?.usuario_id || order?.usuario_id);
+  return updatedOrder;
 }
 
 const paymentController = {

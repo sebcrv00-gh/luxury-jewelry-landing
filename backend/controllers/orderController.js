@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const { syncVipStatusByPurchases } = require('../services/vipAutomationService');
 const ALLOWED_ORDER_STATUSES = ['pendiente', 'procesando', 'enviado', 'entregado', 'cancelado'];
 const ALLOWED_MANUAL_PAYMENT_STATUSES = ['pendiente', 'aprobado'];
 
@@ -109,6 +110,8 @@ const orderController = {
         return res.status(404).json({ error: 'Orden no encontrada' });
       }
 
+      await syncVipStatusByPurchases(updatedOrder.usuario_id);
+
       return res.json({ ok: true, order: updatedOrder });
     } catch (err) {
       console.error('Error al actualizar estado de la orden:', err);
@@ -134,6 +137,7 @@ const orderController = {
       }
 
       const updatedOrder = await Order.updatePaymentStatus(req.params.id, estado_pago);
+      await syncVipStatusByPurchases(updatedOrder.usuario_id);
       return res.json({ ok: true, order: updatedOrder });
     } catch (err) {
       console.error('Error al actualizar estado de pago de la orden:', err);

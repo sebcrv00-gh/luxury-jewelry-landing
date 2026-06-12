@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mail, Phone, User, Shield, Crown, ShoppingBag, XCircle, Users, Star, UserRoundCheck, FileSpreadsheet, Search, ArrowUpAZ, CalendarRange, SlidersHorizontal } from 'lucide-react';
 import api, { getImageUrl } from '../api/axios';
 import { exportClientsToExcel } from '../utils/adminExcelExport';
@@ -37,6 +38,7 @@ const formatClientDate = (value, options = {}) => {
 };
 
 export default function ClientsAdmin() {
+  const navigate = useNavigate();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [vipConfirm, setVipConfirm] = useState(null);
@@ -182,6 +184,9 @@ export default function ClientsAdmin() {
   const filteredVipClients = filteredClients.filter(client => client.rol === 'vip').length;
   const filteredBuyers = filteredClients.filter(client => Number(client.total_pedidos) > 0).length;
   const hasActiveFilters = Boolean(search.trim()) || roleFilter !== 'all' || activityFilter !== 'all' || sortBy !== 'registration-desc';
+  const openClientOrders = (client) => {
+    navigate(`/admin?tab=orders&clientId=${client.id}&clientName=${encodeURIComponent(client.nombre || '')}`);
+  };
 
   return (
     <div className="admin-section-shell">
@@ -367,15 +372,23 @@ export default function ClientsAdmin() {
                       </div>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => openClientOrders(client)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'transparent', border: 'none', padding: 0, cursor: Number(client.total_pedidos) > 0 ? 'pointer' : 'default', opacity: Number(client.total_pedidos) > 0 ? 1 : 0.72 }}
+                        disabled={Number(client.total_pedidos) === 0}
+                        title={Number(client.total_pedidos) > 0 ? `Ver pedidos de ${client.nombre}` : 'Este cliente no tiene pedidos'}
+                      >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '50%', background: client.total_pedidos > 0 ? 'rgba(78, 205, 196, 0.1)' : 'rgba(255,255,255,0.03)', border: client.total_pedidos > 0 ? '1px solid rgba(78, 205, 196, 0.3)' : '1px solid var(--border-subtle)' }}>
                           <ShoppingBag size={16} style={{ color: client.total_pedidos > 0 ? 'var(--success)' : 'var(--text-muted)' }} />
                         </div>
                         <div>
                           <div style={{ fontWeight: 600, fontSize: '1.1rem', color: client.total_pedidos > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>{client.total_pedidos}</div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Pedidos</div>
+                          <div style={{ fontSize: '0.65rem', color: client.total_pedidos > 0 ? 'var(--success)' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                            {client.total_pedidos > 0 ? 'Ver pedidos' : 'Pedidos'}
+                          </div>
                         </div>
-                      </div>
+                      </button>
                     </td>
                     <td>{getRolBadge(client)}</td>
                     <td>

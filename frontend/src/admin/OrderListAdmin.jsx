@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { RefreshCw, PackageOpen, AlertCircle, Receipt, Clock3, CircleDollarSign, Truck, FileDown, FileSpreadsheet, ChevronDown } from 'lucide-react';
 import api from '../api/axios';
 import { downloadInvoicePdf } from '../utils/invoicePdf';
@@ -11,6 +12,14 @@ const REPORT_PERIODS = [
   { key: 'weekly', label: 'Semanal', description: 'Base completa de los ultimos 7 dias' },
   { key: 'monthly', label: 'Mensual', description: 'Base completa del mes actual' },
   { key: 'all', label: 'Completo', description: 'Base historica integral de ventas' }
+];
+const ORDER_SORT_OPTIONS = [
+  { value: 'recent-desc', label: 'Mas recientes' },
+  { value: 'oldest-asc', label: 'Mas antiguos' },
+  { value: 'items-desc', label: 'Mas productos' },
+  { value: 'items-asc', label: 'Menos productos' },
+  { value: 'total-desc', label: 'Mayor monto total' },
+  { value: 'total-asc', label: 'Menor monto total' }
 ];
 
 const getPaymentLabel = (paymentMethod) => {
@@ -38,6 +47,8 @@ const getPaymentStatusClass = (paymentStatus) => {
 };
 
 export default function OrderListAdmin({ refreshTrigger }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const exportMenuRef = useRef(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,11 +59,12 @@ export default function OrderListAdmin({ refreshTrigger }) {
   const [exportingPeriod, setExportingPeriod] = useState('');
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState('');
+  const [sortBy, setSortBy] = useState('recent-desc');
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/orders/admin/all');
+      const res = await api.get('/orders/admin/detailed');
       setOrders(res.data);
     } catch (err) {
       setError('Error al sincronizar con el registro de pedidos.');
@@ -147,6 +159,59 @@ export default function OrderListAdmin({ refreshTrigger }) {
     }
   };
 
+  const countsAsProcessedRevenue = (order) => {
+    if (order.metodo_pago === 'wompi') {
+      return order.estado_pago === 'aprobado';
+    }
+    if (order.metodo_pago === 'efectivo') {
+      return order.estado_pago === 'aprobado' && order.estado === 'entregado';
+    }
+    return false;
+  };
+  const activeExportLabel = REPORT_PERIODS.find((period) => period.key === exportingPeriod)?.label || 'Periodo';
+  const searchParams = new URLSearchParams(location.search);
+  const clientFilterId = String(searchParams.get('clientId') || '').trim();
+  const clientFilterName = String(searchParams.get('clientName') || '').trim();
+  const getItemCount = (order) => (order.items || []).reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
+  const filteredOrders = useMemo(() => {
+    const baseOrders = clientFilterId
+      ? orders.filter((order) => String(order.usuario_id) === clientFilterId)
+      : orders;
+
+    return baseOrders.slice().sort((a, b) => {
+      const aDate = new Date(a.creado_en || 0).getTime();
+      const bDate = new Date(b.creado_en || 0).getTime();
+      const aItems = getItemCount(a);
+      const bItems = getItemCount(b);
+      const aTotal = Number(a.total || 0);
+      const bTotal = Number(b.total || 0);
+
+      switch (sortBy) {
+        case 'oldest-asc':
+          return aDate - bDate || a.id - b.id;
+        case 'items-desc':
+          return bItems - aItems || bDate - aDate;
+        case 'items-asc':
+          return aItems - bItems || bDate - aDate;
+        case 'total-asc':
+          return aTotal - bTotal || bDate - aDate;
+        case 'total-desc':
+          return bTotal - aTotal || bDate - aDate;
+        case 'recent-desc':
+        default:
+          return bDate - aDate || b.id - a.id;
+      }
+    });
+  }, [clientFilterId, orders, sortBy]);
+  const pendingOrders = filteredOrders.filter(order => order.estado === 'pendiente').length;
+  const deliveredOrders = filteredOrders.filter(order => order.estado === 'entregado').length;
+  const revenue = filteredOrders
+    .filter(countsAsProcessedRevenue)
+    .reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const latestOrderDate = filteredOrders[0]?.creado_en
+    ? new Date(filteredOrders[0].creado_en).toLocaleDateString('es-CO')
+    : 'Sin registros';
+
   if (loading && orders.length === 0) {
     return (
       <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px 0' }}>
@@ -167,25 +232,6 @@ export default function OrderListAdmin({ refreshTrigger }) {
     );
   }
 
-  const pendingOrders = orders.filter(order => order.estado === 'pendiente').length;
-  const deliveredOrders = orders.filter(order => order.estado === 'entregado').length;
-  const countsAsProcessedRevenue = (order) => {
-    if (order.metodo_pago === 'wompi') {
-      return order.estado_pago === 'aprobado';
-    }
-    if (order.metodo_pago === 'efectivo') {
-      return order.estado_pago === 'aprobado' && order.estado === 'entregado';
-    }
-    return false;
-  };
-  const revenue = orders
-    .filter(countsAsProcessedRevenue)
-    .reduce((sum, order) => sum + Number(order.total || 0), 0);
-  const latestOrderDate = orders[0]?.creado_en
-    ? new Date(orders[0].creado_en).toLocaleDateString('es-CO')
-    : 'Sin registros';
-  const activeExportLabel = REPORT_PERIODS.find((period) => period.key === exportingPeriod)?.label || 'Periodo';
-
   const getStatusClass = (status) => {
     if (status === 'entregado') return 'success';
     if (status === 'pendiente') return 'pending';
@@ -198,7 +244,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
       <div className="admin-section-header-block">
         <div>
           <h2>Gestión Operativa de Pedidos</h2>
-          <p>Consolida órdenes, monitorea estados de atención y detecta carga operativa desde un panel orientado a seguimiento comercial.</p>
+              <p>Consolida órdenes, monitorea estados de atención y detecta carga operativa desde un panel orientado a seguimiento comercial.</p>
         </div>
         <div className="admin-inline-actions" style={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <div className={`admin-action-dropdown ${isExportMenuOpen ? 'open' : ''}`} ref={exportMenuRef}>
@@ -250,7 +296,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
             <strong>Total de pedidos</strong>
             <span className="admin-info-card-icon"><Receipt size={18} /></span>
           </div>
-          <span className="admin-info-card-value">{orders.length}</span>
+          <span className="admin-info-card-value">{filteredOrders.length}</span>
           <span className="admin-info-card-meta">Volumen total registrado en el sistema</span>
         </div>
         <div className="admin-info-card">
@@ -292,6 +338,33 @@ export default function OrderListAdmin({ refreshTrigger }) {
             </div>
           </div>
 
+          <div className="admin-clients-toolbar" style={{ marginBottom: '18px' }}>
+            <div className="admin-clients-filter-grid">
+              <label className="admin-clients-select">
+                <span><Clock3 size={14} /> Ordenar pedidos</span>
+                <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                  {ORDER_SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="admin-clients-toolbar-meta">
+              <span className="admin-badge-pill info">{filteredOrders.length} pedidos visibles</span>
+              {clientFilterId && (
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={() => navigate('/admin?tab=orders')}
+                  style={{ padding: '10px 16px', fontSize: '0.68rem' }}
+                >
+                  Limpiar filtro de cliente{clientFilterName ? `: ${clientFilterName}` : ''}
+                </button>
+              )}
+            </div>
+          </div>
+
           {statusFeedback && (
             <div
               className="admin-badge-pill info"
@@ -307,6 +380,7 @@ export default function OrderListAdmin({ refreshTrigger }) {
                 <th>ID Pedido</th>
                 <th>Cliente</th>
                 <th>Ciudad Destino</th>
+                <th>Productos</th>
                 <th>Total (COP)</th>
                 <th>Pago</th>
                 <th>Estado pago</th>
@@ -317,15 +391,15 @@ export default function OrderListAdmin({ refreshTrigger }) {
               </tr>
             </thead>
             <tbody>
-              {orders.length === 0 ? (
+              {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="10" style={{ textAlign: 'center', padding: '80px 0' }}>
+                  <td colSpan="11" style={{ textAlign: 'center', padding: '80px 0' }}>
                     <PackageOpen size={48} className="text-muted" style={{ margin: '0 auto 16px', opacity: 0.5 }} />
                     <h4 className="text-gold-light" style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Sin Pedidos Registrados</h4>
                   </td>
                 </tr>
               ) : (
-                orders.map(order => (
+                filteredOrders.map(order => (
                   <tr key={order.id}>
                     <td>
                       <code style={{ background: 'rgba(0,0,0,0.5)', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
@@ -339,6 +413,9 @@ export default function OrderListAdmin({ refreshTrigger }) {
                       </div>
                     </td>
                     <td>{order.ciudad_envio}</td>
+                    <td style={{ color: 'var(--text-primary)', fontWeight: '600' }}>
+                      {getItemCount(order)}
+                    </td>
                     <td style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
                       ${parseFloat(order.total).toLocaleString('es-CO')}
                     </td>
