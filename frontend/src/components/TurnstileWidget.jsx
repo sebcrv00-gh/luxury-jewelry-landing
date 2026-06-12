@@ -4,6 +4,45 @@ const TURNSTILE_SCRIPT_ID = 'cloudflare-turnstile-script';
 const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
 let turnstileScriptPromise = null;
+let turnstileReadyPromise = null;
+
+function waitForTurnstileReady(timeoutMs = 8000) {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('Turnstile solo puede cargarse en el navegador.'));
+  }
+
+  if (window.turnstile?.render) {
+    return Promise.resolve(window.turnstile);
+  }
+
+  if (turnstileReadyPromise) {
+    return turnstileReadyPromise;
+  }
+
+  turnstileReadyPromise = new Promise((resolve, reject) => {
+    const startedAt = Date.now();
+
+    const checkReady = () => {
+      if (window.turnstile?.render) {
+        turnstileReadyPromise = null;
+        resolve(window.turnstile);
+        return;
+      }
+
+      if (Date.now() - startedAt >= timeoutMs) {
+        turnstileReadyPromise = null;
+        reject(new Error('Turnstile no terminó de inicializar.'));
+        return;
+      }
+
+      window.setTimeout(checkReady, 120);
+    };
+
+    checkReady();
+  });
+
+  return turnstileReadyPromise;
+}
 
 function loadTurnstileScript() {
   if (typeof window === 'undefined') {
@@ -21,7 +60,19 @@ function loadTurnstileScript() {
   turnstileScriptPromise = new Promise((resolve, reject) => {
     const existingScript = document.getElementById(TURNSTILE_SCRIPT_ID);
     if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(window.turnstile));
+      if (window.turnstile?.render) {
+        resolve(window.turnstile);
+        return;
+      }
+
+      existingScript.addEventListener('load', async () => {
+        try {
+          const turnstile = await waitForTurnstileReady();
+          resolve(turnstile);
+        } catch (error) {
+          reject(error);
+        }
+      });
       existingScript.addEventListener('error', reject);
       return;
     }
@@ -31,7 +82,14 @@ function loadTurnstileScript() {
     script.src = TURNSTILE_SCRIPT_SRC;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve(window.turnstile);
+    script.onload = async () => {
+      try {
+        const turnstile = await waitForTurnstileReady();
+        resolve(turnstile);
+      } catch (error) {
+        reject(error);
+      }
+    };
     script.onerror = reject;
     document.head.appendChild(script);
   });
@@ -58,7 +116,9 @@ export default function TurnstileWidget({
     const mountWidget = async () => {
       try {
         const turnstile = await loadTurnstileScript();
-        if (isCancelled || !containerRef.current || !turnstile?.render) return;
+        if (isCancelled || !containerRef.current || !turnstile?.render) {
+          throw new Error('Turnstile no está listo para renderizar.');
+        }
 
         containerRef.current.innerHTML = '';
         widgetIdRef.current = turnstile.render(containerRef.current, {
