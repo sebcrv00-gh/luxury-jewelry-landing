@@ -15,20 +15,11 @@ export default function Home() {
 
         <div className="hero-content">
           {isLoggedIn ? (
-            <div className="glass-card">
+            <div className="glass-card hero-dashboard-card">
               <h2 className="hero-title" style={{ fontSize: '2.8rem', marginBottom: '8px' }}>
                 Panel de <em>Control</em>
               </h2>
-              <span style={{
-                color: 'var(--gold-light)',
-                fontSize: '1.15rem',
-                fontFamily: 'var(--font-display)',
-                fontStyle: 'italic',
-                fontWeight: 300,
-                display: 'block',
-                marginBottom: '28px',
-                letterSpacing: '1px'
-              }}>
+              <span className="hero-dashboard-welcome">
                 Bienvenido de vuelta, {user.nombre}
               </span>
               <p className="hero-subtitle" style={{ marginBottom: '38px' }}>
