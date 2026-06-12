@@ -477,6 +477,67 @@ button {
   color: var(--gold);
 }
 
+.guest-theme-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.guest-theme-toggle {
+  justify-content: flex-start;
+}
+
+.guest-theme-toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.3s var(--ease-out-expo);
+}
+
+.guest-theme-toggle-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.guest-theme-submenu {
+  display: grid;
+  gap: 8px;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 14px;
+  opacity: 0;
+  transition: max-height 0.3s var(--ease-out-expo), opacity 0.24s ease, padding 0.3s var(--ease-out-expo);
+}
+
+.guest-theme-group.is-open .guest-theme-submenu {
+  max-height: 220px;
+  opacity: 1;
+  padding: 6px 14px 12px;
+}
+
+.guest-theme-option {
+  width: 100%;
+  border: 1px solid rgba(201, 168, 76, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.guest-theme-option:hover {
+  color: var(--text-primary);
+  border-color: rgba(201, 168, 76, 0.26);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.guest-theme-option.is-active {
+  color: var(--gold-light);
+  border-color: rgba(201, 168, 76, 0.34);
+  background: linear-gradient(145deg, rgba(201, 168, 76, 0.14), rgba(201, 168, 76, 0.05));
+}
+
 .btn-logout-dropdown {
   margin-top: 6px;
   background: none;
@@ -3033,6 +3094,15 @@ footer p+p {
     border: none !important;
     background: transparent !important;
     justify-content: center;
+  }
+
+  .guest-theme-submenu {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .guest-theme-group.is-open .guest-theme-submenu {
+    padding: 6px 12px 12px;
   }
 
   /* ── HERO ── */
