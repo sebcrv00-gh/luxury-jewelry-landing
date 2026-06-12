@@ -66,7 +66,7 @@
   padding: 20px 16px;
   border-radius: 12px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-panel-soft);
   border: 1px solid var(--border-subtle);
   transition: all 0.3s;
   position: relative;
@@ -95,7 +95,7 @@
 }
 
 .checkout-payment-method-card.is-active .checkout-payment-method-name {
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .checkout-payment-method-desc {
@@ -128,17 +128,17 @@
 }
 
 .checkout-payment-panel--card {
-  background: linear-gradient(145deg, rgba(52, 152, 219, 0.06), rgba(20, 20, 20, 0.8));
+  background: linear-gradient(145deg, rgba(52, 152, 219, 0.08), var(--surface-panel-strong));
   border: 1px solid rgba(52, 152, 219, 0.2);
 }
 
 .checkout-payment-panel--nequi {
-  background: linear-gradient(145deg, rgba(233, 30, 99, 0.06), rgba(20, 20, 20, 0.8));
+  background: linear-gradient(145deg, rgba(233, 30, 99, 0.08), var(--surface-panel-strong));
   border: 1px solid rgba(233, 30, 99, 0.2);
 }
 
 .checkout-payment-panel--cash {
-  background: linear-gradient(145deg, rgba(46, 204, 113, 0.06), rgba(20, 20, 20, 0.8));
+  background: linear-gradient(145deg, rgba(46, 204, 113, 0.08), var(--surface-panel-strong));
   border: 1px solid rgba(46, 204, 113, 0.2);
 }
 
@@ -240,7 +240,7 @@
 }
 
 .checkout-mini-summary-box {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-panel-soft);
   padding: 15px;
   border-radius: 8px;
   border: 1px solid var(--border-subtle);

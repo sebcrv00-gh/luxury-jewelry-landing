@@ -9,7 +9,7 @@
 /* ── SIDEBAR ── */
 .cd-sidebar {
   width: 260px; min-height: calc(100vh - var(--header-height)); position: sticky; top: var(--header-height);
-  background: linear-gradient(180deg, rgba(15,15,15,0.98), rgba(8,8,8,0.99));
+  background: var(--surface-panel-strong);
   border-right: 1px solid rgba(201,168,76,0.08); display: flex; flex-direction: column;
   padding: 32px 0; z-index: 10;
 }
@@ -294,9 +294,9 @@
 }
 
 .cd-membership-role-badge--standard {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-panel-soft);
   color: var(--text-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-subtle);
   font-weight: 600;
 }
 
@@ -326,10 +326,10 @@
 }
 
 .cd-membership-stat-card {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-panel-soft);
   padding: 20px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
 }
 
 .cd-membership-stat-label {
@@ -511,8 +511,8 @@ select.cd-input option {
 
 .cd-support-bubble--admin {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-panel-soft);
+  border: 1px solid var(--border-subtle);
 }
 
 .cd-support-bubble--client {
