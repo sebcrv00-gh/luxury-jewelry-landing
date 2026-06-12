@@ -1,6 +1,11 @@
 const crypto = require('crypto');
 const User = require('../models/User');
-const { verifyTurnstileToken, formatTurnstileError } = require('../services/turnstileService');
+const {
+  verifyTurnstileToken,
+  formatTurnstileError,
+  isTurnstileEnabled,
+  getTurnstileSiteKey
+} = require('../services/turnstileService');
 
 const VALID_THEME_PREFERENCES = new Set(['light', 'ambient', 'dark']);
 
@@ -134,6 +139,21 @@ const authController = {
     } catch (err) {
       console.error('Error en /me:', err);
       return res.status(500).json({ error: 'Error del servidor' });
+    }
+  },
+
+  // GET /api/auth/security-config
+  async getSecurityConfig(req, res) {
+    try {
+      return res.json({
+        turnstile: {
+          required: isTurnstileEnabled(),
+          siteKey: getTurnstileSiteKey()
+        }
+      });
+    } catch (err) {
+      console.error('Error al obtener config de seguridad:', err);
+      return res.status(500).json({ error: 'No fue posible obtener la configuración de seguridad.' });
     }
   },
 

@@ -6,8 +6,7 @@ import TurnstileWidget from './TurnstileWidget';
 
 export default function AuthModal() {
   const { isAuthModalOpen, closeAuthModal, authModalMode, openAuthModal, login, register, themePreference } = useAuth();
-  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
-  const isTurnstileEnabled = Boolean(turnstileSiteKey);
+  const fallbackTurnstileSiteKey = String(import.meta.env.VITE_TURNSTILE_SITE_KEY || '').trim();
   
   const [loginEmail, setLoginEmail] = useState('');
   const [loginClave, setLoginClave] = useState('');
@@ -20,6 +19,9 @@ export default function AuthModal() {
   const [registerTurnstileToken, setRegisterTurnstileToken] = useState('');
   const [loginCaptchaNonce, setLoginCaptchaNonce] = useState(0);
   const [registerCaptchaNonce, setRegisterCaptchaNonce] = useState(0);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState(fallbackTurnstileSiteKey);
+  const [turnstileRequired, setTurnstileRequired] = useState(Boolean(fallbackTurnstileSiteKey));
+  const [turnstileLoading, setTurnstileLoading] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -35,6 +37,7 @@ export default function AuthModal() {
   const [recoveryEmailHint, setRecoveryEmailHint] = useState('');
   const [recoveryNewPassword, setRecoveryNewPassword] = useState('');
   const [recoveryConfirmPassword, setRecoveryConfirmPassword] = useState('');
+  const isTurnstileEnabled = Boolean(turnstileSiteKey);
 
   useEffect(() => {
     if (isAuthModalOpen) {
@@ -55,6 +58,43 @@ export default function AuthModal() {
       setRegisterCaptchaNonce((value) => value + 1);
     }
   }, [isAuthModalOpen, authModalMode]);
+
+  useEffect(() => {
+    if (!isAuthModalOpen) return;
+
+    let isCancelled = false;
+
+    const loadSecurityConfig = async () => {
+      setTurnstileLoading(true);
+      try {
+        const { data } = await api.get('/auth/security-config');
+        if (isCancelled) return;
+
+        const apiSiteKey = String(data?.turnstile?.siteKey || '').trim();
+        const resolvedSiteKey = apiSiteKey || fallbackTurnstileSiteKey;
+        setTurnstileSiteKey(resolvedSiteKey);
+        setTurnstileRequired(Boolean(data?.turnstile?.required || resolvedSiteKey));
+
+        if (data?.turnstile?.required && !resolvedSiteKey) {
+          setError('La verificación de seguridad está activa, pero falta la clave pública de Cloudflare Turnstile.');
+        }
+      } catch {
+        if (isCancelled) return;
+        setTurnstileSiteKey(fallbackTurnstileSiteKey);
+        setTurnstileRequired(Boolean(fallbackTurnstileSiteKey));
+      } finally {
+        if (!isCancelled) {
+          setTurnstileLoading(false);
+        }
+      }
+    };
+
+    loadSecurityConfig();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isAuthModalOpen, fallbackTurnstileSiteKey]);
 
   // Escape key
   useEffect(() => {
@@ -77,6 +117,7 @@ export default function AuthModal() {
     e.preventDefault();
     setError('');
     if (!loginEmail || !loginClave) { setError('Todos los campos son obligatorios'); return; }
+    if (turnstileRequired && !isTurnstileEnabled) { setError('La clave pública de Cloudflare Turnstile no está llegando al frontend.'); return; }
     if (isTurnstileEnabled && !loginTurnstileToken) { setError('Completa la verificación de seguridad antes de continuar'); return; }
     setLoading(true);
     try {
@@ -100,6 +141,10 @@ export default function AuthModal() {
     setError(''); setSuccess('');
     if (regClave !== regConfirmClave) {
       setError('La confirmación de la contraseña debe coincidir');
+      return;
+    }
+    if (turnstileRequired && !isTurnstileEnabled) {
+      setError('La clave pública de Cloudflare Turnstile no está llegando al frontend.');
       return;
     }
     if (isTurnstileEnabled && !registerTurnstileToken) {
@@ -452,6 +497,18 @@ export default function AuthModal() {
                   >
                     ¿Olvidaste tu contraseña?
                   </button>
+                  {turnstileLoading && (
+                    <div className="auth-turnstile-wrap">
+                      <p className="auth-turnstile-note">Cargando verificación de seguridad...</p>
+                    </div>
+                  )}
+                  {!turnstileLoading && turnstileRequired && !isTurnstileEnabled && (
+                    <div className="auth-turnstile-wrap">
+                      <p className="auth-turnstile-note">
+                        Cloudflare Turnstile está activo en backend, pero el frontend no recibió la clave pública.
+                      </p>
+                    </div>
+                  )}
                   {isTurnstileEnabled && (
                     <div className="auth-turnstile-wrap">
                       <TurnstileWidget
@@ -517,6 +574,18 @@ export default function AuthModal() {
                       </button>
                     </div>
                   </div>
+                  {turnstileLoading && (
+                    <div className="auth-turnstile-wrap">
+                      <p className="auth-turnstile-note">Cargando verificación de seguridad...</p>
+                    </div>
+                  )}
+                  {!turnstileLoading && turnstileRequired && !isTurnstileEnabled && (
+                    <div className="auth-turnstile-wrap">
+                      <p className="auth-turnstile-note">
+                        Cloudflare Turnstile está activo en backend, pero el frontend no recibió la clave pública.
+                      </p>
+                    </div>
+                  )}
                   {isTurnstileEnabled && (
                     <div className="auth-turnstile-wrap">
                       <TurnstileWidget

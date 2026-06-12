@@ -4,6 +4,14 @@ function isTurnstileEnabled() {
   return Boolean(String(process.env.TURNSTILE_SECRET_KEY || '').trim());
 }
 
+function getTurnstileSiteKey() {
+  return String(
+    process.env.TURNSTILE_SITE_KEY ||
+    process.env.VITE_TURNSTILE_SITE_KEY ||
+    ''
+  ).trim();
+}
+
 function getClientIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string' && forwarded.trim()) {
@@ -78,6 +86,7 @@ function formatTurnstileError(errors = []) {
 
 module.exports = {
   isTurnstileEnabled,
+  getTurnstileSiteKey,
   verifyTurnstileToken,
   formatTurnstileError
 };
