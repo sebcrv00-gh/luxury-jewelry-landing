@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronDown, LogIn, MoonStar, Palette, SunMedium, UserPlus, UserRound, Monitor } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,7 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showGuestThemeMenu, setShowGuestThemeMenu] = useState(false);
+  const guestThemeMenuRef = useRef(null);
 
   const themeIcons = {
     light: SunMedium,
@@ -44,12 +45,8 @@ export default function Header() {
     { to: '/mi-cuenta', label: 'Mi Panel' },
     { to: '/mi-cuenta/perfil', label: 'Editar Perfil' },
     { to: '/mi-cuenta/pedidos', label: 'Mis Pedidos' },
-    { to: '/mi-cuenta/wishlist', label: 'Lista de Deseos' },
-    { to: '/perfil#preferencias-tema', label: 'Temas' }
+    { to: '/mi-cuenta/wishlist', label: 'Lista de Deseos' }
   ];
-  const themeSettingsLink = isAdmin
-    ? '/admin?tab=settings&section=appearance'
-    : '/perfil#preferencias-tema';
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -65,15 +62,20 @@ export default function Header() {
     setIsMobileMenuOpen(false);
   };
 
-  const handleThemeShortcut = () => {
-    navigate(themeSettingsLink);
-    setShowDropdown(false);
-    setIsMobileMenuOpen(false);
-  };
-
   const handleGuestThemeChange = (themeId) => {
     setThemePreference(themeId).catch(() => {});
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (guestThemeMenuRef.current && !guestThemeMenuRef.current.contains(event.target)) {
+        setShowGuestThemeMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="main-header">
@@ -117,13 +119,6 @@ export default function Header() {
                   <Link key={to} to={to} onClick={() => setShowDropdown(false)}>{label}</Link>
                 ))}
 
-                {isAdmin && (
-                  <button type="button" className="dropdown-action-btn" onClick={handleThemeShortcut}>
-                    <Palette size={16} />
-                    <span>Temas</span>
-                  </button>
-                )}
-
                 <button onClick={handleLogout} className="btn-logout-dropdown">Cerrar Sesión</button>
               </div>
             </div>
@@ -147,41 +142,6 @@ export default function Header() {
                   <span className="dropdown-email">Accede o crea tu cuenta para una experiencia personalizada.</span>
                 </div>
 
-                <div
-                  className={`guest-theme-group ${showGuestThemeMenu ? 'is-open' : ''}`}
-                  onMouseEnter={() => setShowGuestThemeMenu(true)}
-                  onMouseLeave={() => setShowGuestThemeMenu(false)}
-                >
-                  <button
-                    type="button"
-                    className="dropdown-action-btn guest-theme-toggle"
-                    onClick={() => setShowGuestThemeMenu((current) => !current)}
-                  >
-                    <Palette size={16} />
-                    <span>Temas</span>
-                    <ChevronDown size={16} className={`guest-theme-toggle-chevron ${showGuestThemeMenu ? 'is-open' : ''}`} />
-                  </button>
-
-                  <div className="guest-theme-submenu">
-                    {THEME_OPTIONS.map((option) => {
-                      const ThemeIcon = themeIcons[option.id] || Palette;
-                      const isActiveTheme = themePreference === option.id;
-
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          className={`guest-theme-option ${isActiveTheme ? 'is-active' : ''}`}
-                          onClick={() => handleGuestThemeChange(option.id)}
-                        >
-                          <ThemeIcon size={15} />
-                          <span>{option.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 <button type="button" className="dropdown-action-btn" onClick={() => handleOpenGuestAuth('login')}>
                   <LogIn size={16} />
                   <span>Iniciar sesión</span>
@@ -197,6 +157,44 @@ export default function Header() {
           {!isAdmin && <Link to="/carrito" className={`carrito-btn no-underline ${path === '/carrito' ? 'active-nav' : ''}`}>🛒 Carrito</Link>}
         </nav>
       </div>
+
+      {!isLoggedIn && !isAdmin && (
+        <div
+          ref={guestThemeMenuRef}
+          className={`guest-theme-fab ${showGuestThemeMenu ? 'is-open' : ''}`}
+        >
+          <button
+            type="button"
+            className="guest-theme-fab-trigger"
+            onClick={() => setShowGuestThemeMenu((current) => !current)}
+            aria-expanded={showGuestThemeMenu}
+            aria-label="Abrir selector de temas"
+          >
+            <Palette size={17} />
+            <span>Temas</span>
+            <ChevronDown size={15} className="guest-theme-fab-chevron" />
+          </button>
+
+          <div className="guest-theme-fab-menu">
+            {THEME_OPTIONS.map((option) => {
+              const ThemeIcon = themeIcons[option.id] || Palette;
+              const isActiveTheme = themePreference === option.id;
+
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={`guest-theme-fab-option ${isActiveTheme ? 'is-active' : ''}`}
+                  onClick={() => handleGuestThemeChange(option.id)}
+                >
+                  <ThemeIcon size={15} />
+                  <span>{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

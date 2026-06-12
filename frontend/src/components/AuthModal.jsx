@@ -243,7 +243,7 @@ export default function AuthModal() {
     <div className="auth-simple-captcha-wrap">
       <div className="auth-simple-captcha-box">
         <div className="auth-simple-captcha-head">
-          <span className="auth-simple-captcha-label">Captcha de seguridad</span>
+          <span className="auth-simple-captcha-label">Verificacion</span>
           <button
             type="button"
             className="auth-simple-captcha-refresh"
@@ -261,13 +261,13 @@ export default function AuthModal() {
           type="text"
           value={answer}
           onChange={(e) => setAnswer(e.target.value.replace(/[^\d-]/g, '').slice(0, 6))}
-          placeholder="Escribe tu respuesta"
+          placeholder="Respuesta"
           className="auth-simple-captcha-input"
           disabled={loadingState || !token}
           required
         />
       </div>
-      <p className="auth-simple-captcha-note">{compactText}</p>
+      {compactText ? <p className="auth-simple-captcha-note">{compactText}</p> : null}
     </div>
   );
 
@@ -523,7 +523,7 @@ export default function AuthModal() {
                     token: loginCaptchaToken,
                     loadingState: loginCaptchaLoading,
                     onRefresh: () => loadSimpleCaptcha('login'),
-                    compactText: 'Protección sencilla activa para validar accesos al sistema.'
+                    compactText: ''
                   })}
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? (
@@ -581,7 +581,7 @@ export default function AuthModal() {
                     token: registerCaptchaToken,
                     loadingState: registerCaptchaLoading,
                     onRefresh: () => loadSimpleCaptcha('register'),
-                    compactText: 'Validación simple activa para proteger la creación de cuentas.'
+                    compactText: ''
                   })}
                   <button type="submit" className="auth-submit-btn" disabled={loading}>
                     {loading ? (
