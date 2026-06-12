@@ -72,6 +72,29 @@ export default function AuthModal() {
 
         const apiSiteKey = String(data?.turnstile?.siteKey || '').trim();
         const resolvedSiteKey = apiSiteKey || fallbackTurnstileSiteKey;
+        // #region debug-point B:frontend-security-config
+        fetch('http://127.0.0.1:7777/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'turnstile-missing',
+            runId: 'pre-fix',
+            hypothesisId: 'B',
+            location: 'frontend/components/AuthModal.jsx:loadSecurityConfig',
+            msg: '[DEBUG] Frontend received auth security config',
+            data: {
+              required: Boolean(data?.turnstile?.required),
+              apiSiteKeyPresent: Boolean(apiSiteKey),
+              apiSiteKeyLength: apiSiteKey.length,
+              fallbackSiteKeyPresent: Boolean(fallbackTurnstileSiteKey),
+              fallbackSiteKeyLength: fallbackTurnstileSiteKey.length,
+              resolvedSiteKeyPresent: Boolean(resolvedSiteKey),
+              resolvedSiteKeyLength: resolvedSiteKey.length
+            },
+            ts: Date.now()
+          })
+        }).catch(() => {});
+        // #endregion
         setTurnstileSiteKey(resolvedSiteKey);
         setTurnstileRequired(Boolean(data?.turnstile?.required || resolvedSiteKey));
 
@@ -80,6 +103,24 @@ export default function AuthModal() {
         }
       } catch {
         if (isCancelled) return;
+        // #region debug-point B:frontend-security-config-error
+        fetch('http://127.0.0.1:7777/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'turnstile-missing',
+            runId: 'pre-fix',
+            hypothesisId: 'B',
+            location: 'frontend/components/AuthModal.jsx:loadSecurityConfig:catch',
+            msg: '[DEBUG] Frontend failed to fetch auth security config',
+            data: {
+              fallbackSiteKeyPresent: Boolean(fallbackTurnstileSiteKey),
+              fallbackSiteKeyLength: fallbackTurnstileSiteKey.length
+            },
+            ts: Date.now()
+          })
+        }).catch(() => {});
+        // #endregion
         setTurnstileSiteKey(fallbackTurnstileSiteKey);
         setTurnstileRequired(Boolean(fallbackTurnstileSiteKey));
       } finally {

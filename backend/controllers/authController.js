@@ -145,6 +145,26 @@ const authController = {
   // GET /api/auth/security-config
   async getSecurityConfig(req, res) {
     try {
+      // #region debug-point B:security-config-response
+      fetch('http://127.0.0.1:7777/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'turnstile-missing',
+          runId: 'pre-fix',
+          hypothesisId: 'B',
+          location: 'backend/controllers/authController.js:getSecurityConfig',
+          msg: '[DEBUG] Returning auth security config',
+          data: {
+            required: isTurnstileEnabled(),
+            siteKeyPresent: Boolean(getTurnstileSiteKey()),
+            siteKeyLength: String(getTurnstileSiteKey() || '').length,
+            host: req.get('host') || null
+          },
+          ts: Date.now()
+        })
+      }).catch(() => {});
+      // #endregion
       return res.json({
         turnstile: {
           required: isTurnstileEnabled(),

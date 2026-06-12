@@ -115,6 +115,26 @@ export default function TurnstileWidget({
 
     const mountWidget = async () => {
       try {
+        // #region debug-point A:widget-mount-start
+        fetch('http://127.0.0.1:7777/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'turnstile-missing',
+            runId: 'pre-fix',
+            hypothesisId: 'A',
+            location: 'frontend/components/TurnstileWidget.jsx:mountWidget:start',
+            msg: '[DEBUG] Turnstile mount requested',
+            data: {
+              action,
+              theme,
+              siteKeyPresent: Boolean(siteKey),
+              siteKeyLength: String(siteKey || '').length
+            },
+            ts: Date.now()
+          })
+        }).catch(() => {});
+        // #endregion
         const turnstile = await loadTurnstileScript();
         if (isCancelled || !containerRef.current || !turnstile?.render) {
           throw new Error('Turnstile no está listo para renderizar.');
@@ -125,15 +145,91 @@ export default function TurnstileWidget({
           sitekey: siteKey,
           action,
           theme,
-          callback: (token) => onTokenChange?.(token || ''),
+          callback: (token) => {
+            // #region debug-point C:widget-token
+            fetch('http://127.0.0.1:7777/event', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId: 'turnstile-missing',
+                runId: 'pre-fix',
+                hypothesisId: 'C',
+                location: 'frontend/components/TurnstileWidget.jsx:callback',
+                msg: '[DEBUG] Turnstile token callback received',
+                data: {
+                  action,
+                  tokenPresent: Boolean(token),
+                  tokenLength: String(token || '').length
+                },
+                ts: Date.now()
+              })
+            }).catch(() => {});
+            // #endregion
+            onTokenChange?.(token || '');
+          },
           'expired-callback': () => onTokenChange?.(''),
           'timeout-callback': () => onTokenChange?.(''),
           'error-callback': () => {
+            // #region debug-point C:widget-error-callback
+            fetch('http://127.0.0.1:7777/event', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                sessionId: 'turnstile-missing',
+                runId: 'pre-fix',
+                hypothesisId: 'C',
+                location: 'frontend/components/TurnstileWidget.jsx:error-callback',
+                msg: '[DEBUG] Turnstile error callback fired',
+                data: { action, theme },
+                ts: Date.now()
+              })
+            }).catch(() => {});
+            // #endregion
             onTokenChange?.('');
             onError?.('No fue posible validar el captcha de seguridad. Intenta nuevamente.');
           }
         });
+        // #region debug-point A:widget-render-success
+        fetch('http://127.0.0.1:7777/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'turnstile-missing',
+            runId: 'pre-fix',
+            hypothesisId: 'A',
+            location: 'frontend/components/TurnstileWidget.jsx:mountWidget:rendered',
+            msg: '[DEBUG] Turnstile render call completed',
+            data: {
+              action,
+              theme,
+              widgetIdPresent: widgetIdRef.current !== null && widgetIdRef.current !== undefined,
+              containerChildCount: containerRef.current.childElementCount
+            },
+            ts: Date.now()
+          })
+        }).catch(() => {});
+        // #endregion
       } catch {
+        // #region debug-point C:widget-mount-error
+        fetch('http://127.0.0.1:7777/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'turnstile-missing',
+            runId: 'pre-fix',
+            hypothesisId: 'C',
+            location: 'frontend/components/TurnstileWidget.jsx:mountWidget:catch',
+            msg: '[DEBUG] Turnstile mount failed',
+            data: {
+              action,
+              theme,
+              siteKeyPresent: Boolean(siteKey),
+              siteKeyLength: String(siteKey || '').length
+            },
+            ts: Date.now()
+          })
+        }).catch(() => {});
+        // #endregion
         onTokenChange?.('');
         onError?.('No fue posible cargar el captcha de seguridad. Revisa tu conexión e inténtalo de nuevo.');
       }
