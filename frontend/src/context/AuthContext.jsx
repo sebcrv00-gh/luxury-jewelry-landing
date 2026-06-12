@@ -22,10 +22,15 @@ export function AuthProvider({ children }) {
   const [welcomeName, setWelcomeName] = useState('');
   const [themePreference, setThemePreferenceState] = useState(DEFAULT_THEME_PREFERENCE);
 
-  const applyThemePreference = (theme) => {
+  const applyThemePreference = (theme, options = {}) => {
+    const { persist = true } = options;
     const normalizedTheme = normalizeThemePreference(theme);
     document.documentElement.setAttribute('data-theme', normalizedTheme);
-    localStorage.setItem(THEME_PREFERENCE_STORAGE_KEY, normalizedTheme);
+    if (persist) {
+      localStorage.setItem(THEME_PREFERENCE_STORAGE_KEY, normalizedTheme);
+    } else {
+      localStorage.removeItem(THEME_PREFERENCE_STORAGE_KEY);
+    }
     setThemePreferenceState(normalizedTheme);
     return normalizedTheme;
   };
@@ -38,7 +43,7 @@ export function AuthProvider({ children }) {
   const closeWelcome = () => setShowWelcome(false);
 
   useEffect(() => {
-    applyThemePreference(localStorage.getItem(THEME_PREFERENCE_STORAGE_KEY) || DEFAULT_THEME_PREFERENCE);
+    applyThemePreference(DEFAULT_THEME_PREFERENCE, { persist: false });
 
     api.get('/auth/me')
       .then(res => {
@@ -47,7 +52,10 @@ export function AuthProvider({ children }) {
           applyThemePreference(res.data.user.tema_preferencia);
         }
       })
-      .catch(() => setUser(null))
+      .catch(() => {
+        setUser(null);
+        applyThemePreference(DEFAULT_THEME_PREFERENCE, { persist: false });
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -86,9 +94,13 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await api.post('/auth/logout');
-    setUser(null);
-    navigate('/');
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      setUser(null);
+      applyThemePreference(DEFAULT_THEME_PREFERENCE, { persist: false });
+      navigate('/');
+    }
   };
 
   const updateProfile = async (formData) => {
@@ -103,7 +115,7 @@ export function AuthProvider({ children }) {
   };
 
   const setThemePreference = async (theme) => {
-    const normalizedTheme = applyThemePreference(theme);
+    const normalizedTheme = applyThemePreference(theme, { persist: Boolean(user) });
 
     if (!user) {
       return normalizedTheme;

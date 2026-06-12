@@ -171,7 +171,7 @@ export default function Profile() {
           </div>
         </form>
 
-        <div className="profile-theme-block">
+        <div className="profile-theme-block" id="preferencias-tema">
           <ThemePreferencePanel
             title="Estilo de la página"
           />

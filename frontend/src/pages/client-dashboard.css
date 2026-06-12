@@ -242,19 +242,13 @@
 
 .cd-membership-inner {
   display: flex;
-  flex-direction: column;
-  gap: 28px;
+  gap: 50px;
   align-items: center;
-  justify-content: center;
   position: relative;
   z-index: 2;
-  text-align: center;
 }
 
 .cd-membership-identity {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
 }
 
@@ -265,7 +259,7 @@
   border: 3px solid var(--gold);
   padding: 6px;
   background: rgba(201, 168, 76, 0.1);
-  margin: 0 auto 20px;
+  margin-bottom: 20px;
 }
 
 .cd-membership-avatar {
@@ -308,9 +302,6 @@
 
 .cd-membership-body {
   flex: 1;
-  width: 100%;
-  max-width: 760px;
-  text-align: center;
 }
 
 .cd-membership-name {
@@ -332,8 +323,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 25px;
-  max-width: 760px;
-  margin: 0 auto;
 }
 
 .cd-membership-stat-card {
@@ -386,7 +375,6 @@
   color: var(--text-muted);
   font-size: 0.85rem;
   flex-wrap: wrap;
-  justify-content: center;
 }
 
 .cd-membership-meta-item {
@@ -648,10 +636,6 @@ select.cd-input option {
   .cd-progress-bar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
   .cd-support-layout { grid-template-columns: 1fr; }
   .cd-membership-note { flex-direction: column; align-items: flex-start; }
-  .cd-membership-card { padding: 34px 24px; }
-  .cd-membership-inner { gap: 22px !important; }
-  .cd-membership-stats { grid-template-columns: 1fr; gap: 16px; }
-  .cd-membership-meta { justify-content: center; }
 }
 
 @media (max-width: 480px) {

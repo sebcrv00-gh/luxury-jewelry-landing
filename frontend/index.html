@@ -12,8 +12,7 @@
     <script>
       (function () {
         try {
-          var storedTheme = localStorage.getItem('luxury-jewelry-theme') || 'dark';
-          document.documentElement.setAttribute('data-theme', storedTheme);
+          document.documentElement.setAttribute('data-theme', 'dark');
         } catch (error) {
           document.documentElement.setAttribute('data-theme', 'dark');
         }

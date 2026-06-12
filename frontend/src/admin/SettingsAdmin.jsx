@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff, Store, Truck, Percent, CheckCircle, AlertCircle, Palette } from 'lucide-react';
 import api from '../api/axios';
 import ThemePreferencePanel from '../components/ThemePreferencePanel';
 
 export default function SettingsAdmin() {
+  const location = useLocation();
   const [activeSection, setActiveSection] = useState('security');
 
   // ── SEGURIDAD ──
@@ -68,6 +70,15 @@ export default function SettingsAdmin() {
     { id: 'shipping', icon: Truck, label: 'Tarifas de Envío' },
     { id: 'taxes', icon: Percent, label: 'Impuestos' },
   ];
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const requestedSection = params.get('section');
+
+    if (requestedSection && sections.some(section => section.id === requestedSection)) {
+      setActiveSection(requestedSection);
+    }
+  }, [location.search]);
 
   const inputStyle = {
     width: '100%', padding: '14px 18px', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)',
