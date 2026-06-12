@@ -174,7 +174,6 @@ export default function Profile() {
         <div className="profile-theme-block">
           <ThemePreferencePanel
             title="Estilo de la página"
-            description="Tu preferencia visual se guarda en tu cuenta para que siempre vuelvas al mismo ambiente, incluso al iniciar sesión desde otro dispositivo."
           />
         </div>
 

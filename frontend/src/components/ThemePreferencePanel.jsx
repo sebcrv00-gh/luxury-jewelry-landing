@@ -10,7 +10,7 @@ const THEME_ICONS = {
 
 export default function ThemePreferencePanel({
   title = 'Estilo de la página',
-  description = 'Elige la apariencia visual que prefieres para navegar por Luxury Jewelry.',
+  description = '',
   className = ''
 }) {
   const { themePreference, setThemePreference } = useAuth();
@@ -20,7 +20,7 @@ export default function ThemePreferencePanel({
       <div className="theme-preference-head">
         <div>
           <h3>{title}</h3>
-          <p>{description}</p>
+          {description ? <p>{description}</p> : null}
         </div>
       </div>
 
@@ -45,7 +45,6 @@ export default function ThemePreferencePanel({
               </span>
               <span className="theme-preference-copy">
                 <strong>{option.label}</strong>
-                <small>{option.description}</small>
               </span>
             </button>
           );

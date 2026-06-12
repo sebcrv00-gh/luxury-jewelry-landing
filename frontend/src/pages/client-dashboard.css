@@ -14,8 +14,25 @@
   padding: 32px 0; z-index: 10;
 }
 
-.cd-profile-card { text-align: center; padding: 0 24px 28px; border-bottom: 1px solid rgba(201,168,76,0.08); margin-bottom: 8px; }
-.cd-avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); margin-bottom: 14px; }
+.cd-profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 24px 28px;
+  border-bottom: 1px solid rgba(201,168,76,0.08);
+  margin-bottom: 8px;
+}
+.cd-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold);
+  display: block;
+  margin: 0 auto 14px;
+}
 .cd-user-name { font-family: var(--font-display); font-size: 1.1rem; color: var(--text-primary); margin: 0 0 4px; letter-spacing: 0.5px; }
 .cd-user-role { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1.5px; }
 
@@ -225,13 +242,19 @@
 
 .cd-membership-inner {
   display: flex;
-  gap: 50px;
+  flex-direction: column;
+  gap: 28px;
   align-items: center;
+  justify-content: center;
   position: relative;
   z-index: 2;
+  text-align: center;
 }
 
 .cd-membership-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
@@ -242,7 +265,7 @@
   border: 3px solid var(--gold);
   padding: 6px;
   background: rgba(201, 168, 76, 0.1);
-  margin-bottom: 20px;
+  margin: 0 auto 20px;
 }
 
 .cd-membership-avatar {
@@ -285,6 +308,9 @@
 
 .cd-membership-body {
   flex: 1;
+  width: 100%;
+  max-width: 760px;
+  text-align: center;
 }
 
 .cd-membership-name {
@@ -306,6 +332,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 25px;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .cd-membership-stat-card {
@@ -358,6 +386,7 @@
   color: var(--text-muted);
   font-size: 0.85rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .cd-membership-meta-item {
@@ -562,22 +591,25 @@ select.cd-input option {
   }
   .cd-profile-card {
     border-bottom: none !important;
-    padding: 0 !important;
+    padding: 0 4px !important;
     width: auto !important;
     display: flex !important;
+    flex-direction: column !important;
     align-items: center !important;
-    gap: 10px !important;
-    text-align: left !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    text-align: center !important;
     margin-bottom: 0 !important;
     flex-shrink: 0 !important;
+    min-width: 60px !important;
   }
   .cd-user-name, .cd-user-role {
     display: none !important;
   }
   .cd-avatar {
-    width: 38px !important;
-    height: 38px !important;
-    margin-bottom: 0 !important;
+    width: 44px !important;
+    height: 44px !important;
+    margin: 0 auto !important;
   }
   .cd-nav {
     display: flex !important;
@@ -616,6 +648,10 @@ select.cd-input option {
   .cd-progress-bar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
   .cd-support-layout { grid-template-columns: 1fr; }
   .cd-membership-note { flex-direction: column; align-items: flex-start; }
+  .cd-membership-card { padding: 34px 24px; }
+  .cd-membership-inner { gap: 22px !important; }
+  .cd-membership-stats { grid-template-columns: 1fr; gap: 16px; }
+  .cd-membership-meta { justify-content: center; }
 }
 
 @media (max-width: 480px) {

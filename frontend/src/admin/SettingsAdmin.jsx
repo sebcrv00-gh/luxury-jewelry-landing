@@ -178,7 +178,6 @@ export default function SettingsAdmin() {
               </p>
               <ThemePreferencePanel
                 title="Apariencia administrativa"
-                description="Selecciona el ambiente visual con el que deseas gestionar el ecosistema Luxury Jewelry. El modo oscuro sigue siendo el predeterminado del sistema."
               />
             </div>
           )}
